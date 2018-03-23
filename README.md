@@ -16,7 +16,7 @@ The mOTU profiler requires:
 * SAMtools ([link](http://samtools.sourceforge.net/))
 
 In order to use the command ```snv_call``` you need:
-* ([metaSNV](http://metasnv.embl.de/))
+* [metaSNV](http://metasnv.embl.de/), now available also on [bioconda](https://anaconda.org/bioconda/metasnv)
 
 Installation
 --------------
