@@ -54,8 +54,8 @@ motus profile -f for_sample.fastq -r rev_sample.fastq -s no_pair.fastq -t 6 > ta
 You can merge taxonomy files from different samples with `mOTU merge`:
 
 ```shell
-motus profile -s metagenomic_sample_1.fastq > taxonomic_profiling_1.txt
-motus profile -s metagenomic_sample_2.fastq > taxonomic_profiling_2.txt
+motus profile -s metagenomic_sample_1.fastq -o taxonomic_profiling_1.txt
+motus profile -s metagenomic_sample_2.fastq -o taxonomic_profiling_2.txt
 motus merge -i taxonomic_profiling_1.txt,taxonomic_profiling_2.txt > all_samples_profiling.txt
 ```
 
