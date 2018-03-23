@@ -15,6 +15,8 @@ The mOTU profiler requires:
 * the Burrow-Wheeler Aligner ([bwa](https://github.com/lh3/bwa))
 * SAMtools ([link](http://samtools.sourceforge.net/))
 
+In order to use the command ```snv_call``` you need:
+* ([metaSNV](http://metasnv.embl.de/))
 
 Installation
 --------------
