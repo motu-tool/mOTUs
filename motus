@@ -1,0 +1,1747 @@
+#!/usr/bin/env python
+
+# ============================================================================ #
+# motus.py: mOTU profiling tools
+version_tool = "0.5"
+# ============================================================================ #
+
+import os
+import sys
+import argparse
+from collections import defaultdict
+import string
+import shlex
+import shutil
+import time
+import subprocess
+import glob
+import random
+import multiprocessing
+import tempfile
+
+
+# position of the script -------------------------------------------------------
+path_mOTUs = os.path.realpath(__file__)
+path_array = path_mOTUs.split("/")
+relative_path = "/".join(path_array[0:-1])
+relative_path = relative_path + "/"
+
+# add /bin to the path ---------------------------------------------------------
+try:
+    if os.path.isdir(relative_path+'bin'):
+        sys.path.insert(0, relative_path+'bin')
+    else:
+        sys.stderr.write("[E::main] Error: "+relative_path+"bin directory is missing.\n[E::main] Download the motus profiler again\n\n")
+        sys.exit(1)
+except:
+    sys.stderr.write("[E::main] Error: "+relative_path+"bin directory is missing.\n[E::main] Download the motus profiler again\n\n")
+    sys.exit(1)
+try:
+    import map_genes_to_mOTUs as map_motu
+except:
+    sys.stderr.write("[E::main] Error: fail to load the script: "+relative_path+"bin/map_genes_to_mOTUs.py\n[E::main] Download the motus profiler again\n\n")
+    sys.exit(1)
+try:
+    import runBWA as runbwa
+except ImportError:
+    sys.stderr.write("[E::main] Error: fail to load the script: "+relative_path+"bin/runBWA.py\n[E::main] Download the motus profiler again\n\n")
+    sys.exit(1)
+try:
+    import runBWA_for_snv as runbwa_snv
+except ImportError:
+    sys.stderr.write("[E::main] Error: fail to load the script: "+relative_path+"bin/runBWA_for_snv.py\n[E::main] Download the motus profiler again\n\n")
+    sys.exit(1)
+try:
+    import map_mOTUs_to_LGs as map_lgs
+except:
+    sys.stderr.write("[E::main] Error: fail to load the script: "+relative_path+"bin/map_mOTUs_to_LGs.py\n[E::main] Download the motus profiler again\n\n")
+    sys.exit(1)
+try:
+    import append
+except:
+    sys.stderr.write("[E::main] Error: fail to load the script: "+relative_path+"bin/append.py\n[E::main] Download the motus profiler again\n\n")
+    sys.exit(1)
+try:
+    import msamtools_python as filter_sam
+except:
+    sys.stderr.write("[E::main] Error: fail to load the script: "+relative_path+"bin/msamtools_python.py\n[E::main] Download the motus profiler again\n\n")
+    sys.exit(1)
+try:
+    import motu_utilities
+except:
+    sys.stderr.write("[E::main] Error: fail to load the script: "+relative_path+"bin/motu_utilities.py\n[E::main] Download the motus profiler again\n\n")
+    sys.exit(1)
+try:
+    import PEfiltering
+except:
+    sys.stderr.write("[E::main] Error: fail to load the script: "+relative_path+"bin/PEfiltering.py\n[E::main] Download the motus profiler again\n\n")
+    sys.exit(1)
+
+# ------------------------------------------------------------------------------
+#       print the help informations
+# ------------------------------------------------------------------------------
+class CapitalisedHelpFormatter(argparse.HelpFormatter):
+    def add_usage(self, usage, actions, groups, prefix=None):
+        if prefix is None:
+            prefix = ''
+        return super(CapitalisedHelpFormatter, self).add_usage(usage, actions, groups, prefix)
+
+
+def msg(name=None):
+    str_msg = '''
+\00
+Program: motus - a tool for marker gene-based OTU (mOTU) profiling
+Version: '''+version_tool+'''
+
+Usage: motus <command> [options]
+
+Command:
+ -- Taxonomic profiling
+      profile     Perform a taxonomic profiling (map_tax + calc_mgc + calc_motu)
+      merge       Merge different taxonomic profiles to create a table
+
+      map_tax     Map reads to the marker gene database
+      calc_mgc    Aggregate reads from the same marker gene cluster (mgc)
+      calc_motu   From a mgc abundance table, produce the mOTU abundance table
+
+ -- SNV calling
+      map_snv     Map reads to create bam/sam file for snv calling
+      snv_call    SNV calling using metaSNV
+
+Type motus <command> to print the help for a specific command
+        '''
+    return str_msg
+
+# ------------------------------------------------------------------------------
+def print_menu_profile():
+    sys.stderr.write("\n")
+    sys.stderr.write("Usage: motus profile [options]\n\n")
+    sys.stderr.write("Input options:\n")
+    sys.stderr.write("   -f FILE[,FILE]  input file(s) for reads in forward orientation, fastq formatted\n")
+    sys.stderr.write("   -r FILE[,FILE]  input file(s) for reads in reverse orientation, fastq formatted\n")
+    sys.stderr.write("   -s FILE[,FILE]  input file(s) for reads without mate, fastq formatted\n")
+    sys.stderr.write("   -n STR          sample name\n")
+    sys.stderr.write("   -i FILE[,FILE]  provide a sam or bam input file\n")
+    sys.stderr.write("   -m FILE         provide a mgc reads count file\n\n")
+    sys.stderr.write("Output options:\n")
+    sys.stderr.write("   -o FILE         output file name [stdout]\n")
+    sys.stderr.write("   -I FILE         save the result of bwa in bam format (intermediate step) [None]\n")
+    sys.stderr.write("   -M FILE         save the mgc reads count (intermediate step) [None]\n")
+    sys.stderr.write("   -e              profile only reference species (ref_mOTUs)\n")
+    #sys.stderr.write("   -p       visualize the specI ID instead of the species name\n") # alway visualize
+    sys.stderr.write("   -w              print result as relative abundance instead of raw reads\n")
+    sys.stderr.write("   -p              print NCBI id\n")
+    sys.stderr.write("   -u              print the full name of the species\n")
+    sys.stderr.write("   -q              print the full rank taxonomy\n")
+    sys.stderr.write("   -B              print result in BIOM format\n")
+    sys.stderr.write("   -k STR          taxonomic level [mOTU]\n")
+    sys.stderr.write("                   Values: [kingdom, phylum, class, order, family, genus, mOTU]\n\n")
+    sys.stderr.write("Algorithm options:\n")
+    sys.stderr.write("   -g INT          number of marker genes cutoff: 1=higher recall, 6=higher precision [3]\n")
+    sys.stderr.write("   -l INT          min. length of alignment for the reads (number of nucleotides) [75]\n")
+    #sys.stderr.write("   -L FLOAT        min. length of alignment for the reads (percentage of the average read length) [None]\n")
+    #sys.stderr.write("   -c INT          number of cores for bwa (max one per lane) [1]\n")
+    sys.stderr.write("   -t INT          number of threads [1]\n")
+    sys.stderr.write("   -v INT          verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n")
+    sys.stderr.write("   -y STR          type of read counts [insert.scaled_counts]\n")
+    sys.stderr.write("                   Values: [base.coverage, insert.raw_counts, insert.scaled_counts]\n\n")
+
+# ------------------------------------------------------------------------------
+def print_menu_map_snv():
+    sys.stderr.write("\n")
+    sys.stderr.write("Usage: motus map_snv [options]\n\n")
+    sys.stderr.write("Input options:\n")
+    sys.stderr.write("   -f FILE[,FILE]  input file(s) for reads in forward orientation, fastq formatted\n")
+    sys.stderr.write("   -r FILE[,FILE]  input file(s) for reads in reverse orientation, fastq formatted\n")
+    sys.stderr.write("   -s FILE[,FILE]  input file(s) for reads without mate, fastq formatted\n\n")
+    sys.stderr.write("Output options:\n")
+    sys.stderr.write("   -o FILE         output bam file name [stdout]\n\n")
+    sys.stderr.write("Algorithm options:\n")
+    sys.stderr.write("   -l INT          min. length of alignment for the reads (number of nucleotides) [75]\n")
+    #sys.stderr.write("   -c INT          number of cores for bwa (max one per lane) [1]\n")
+    sys.stderr.write("   -t INT          number of threads [1]\n")
+    sys.stderr.write("   -v INT          verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n\n")
+
+# ------------------------------------------------------------------------------
+def print_menu_snv_call():
+    sys.stderr.write("\n")
+    sys.stderr.write("Usage: motus snv_call -d Directory -o Directory [options]\n\n")
+    sys.stderr.write("Input options:\n")
+    sys.stderr.write("   -d  DIR     Call metaSNV on all bam files in the directory. [Mandatory]\n")
+    sys.stderr.write("   -fb FLOAT   Coverage breadth: minimal horizontal genome coverage percentage per sample per species. Default=40.0\n")
+    sys.stderr.write("   -fd FLOAT   Coverage depth: minimal average vertical genome coverage per sample per species. Default=5.0\n")
+    sys.stderr.write("   -fm INT     Minimum number of samples per species. Default=2\n")
+    sys.stderr.write("   -fp FLOAT   FILTERING STEP II: Required proportion of informative samples (coverage non-zero) per position. Default=0.50\n")
+    sys.stderr.write("   -fc FLOAT   FILTERING STEP II: Minimum coverage per position per sample per species. Default=5.0\n")
+    sys.stderr.write("   -t  INT     Number of threads. Default=1\n\n")
+    sys.stderr.write("Output options:\n")
+    sys.stderr.write("   -o  DIR     Output directory. Will fail if already exists. [Mandatory]\n\n")
+    sys.stderr.write("Algorithm options:\n")
+    sys.stderr.write("   -v INT      Verbose level: 1=error, 2=warning, 3=message, 4+=debugging. Default=3\n\n")
+
+# ------------------------------------------------------------------------------
+def print_menu_bwa():
+    sys.stderr.write("\n")
+    sys.stderr.write("Usage: motus map_tax [options]\n\n")
+    sys.stderr.write("Input options:\n")
+    sys.stderr.write("   -f FILE[,FILE]  input file(s) for reads in forward orientation, fastq formatted\n")
+    sys.stderr.write("   -r FILE[,FILE]  input file(s) for reads in reverse orientation, fastq formatted\n")
+    sys.stderr.write("   -s FILE[,FILE]  input file(s) for reads without mate, fastq formatted\n\n")
+    sys.stderr.write("Output options:\n")
+    sys.stderr.write("   -o FILE         output file name [stdout]\n")
+    sys.stderr.write("   -b              save the result of bwa in bam format\n\n")
+    sys.stderr.write("Algorithm options:\n")
+    sys.stderr.write("   -l INT          min. length of alignment for the reads (number of nucleotides) [75]\n")
+    #sys.stderr.write("   -c INT          number of cores for bwa (max one per lane) [1]\n")
+    sys.stderr.write("   -t INT          number of threads [1]\n")
+    sys.stderr.write("   -v INT          verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n\n")
+
+# ------------------------------------------------------------------------------
+def print_menu_map_genes():
+    sys.stderr.write("\n")
+    sys.stderr.write("Usage: motus calc_mgc [options]\n\n")
+    sys.stderr.write("Input options:\n")
+    sys.stderr.write("   -n STR          sample name\n")
+    sys.stderr.write("   -i FILE[,FILE]  provide a sam or bam input file (or list of files)\n\n")
+    sys.stderr.write("Output options:\n")
+    sys.stderr.write("   -o FILE         output file name [stdout]\n\n")
+    sys.stderr.write("Algorithm options:\n")
+    sys.stderr.write("   -l INT          min. length of alignment for the reads (number of nucleotides) [75]\n")
+    #sys.stderr.write("   -L FLOAT        min. length of alignment for the reads (percentage of the average read length) [None]\n")
+    sys.stderr.write("   -v INT          verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n")
+    sys.stderr.write("   -y STR          type of read counts [insert.scaled_counts]\n")
+    sys.stderr.write("                   Values: [base.coverage, insert.raw_counts, insert.scaled_counts]\n\n")
+
+# ------------------------------------------------------------------------------
+def print_menu_map_lgs():
+    sys.stderr.write("\n")
+    sys.stderr.write("Usage: motus calc_motu [options]\n\n")
+    sys.stderr.write("Input options:\n")
+    sys.stderr.write("   -n STR   sample name\n")
+    sys.stderr.write("   -i FILE  provide the mgc abundance table\n\n")
+    sys.stderr.write("Output options:\n")
+    sys.stderr.write("   -o FILE  output file name [stdout]\n")
+    sys.stderr.write("   -e       profile only reference species (ref_mOTUs)\n")
+    sys.stderr.write("   -B       print result in BIOM format\n")
+    sys.stderr.write("   -w       print result as relative abundance instead of raw reads\n")
+    sys.stderr.write("   -p       print NCBI id\n")
+    sys.stderr.write("   -u       print the full name of the species\n")
+    sys.stderr.write("   -q       print the full rank taxonomy\n")
+    sys.stderr.write("   -k STR   taxonomic level [mOTU]\n")
+    sys.stderr.write("            Values: [kingdom, phylum, class, order, family, genus, mOTU]\n\n")
+    sys.stderr.write("Algorithm options:\n")
+    sys.stderr.write("   -g INT   number of marker genes cutoff: 1=higher recall, 6=higher precision [3]\n")
+    sys.stderr.write("   -v INT   verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n\n")
+
+# ------------------------------------------------------------------------------
+def print_menu_append():
+    sys.stderr.write("\n")
+    sys.stderr.write("Usage: motus merge [options]\n\n")
+    sys.stderr.write("Input options:\n")
+    sys.stderr.write("   -i STR[,STR]  list of files (comma separated)\n")
+    sys.stderr.write("   -d DIR        merge all the files in the directory\n\n")
+    sys.stderr.write("Output options:\n")
+    sys.stderr.write("   -o FILE       output file name [stdout]\n")
+    sys.stderr.write("   -B            print result in BIOM format\n\n")
+    sys.stderr.write("Algorithm options:\n")
+    sys.stderr.write("   -v INT        verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n\n")
+
+
+# ------------------------------------------------------------------------------
+#      function to get the last git commit id
+# ------------------------------------------------------------------------------
+def check_commit_id(commit_id_in_file):
+    if not(is_tool("git")):
+        return
+
+    gitCMD = "git --git-dir="+relative_path+".git log"
+    try:
+        git_cmd = subprocess.Popen(gitCMD,stdout=subprocess.PIPE,shell = True)
+        stdout_s,stderr_s = git_cmd.communicate()
+        if git_cmd.returncode:
+            return
+        else:
+            list_stdout = (stdout_s.decode('ascii')).split("\n")
+        commit_id_dir = list_stdout[0]
+        # check that they are the same
+        if commit_id_dir != commit_id_in_file:
+            sys.stderr.write("[W::main] Warning: the commit id saved during the setup ("+commit_id_in_file+") is different from the git commit id of this git repository ("+str(commit_id_dir)+"). Run 'python "+relative_path+"setup.py'\n\n")
+    except:
+        return
+
+# ------------------------------------------------------------------------------
+# function for multiple cores for bwa
+def run_bwa_multiple_cores(forward_reads,  reverse_reads,  single_reads, reference, threads, output, bamOutput, msam_script, technology, verbose, profile_mode, lane_id, result):
+    result1 = runbwa.runBWAmapping( forward_reads,  reverse_reads,  single_reads, reference, threads, output, bamOutput, msam_script, technology, verbose, profile_mode, lane_id,default_min_len_align_length_map_tax)
+    for i in result1:
+        result.append(i)
+
+def prepare_output_bwa(output,outPutIsBam,header_file,all_sam_lines,str_end_header,verbose,str_info_min_len,str_perc_id,str_min_perc_query):
+
+    if not(is_tool("samtools")) and outPutIsBam:
+        sys.stderr.write(" [E::map_db] Error: samtools is not in the path. Saving .sam format instead of .bam format\n")
+        outPutIsBam = False
+
+
+    error_save_intermediate_bam_file = False
+
+    # load the header
+    try:
+        h_file = open(header_file,'r')
+    except:
+        sys.stderr.write("[E::map_db] Error loading file: "+header_file+"\n[E::map_db] Try to download again the motus profiler\n\n")
+        sys.exit(1)
+
+    # create the temp sam file with the result
+    try:
+        if output != "" or (output == "" and outPutIsBam):
+            sam_temp_file = tempfile.NamedTemporaryFile(delete=False, mode = "w")
+            os.chmod(sam_temp_file.name, 0o644)
+        else:
+            sam_temp_file = sys.stdout
+
+        if verbose>4: sys.stderr.write("  \n[map_db] saving intermediate sam file in "+sam_temp_file.name + "\n")
+
+        sam_temp_file.write(str_end_header)
+        sam_temp_file.write(str_info_min_len)
+        sam_temp_file.write(str_perc_id)
+        sam_temp_file.write(str_min_perc_query)
+
+        for i in h_file:
+            sam_temp_file.write(i)
+        for i in all_sam_lines:
+            sam_temp_file.write(i)
+    except:
+        sys.stderr.write(" [W::map_db] Warning: failed to save intermediate sam file\n")
+        if verbose>4: sys.stderr.write("Error when saving the intermediate sam file\n")
+        error_save_intermediate_bam_file = True
+        sys.exit(1)
+
+    # close the sam file
+    if output == "" and (not outPutIsBam):
+        return 0
+    else:
+        try:
+            sam_temp_file.flush()
+            os.fsync(sam_temp_file.fileno())
+            sam_temp_file.close()
+        except:
+            if verbose>4: sys.stderr.write("Error when closing sam file\n")
+            if not error_save_intermediate_bam_file:
+                sys.stderr.write(" [W::map_db] Warning: failed to save intermediate bam file\n")
+            sys.exit(1)
+
+    #IF WE RETURN SAM
+    if not(outPutIsBam):
+        # move the temp file to the final destination
+        try:
+            #os.rename(bam_temp_file.name,args.profile_bam_file) # atomic operation
+            shutil.move(sam_temp_file.name,output) #It is not atomic if the files are on different filsystems.
+        except:
+            if verbose>4: sys.stderr.write("Error when copying intermediate sam to the final destination\n")
+            if not error_save_intermediate_bam_file:
+                sys.stderr.write("[E::map_db] Error: failed to save the sam file\n")
+                sys.stderr.write("[E::map_db] you can find the file here:\n"+sam_temp_file.name+"\n")
+                sys.exit(1)
+        return 0
+
+
+    #IF WE RETURN BAM
+    try:
+        if output != "":
+            bam_temp_file = tempfile.NamedTemporaryFile(delete=False, mode = "w")
+            os.chmod(bam_temp_file.name, 0o644)
+        else:
+            bam_temp_file = sys.stdout
+        convertCMD = "samtools view -b -Sh "+ sam_temp_file.name
+        convert_popenCMD = shlex.split(convertCMD)
+        convert_cmd = subprocess.Popen(convert_popenCMD,stdout=bam_temp_file,)
+
+        stdout_s,stderr_s = convert_cmd.communicate()
+        if convert_cmd.returncode:
+            if not error_save_intermediate_bam_file:
+                sys.stderr.write("[E::map_db] Error: failed to save intermediate bam file\n")
+                sys.stderr.write(stderr_s.decode('ascii'))
+                sys.exit(1)
+    except:
+        if verbose>4: sys.stderr.write("Error when converting to bam\n")
+        if not error_save_intermediate_bam_file:
+            sys.stderr.write(" [W::map_db] Warning: failed to save intermediate bam file\n")
+        sys.exit(1)
+
+    # move the temp file to the final destination
+    if output != "":
+        try:
+            #os.rename(bam_temp_file.name,args.profile_bam_file) # atomic operation
+            shutil.move(bam_temp_file.name,output) #It is not atomic if the files are on different filsystems.
+        except:
+            if verbose>4: sys.stderr.write("Error when copying intermediate bam to the final destination\n")
+            if not error_save_intermediate_bam_file:
+                sys.stderr.write("[E::map_db] Error: failed to save intermediate bam file\n")
+                sys.stderr.write("[E::map_db] you can find the file here:\n"+bam_temp_file.name+"\n")
+            # remove the temporary sam file
+            os.remove(sam_temp_file.name)
+            sys.exit(1)
+
+    # remove the temporary sam file
+    os.remove(sam_temp_file.name)
+    return 0
+
+
+# ------------------------------------------------------------------------------
+# function to check if a specific tool exists
+def is_tool(name):
+    try:
+        devnull = open(os.devnull)
+        subprocess.Popen([name], stdout=devnull, stderr=devnull).communicate()
+    except OSError as e:
+        if e.errno == os.errno.ENOENT:
+            return False
+    return True
+
+
+# ------------------------------------------------------------------------------
+# MAIN
+# ------------------------------------------------------------------------------
+def main(argv=None):
+
+    motu_call = "python "+(" ".join(sys.argv))
+
+    parser = argparse.ArgumentParser(usage=msg(), formatter_class=CapitalisedHelpFormatter,add_help=False)
+    #parser = argparse.ArgumentParser(description='This program calculates mOTU-LGs and specI abundances for one sample', add_help = True)
+    parser.add_argument('command', action="store", default=None, help='mode to use the mOTU tool',choices=['profile','map_tax','calc_mgc','calc_motu','merge','map_snv','snv_call'])
+    parser.add_argument('-f', action="store", default=None,dest='forwardReads', help='name of input file for reads in forward orientation, fastq formatted, can be gzipped')
+    parser.add_argument('-r', action="store", default=None,dest='reverseReads', help='name of input file for reads in reverse orientation, fastq formatted, can be gzipped')
+    parser.add_argument('-s', action="store", default=None,dest='singleReads', help='name of input file for reads without mate, fastq formatted, can be gzipped')
+    parser.add_argument('-o', action="store", dest='output', default=None, help='name of output file')
+    parser.add_argument('-t', type=int, action="store", dest='threads', default=None, help='Number of threads to be used.')
+    parser.add_argument('-e', action='store_true', default=None, dest='onlySpecI', help='Set if you want to profile only specI (mOTU-LGs will go in -1)')
+    parser.add_argument('-b', action="store_true", default=None, dest='outPutIsBam', help='Specify if the final output should be a bam formatted file')
+    parser.add_argument('-y', action="store", dest='type_output', default=None, help='type of output that you want to print',choices=['base.coverage', 'insert.raw_counts', 'insert.scaled_counts'])
+    parser.add_argument('-n', action="store", dest='sampleName', default=None, help='sample name for the current mapping')
+    parser.add_argument('-i', action="store", dest='listInputFiles', default=None, help='name of input file(s); sam or bam formatted files. If it is a list: insert all files separated by a comma')
+    parser.add_argument('-m', action="store", dest='motu_read_counts_file', default=None, help='name of input file; for profiling. It is the file of mOTU read count')
+    parser.add_argument('-v', action='store', type=int, default=None, dest='verbose', help='Verbose levels')
+    parser.add_argument('-d', action="store", default=None, dest='directory_append', help='directory from where to take the files to append')
+    parser.add_argument('-B', action='store_true', default=None, dest='BIOM_output', help='print output in BIOM format')
+    parser.add_argument('-w', action='store_true', default=None, dest='print_rel_ab', help='print result as relative abundance instead of raw reads')
+    parser.add_argument('-u', action='store_true', default=None, dest='print_long_names', help='print names of the species in long format')
+    parser.add_argument('-q', action='store_true', default=None, dest='print_full_rank', help='print the full rank of the taxonomy')
+    parser.add_argument('-p', action='store_true', default=None, dest='print_NCBI_id', help='print NCBI id')
+    parser.add_argument('-k', action="store", default = None, dest='taxonomic_level', help='Taxonomic level for the profiling',choices=['kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'mOTU'])
+    parser.add_argument('-I', action="store", default = None, dest='profile_bam_file', help='name of the bam file to save the intermediate bam file during profiling')
+    parser.add_argument('-M', action="store", default = None, dest='profile_mOTU_reads_file', help='name of the output file when profiling, relative to the mOTU read counts')
+    parser.add_argument('-g', type=int, action="store", dest='map_lgs_cutoff', default=None, help='cutoff when profiling for the number of genes')
+    parser.add_argument('-l', type=int, action="store", dest='min_len_align_length', default=None, help='Minimum length of the alignment')
+    #parser.add_argument('-L', type=float, action="store", dest='min_len_align_perc', default=None, help='Minimum length of the alignment, as percentage of the average read length')
+    # develope, but to be checked
+    parser.add_argument('-c', type=int, action="store", dest='number_of_cores', default=None, help='Number of cores to use for bwa')
+    # db has to be deleted
+    #parser.add_argument('-db', action="store", default = None, dest='db', help='database of marker genes',choices=['nr', 'aug.cen', 'cen'])
+    parser.add_argument('-save_sam_lines', action="store", dest='save_sam_lines', default=None, help='name of output file')
+    parser.add_argument('-load_sam_lines', action="store", dest='load_sam_lines', default=None, help='name of output file')
+    parser.add_argument('-min_perc_id', action="store", default = None, dest='min_perc_id', help='minimum percentage of identity when filtering - choose between 97 and 100')
+    parser.add_argument('-min_clip_length', action="store", default = None, dest='min_clip_length', help='min. length of alignment when clipped')
+    parser.add_argument('-min_perc_align', action="store", default = None, dest='min_perc_align', help='min. percent of the query that must be aligned, between 0 and 100')
+
+    '''
+    Edit Hans
+    '''
+    parser.add_argument('-fb', metavar='FLOAT', type=float, default=40.0,
+                        help="Coverage breadth: minimal horizontal genome coverage percentage per sample per species")
+    parser.add_argument('-fd', metavar='FLOAT', type=float, default=5.0,
+                        help="Coverage depth: minimal average vertical genome coverage per sample per species")
+    parser.add_argument('-fm', metavar='INT', type=int, help="Minimum number of samples per species", default=2)
+    parser.add_argument('-fc', metavar='FLOAT', type=float,
+                        help="FILTERING STEP II:"
+                             "minimum coverage per position per sample per species", default=5.0)
+    parser.add_argument('-fp', metavar='FLOAT', type=float,
+                        help="FILTERING STEP II:"
+                             "required proportion of informative samples (coverage non-zero) per position",
+                        default=0.50)
+    '''
+    Edit Hans
+    '''
+    args = parser.parse_args()
+
+
+    # print menus ----------------------------------------------------------------
+    if (args.forwardReads == None) and (args.reverseReads == None) and (args.singleReads == None) and (args.output == None) and (args.threads == None) and (args.onlySpecI == None) and (args.outPutIsBam == None):
+        if (args.type_output == None) and (args.sampleName == None) and (args.listInputFiles == None) and (args.motu_read_counts_file == None) and (args.verbose == None) and (args.directory_append == None):
+             if (args.BIOM_output == None) and (args.taxonomic_level == None) and (args.profile_bam_file == None) and (args.profile_mOTU_reads_file == None) and (args.map_lgs_cutoff == None) and (args.number_of_cores == None):
+                 if (args.print_rel_ab == None) and (args.print_NCBI_id == None) and (args.print_long_names == None):
+                     if args.command == 'profile': print_menu_profile()
+                     if args.command == 'map_snv': print_menu_map_snv()
+                     if args.command == 'map_tax': print_menu_bwa()
+                     if args.command == 'calc_mgc': print_menu_map_genes()
+                     if args.command == 'calc_motu': print_menu_map_lgs()
+                     if args.command == 'merge': print_menu_append()
+                     if args.command == 'snv_call': print_menu_snv_call()
+                     sys.exit(1)
+    # set default for args.erbose
+    if (args.verbose == None): args.verbose = 3
+
+    # print parameters that are ignored -------------------------------------------
+    if args.command == 'profile':
+        if ((args.outPutIsBam != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -b ignored\n")
+        if ((args.directory_append != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -d ignored\n")
+    if args.command == 'map_tax':
+        if ((args.directory_append != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -d ignored\n")
+        if ((args.onlySpecI != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -e ignored\n")
+        if ((args.type_output != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -y ignored\n")
+        if ((args.sampleName != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -n ignored\n")
+        if ((args.listInputFiles != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -i ignored\n")
+        if ((args.motu_read_counts_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -m ignored\n")
+        if ((args.BIOM_output != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -B ignored\n")
+        if ((args.print_rel_ab != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -w ignored\n")
+        if ((args.print_full_rank != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -q ignored\n")
+        if ((args.print_NCBI_id != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -p ignored\n")
+        if ((args.print_long_names != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -u ignored\n")
+        if ((args.taxonomic_level != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -k ignored\n")
+        if ((args.profile_bam_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -I ignored\n")
+        if ((args.profile_mOTU_reads_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -M ignored\n")
+        if ((args.map_lgs_cutoff != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -g ignored\n")
+    if args.command == 'merge':
+        if ((args.onlySpecI != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -e ignored\n")
+        if ((args.type_output != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -y ignored\n")
+        if ((args.sampleName != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -n ignored\n")
+        if ((args.motu_read_counts_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -m ignored\n")
+        if ((args.print_rel_ab != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -w ignored\n")
+        if ((args.print_full_rank != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -q ignored\n")
+        if ((args.print_NCBI_id != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -p ignored\n")
+        if ((args.print_long_names != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -u ignored\n")
+        if ((args.taxonomic_level != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -k ignored\n")
+        if ((args.profile_bam_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -I ignored\n")
+        if ((args.profile_mOTU_reads_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -M ignored\n")
+        if ((args.map_lgs_cutoff != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -g ignored\n")
+        if ((args.forwardReads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -f ignored\n")
+        if ((args.reverseReads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -r ignored\n")
+        if ((args.singleReads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -s ignored\n")
+        if ((args.threads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -t ignored\n")
+        if ((args.outPutIsBam != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -b ignored\n")
+        if ((args.min_len_align_length != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -l ignored\n")
+    if args.command == 'map_snv':
+        if ((args.directory_append != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -d ignored\n")
+        if ((args.onlySpecI != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -e ignored\n")
+        if ((args.type_output != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -y ignored\n")
+        if ((args.sampleName != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -n ignored\n")
+        if ((args.listInputFiles != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -i ignored\n")
+        if ((args.motu_read_counts_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -m ignored\n")
+        if ((args.BIOM_output != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -B ignored\n")
+        if ((args.print_rel_ab != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -w ignored\n")
+        if ((args.print_full_rank != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -q ignored\n")
+        if ((args.print_NCBI_id != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -p ignored\n")
+        if ((args.print_long_names != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -u ignored\n")
+        if ((args.taxonomic_level != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -k ignored\n")
+        if ((args.profile_bam_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -I ignored\n")
+        if ((args.profile_mOTU_reads_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -M ignored\n")
+        if ((args.map_lgs_cutoff != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -g ignored\n")
+        if ((args.outPutIsBam != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -b ignored\n")
+    if args.command == 'calc_mgc':
+        if ((args.outPutIsBam != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -b ignored\n")
+        if ((args.directory_append != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -d ignored\n")
+        if ((args.forwardReads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -f ignored\n")
+        if ((args.reverseReads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -r ignored\n")
+        if ((args.singleReads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -s ignored\n")
+        if ((args.threads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -t ignored\n")
+        if ((args.onlySpecI != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -e ignored\n")
+        if ((args.motu_read_counts_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -m ignored\n")
+        if ((args.BIOM_output != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -B ignored\n")
+        if ((args.print_rel_ab != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -w ignored\n")
+        if ((args.print_full_rank != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -q ignored\n")
+        if ((args.print_NCBI_id != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -p ignored\n")
+        if ((args.print_long_names != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -u ignored\n")
+        if ((args.taxonomic_level != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -k ignored\n")
+        if ((args.profile_bam_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -I ignored\n")
+        if ((args.profile_mOTU_reads_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -M ignored\n")
+        if ((args.map_lgs_cutoff != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -g ignored\n")
+    if args.command == 'calc_motu':
+        if ((args.outPutIsBam != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -b ignored\n")
+        if ((args.directory_append != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -d ignored\n")
+        if ((args.profile_bam_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -I ignored\n")
+        if ((args.profile_mOTU_reads_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -M ignored\n")
+        if ((args.min_len_align_length != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -l ignored\n")
+        if ((args.forwardReads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -f ignored\n")
+        if ((args.reverseReads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -r ignored\n")
+        if ((args.singleReads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -s ignored\n")
+        if ((args.threads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -t ignored\n")
+        if ((args.type_output != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -y ignored\n")
+        if ((args.motu_read_counts_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -m ignored\n")
+
+
+
+
+    # set the default
+    if (args.threads == None): args.threads = 1
+    if (args.verbose == None): args.verbose = 3
+    if (args.type_output == None): args.type_output = 'insert.scaled_counts'
+    if (args.map_lgs_cutoff == None): args.map_lgs_cutoff = 3
+    if (args.number_of_cores == None): args.number_of_cores = 1
+    if (args.taxonomic_level == None): args.taxonomic_level = "mOTU"
+    if (args.sampleName == None): args.sampleName = "unnamed sample"
+    if (args.outPutIsBam == None): args.outPutIsBam = False
+    if (args.onlySpecI == None): args.onlySpecI = False
+    if (args.print_full_rank == None): args.print_full_rank = False
+    if (args.BIOM_output == None): args.BIOM_output = False
+    if (args.print_rel_ab == None): args.print_rel_ab = False
+    if (args.print_NCBI_id == None): args.print_NCBI_id = False
+    if (args.print_long_names == None): args.print_long_names = False
+    if (args.output == None): args.output = ""
+
+    # check min length alignment
+    default_min_len_align_length = 75 # min length align that we use to filter for profiling
+    default_min_len_align_length_map_tax = 75 # min length align that we use in map_tax
+
+    if (args.command == 'map_tax') and (args.min_len_align_length != None): # map_tax default is 45, unless we set -l
+        default_min_len_align_length_map_tax = args.min_len_align_length
+
+    if (args.min_len_align_length == None): args.min_len_align_length = default_min_len_align_length
+    if (args.min_len_align_length < 20):
+        sys.stderr.write("[E::main] Error: -l should be greater than 20\n")
+        sys.exit(1)
+    if (args.min_len_align_length < 45) and (args.verbose>=2):
+        sys.stderr.write("[W::main] Warning: Minimum suggested value for -l is 45\n")
+    if (args.min_len_align_length < default_min_len_align_length_map_tax):
+        default_min_len_align_length_map_tax = args.min_len_align_length
+    if args.command == 'map_snv': # if we use map_snv then we filter with the value that was inserted
+        default_min_len_align_length_map_tax = args.min_len_align_length
+    info_parameters_p = "-l "+str(args.min_len_align_length)
+
+
+
+    # set default for parameters that are not displayed
+    if (args.min_perc_id == None): args.min_perc_id = 97
+    if (args.min_perc_align == None): args.min_perc_align = 45
+    if (args.min_clip_length == None): args.min_clip_length = 60
+    args.min_perc_id = float(args.min_perc_id)
+    args.min_perc_align = float(args.min_perc_align)
+    args.min_clip_length = float(args.min_clip_length)
+    # check parameters that are not displayed
+    if (args.min_perc_id < 97 or args.min_perc_id >100):
+        sys.stderr.write("[E::main] Error: -min_perc_id should be between 97 and 100\n")
+        sys.exit(1)
+    if (args.min_perc_align < 45 or args.min_perc_align >100):
+        sys.stderr.write("[E::main] Error: -min_perc_align should be between 45 and 100\n")
+        sys.exit(1)
+    if (args.min_clip_length < 60):
+        sys.stderr.write("[E::main] Error: -min_clip_length should be greater than 60\n")
+        sys.exit(1)
+
+    # ---------------------- check general parameters --------------------------
+    if args.verbose < 1:
+        sys.stderr.write("[E::main] Error: verbose level (-v) is less than 1\n")
+        sys.exit(1)
+    if args.threads < 1:
+        sys.stderr.write("[E::main] Error: number of threads (-t) is less than 1\n")
+        sys.exit(1)
+    if args.number_of_cores < 1:
+        sys.stderr.write("[E::main] Error: number of cores (-c) is less than 1\n")
+        sys.exit(1)
+    if args.map_lgs_cutoff<1 or args.map_lgs_cutoff>6:
+        sys.stderr.write("[E::main] Error: invalid number of marker genes cutoff (-g): "+str(args.map_lgs_cutoff)+" (possible values: from 1 to 6)\n")
+        sys.exit(1)
+
+
+
+
+    # --------------------------------------------------------------------------
+    #                                  SNVCALL
+    # Begin edit hans 8.3.2018
+    # I leave all settings here. They might need to be put to a different location later.
+    # --------------------------------------------------------------------------
+    if args.command == 'snv_call':
+        sys.stderr.write("[main] Begin metaSNV\n")
+    # --------------------------------------------------------------------------
+    #                       Settings/Params
+    # --------------------------------------------------------------------------
+
+
+        reference = relative_path+"db_mOTU/mOTU.v2b.centroids.reformatted.padded"
+        annotation = relative_path+"db_mOTU/mOTU.v2b.centroids.reformatted.padded.annotations"
+        if not os.path.isfile(annotation):
+            sys.stderr.write("[E::main] The annotation file %s does not exist. Create annotation file with the get.annotations.py command from the metaSNV package\n" % (annotation))
+            sys.exit(1)
+        bamdir = args.directory_append
+        fb = args.fb
+        fd = args.fd
+        fm = args.fm
+        fp = args.fp
+        fc = args.fc
+        paramsdir = '-m{}-d{}-b{}-p{}'.format(int(args.fm), int(args.fd), int(args.fb), float(args.fp))
+        threads = args.threads
+        sample_file = os.path.abspath(os.path.join(bamdir, 'sample_list'))
+        outdir = os.path.abspath(args.output)
+        if os.path.exists(outdir):
+            sys.stderr.write("[E::main] The output directory already exists: %s Existing. Delete and restart\n" % (outdir))
+            sys.exit(1)
+        msnv_log_file = os.path.abspath(os.path.join(outdir, 'metaSNV.log'))
+        sys.stderr.write("[main] metaSNV stderr/stdout log file: %s\n" % (msnv_log_file))
+    # --------------------------------------------------------------------------
+    #                           create sample_list file
+    # --------------------------------------------------------------------------
+
+
+
+
+        if args.verbose>=4:
+            sys.stderr.write("[main] Creating sample list file for metaSNV: %s\n" % (sample_file))
+
+        bamfiles = [os.path.abspath(p) for p in glob.glob(os.path.join(bamdir, '*bam'))]
+
+        if len(bamfiles) == 0:
+            sys.stderr.write("[E::main] No BAM files found in the input folder. Exiting\n")
+            sys.exit(0)
+        with open(sample_file, 'w') as handle:
+            for bamfile in bamfiles:
+                handle.write(bamfile + '\n')
+
+    # --------------------------------------------------------------------------
+    #                           metaSNV
+    # --------------------------------------------------------------------------
+        if args.verbose>=4:
+            sys.stderr.write("[main] Executing metaSNV main routine.\n")
+
+
+        metaSNV_command = 'metaSNV.py %s %s %s --db_ann %s --threads %d --n_splits %d' % (outdir, sample_file, reference, annotation, args.threads, args.threads)
+        if args.verbose>=4:
+            sys.stderr.write("[main] Command: %s\n" % metaSNV_command)
+        metaSNV_popenCMD = shlex.split(metaSNV_command)
+        p = subprocess.Popen(metaSNV_popenCMD, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (stdout, stderr) = p.communicate()
+        mlf = open(msnv_log_file, 'w')
+        mlf.write(metaSNV_command + '\n')
+        mlf.write(stdout + '\n')
+        mlf.write(stderr + '\n')
+        if p.returncode:
+            sys.stderr.write("[E::main] metaSNV finished with an error. Exiting\n")
+            sys.stderr.write("[E::main] %s\n" %(stderr))
+            sys.stderr.write("[E::main] %s\n" %(stdout))
+            mlf.close()
+            sys.exit(1)
+    # --------------------------------------------------------------------------
+    #                                  FILTER
+    # --------------------------------------------------------------------------
+        if args.verbose>=4:
+            sys.stderr.write("[main] Executing metaSNV filter routine.\n")
+            params = '-m 5 -d 10 -b 80 -p 0.9'
+        metaSNVFilter_command = 'metaSNV_Filtering_2.0.py %s -m %d -d %f -b %f -p %f -c %f --n_threads %d' %(outdir, fm, fd, fb, fp, fc, args.threads)
+        if args.verbose>=4:
+            sys.stderr.write("[main] Command: %s\n" % metaSNVFilter_command)
+        metaSNVFilter_popenCMD = shlex.split(metaSNVFilter_command)
+        p = subprocess.Popen(metaSNVFilter_popenCMD, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (stdout, stderr) = p.communicate()
+        mlf.write(metaSNVFilter_command + '\n')
+        mlf.write(stdout + '\n')
+        mlf.write(stderr + '\n')
+        if p.returncode:
+            sys.stderr.write("[E::main] metaSNVFilter finished with an error. Exiting\n")
+            sys.stderr.write("[E::main] %s\n" %(stderr))
+            sys.stderr.write("[E::main] %s\n" %(stdout))
+            mlf.close()
+            sys.exit(1)
+    # --------------------------------------------------------------------------
+    #                                  REMOVE PADDING
+    # --------------------------------------------------------------------------
+        if args.verbose>=4:
+            sys.stderr.write("[main] Executing metaSNV remove padded routine.\n")
+        metaSNVRMPadded_command = 'motus.remove.padded.sh %s/filtered%s/pop' % (outdir, paramsdir)
+        if args.verbose>=4:
+            sys.stderr.write("[main] Command: %s\n" % metaSNVRMPadded_command)
+        metaSNVRMPadded_popenCMD = shlex.split(metaSNVRMPadded_command)
+        p = subprocess.Popen(metaSNVRMPadded_popenCMD, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (stdout, stderr) = p.communicate()
+        mlf.write(metaSNVRMPadded_command + '\n')
+        mlf.write(stdout + '\n')
+        mlf.write(stderr + '\n')
+        if p.returncode:
+            sys.stderr.write("[E::main] metaSNVRMPadded finished with an error. Exiting\n")
+            sys.stderr.write("[E::main] %s\n" %(stderr))
+            sys.stderr.write("[E::main] %s\n" %(stdout))
+            mlf.close()
+            sys.exit(1)
+    # --------------------------------------------------------------------------
+    #                                  DISTANCE
+    # --------------------------------------------------------------------------
+        if args.verbose>=4:
+            sys.stderr.write("[main] Executing metaSNV distance routine.\n")
+        metaSNVDist_command = 'metaSNV_DistDiv.py --filt %s/filtered%s --dist --n_threads %d' % (outdir, paramsdir, args.threads)
+        if args.verbose>=4:
+            sys.stderr.write("[main] Command: %s\n" % metaSNVDist_command)
+        metaSNVDist_popenCMD = shlex.split(metaSNVDist_command)
+        p = subprocess.Popen(metaSNVDist_popenCMD, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (stdout, stderr) = p.communicate()
+        mlf.write(metaSNVDist_command + '\n')
+        mlf.write(stdout + '\n')
+        mlf.write(stderr + '\n')
+        if p.returncode:
+            sys.stderr.write("[E::main] metaSNVDist finished with an error. Exiting\n")
+            sys.stderr.write("[E::main] %s\n" %(stderr))
+            sys.stderr.write("[E::main] %s\n" %(stdout))
+            mlf.close()
+            sys.exit(1)
+        sys.stderr.write("[main] End metaSNV\n")
+        mlf.close()
+        sys.exit(0)
+    # --------------------------------------------------------------------------
+    #                                  END snv_call
+    # --------------------------------------------------------------------------
+
+
+    #set database of sequences
+    reference = relative_path+"db_mOTU/mOTU.v2b.nr.padded" # must keep this
+    header_file = relative_path+"db_mOTU/bam_header_nr" # must keep this
+    args_db = 'nr' # must keep this
+
+    # if we use snv, then we use centroids
+    if args.command == 'map_snv':
+        reference = relative_path+"db_mOTU/mOTU.v2b.centroids.reformatted.padded"
+        header_file = relative_path+"db_mOTU/bam_header_cen"
+        args_db == 'cen'
+
+    # --------------------------------------------------------------------------
+    #                      VERSION of DB,scripts,taxonomy
+    # --------------------------------------------------------------------------
+    # --- load the file with the information of the versions
+    path_info_version = relative_path + "db_mOTU/versions"
+    try:
+        location = open(path_info_version,'r')
+        versions = dict()
+        for line in location:
+            l = line.rstrip().split('\t')
+            if l[0] != "#":
+                versions[l[0]] = l[1]
+        location.close()
+    except:
+        sys.stderr.write("[E::main] Error loading file: "+path_info_version+"\n[E::main] Try to download again the motus profiler\n\n")
+        sys.exit(1)
+
+    # db -----------
+    version_db = args_db+versions[args_db]
+    if (args.verbose >= 5): sys.stderr.write("[main] Map reads to db "+version_db+"\n")
+    # scripts
+    version_map_lgs = "calc_motu "+str(versions["map_mOTUs_to_LGs"])
+    version_map_lgs = version_map_lgs + " -k "+args.taxonomic_level
+    version_map_lgs = version_map_lgs + " -g "+str(args.map_lgs_cutoff)
+    if args.onlySpecI: version_map_lgs = version_map_lgs + " -e"
+    if args.print_rel_ab: version_map_lgs = version_map_lgs + " -w"
+    if args.print_NCBI_id: version_map_lgs = version_map_lgs + " -p"
+    if args.print_long_names: version_map_lgs = version_map_lgs + " -u"
+    version_map_lgs = version_map_lgs + " | taxonomy: ref_mOTU_"+str(versions["specI_tax"])
+    version_map_lgs = version_map_lgs + " meta_mOTU_"+str(versions["mOTULG_tax"])
+
+    version_append = "# motus version "+str(version_tool)+" | merge "+str(versions["append"])
+
+
+    # --------------------------------------------------------------------------
+    #                           GITLAB commit id
+    # --------------------------------------------------------------------------
+    # --- load the file with the information of the versions
+    path_info_version_git = relative_path + "db_mOTU/version_git_commit"
+    version_git_file = True
+    try:
+        location = open(path_info_version_git,'r')
+        version_git = dict()
+        for line in location:
+            l = line.rstrip().split('\t')
+            if l[0] != "#":
+                version_git[l[0]] = l[1]
+        location.close()
+    except:
+        sys.stderr.write("[W::map_db] Warning: There is no information of the git commit id. Run 'python "+relative_path+"setup.py'.\n\n")
+        version_git_file = False
+
+    # version in github
+    commit_id_version = "commit unknown"
+    if version_git_file:
+        if "git_commit_id" in version_git:
+            commit_id_version = "commit "+version_git["git_commit_id"]
+            # check that the git commit id that is saved in version is the same of the one that we get from the current git repo
+            check_commit_id(commit_id_version)
+            if "git_tag_version" in version_git:
+                commit_id_version = "tag version "+version_git["git_tag_version"]
+        else:
+            if args.verbose >= 2: sys.stderr.write("[W::map_db] Warning: There is no information of the git commit id. Run 'python "+relative_path+"setup.py'.\n\n")
+            commit_id_version = "commit unknown"
+
+    git_commit_id =  "# git "+commit_id_version
+
+    # --------------------------------------------------------------------------
+    #                                     PROFILE
+    # --------------------------------------------------------------------------
+    if args.command == 'profile' or args.command == 'map_snv':
+        # ---------------- check input -----------------------------------------
+        if args.verbose>2:
+            initial_start_time = time.time()
+            time_after_bwa = time.time() # for now we initialize it, so that if we skip bwa, then we use the initial time
+            time_after_map_genes = time.time() # for now we initialize it, so that if we skip calc_mgc, then we use the initial time
+            if args.command == 'profile' and (args.listInputFiles == None and args.motu_read_counts_file==None):
+                sys.stderr.write("[main]  MAP_TAX -----------\n")
+            if args.command == 'map_snv':
+                sys.stderr.write("[main]  MAP_SNV -----------\n")
+
+        # check that there is at least one file with reads
+        if (args.forwardReads==None) and (args.reverseReads==None) and (args.singleReads==None) and (args.listInputFiles == None) and (args.motu_read_counts_file==None):
+            sys.stderr.write("[E::map_db] Error: input is missing. Please provide -f,-r or -s or -i or -m.\n")
+            sys.exit(1)
+        # check that for and rev reads are present togehter
+        if ((args.forwardReads!=None) and (args.reverseReads==None) and (args.listInputFiles == None) and (args.motu_read_counts_file==None)):
+            sys.stderr.write("[E::map_db] Error: reverse reads (-r) missing\n")
+            sys.exit(1)
+        if ((args.forwardReads==None) and (args.reverseReads!=None) and (args.listInputFiles == None) and (args.motu_read_counts_file==None)):
+            sys.stderr.write("[E::map_db] Error: forward reads (-f) missing\n")
+            sys.exit(1)
+        # if we have -i bam/sam file, then we ignore the reads input
+        if (args.listInputFiles != None and (args.motu_read_counts_file==None)):
+            if (args.verbose >= 2) and (args.forwardReads!=None): sys.stderr.write("[W::main] Warning: -f FILE ignored since there is -i\n")
+            if (args.verbose >= 2) and (args.reverseReads!=None): sys.stderr.write("[W::main] Warning: -r FILE ignored since there is -i\n")
+            if (args.verbose >= 2) and (args.singleReads!=None): sys.stderr.write("[W::main] Warning: -s FILE ignored since there is -i\n")
+        # if we have -m, then we ignore other inputs
+        if (args.motu_read_counts_file!=None):
+            if (args.verbose >= 2) and (args.forwardReads!=None): sys.stderr.write("[W::main] Warning: -f FILE ignored since there is -m\n")
+            if (args.verbose >= 2) and (args.reverseReads!=None): sys.stderr.write("[W::main] Warning: -r FILE ignored since there is -m\n")
+            if (args.verbose >= 2) and (args.singleReads!=None): sys.stderr.write("[W::main] Warning: -s FILE ignored since there is -m\n")
+            if (args.verbose >= 2) and (args.listInputFiles!=None): sys.stderr.write("[W::main] Warning: -i FILE ignored since there is -m\n")
+
+        if (args.listInputFiles == None and args.motu_read_counts_file==None): ## run BWA
+            # ---------------------- divide the lanes ------------------------------
+            singles = list()
+            forw = list()
+            reve = list()
+            if (args.singleReads!=None): singles = args.singleReads.split(",")
+            if (args.forwardReads!=None): forw = args.forwardReads.split(",")
+            if (args.reverseReads!=None): reve = args.reverseReads.split(",")
+
+            number_of_lanes = max(len(singles),len(forw),len(reve))
+            if args.verbose > 2: sys.stderr.write("[main] Number of detected lanes: "+str(number_of_lanes)+"\n")
+
+            # ----check input: check number of files for forw and rev --------------
+            if (args.forwardReads!=None):
+                if len(forw) != len(reve):
+                    sys.stderr.write("[E::map_db] Error: number of files for forward reads ("+str(len(forw))+") is different from number of files for reverse reads ("+str(len(reve))+")\n")
+                    sys.exit(1)
+
+            # ----check if use multicores and prepere data for multicores ----------
+            if args.number_of_cores > 1:
+                multiple_cores = True
+            else:
+                multiple_cores = False
+
+            # check that we have the same number
+            #of cores as the number of lanes
+            if args.number_of_cores > number_of_lanes:
+                if args.verbose >= 2: sys.stderr.write(" [W::map_db] Warning: We use only "+str(number_of_lanes)+" out of "+str(args.number_of_cores)+" cores\n")
+            if args.number_of_cores < number_of_lanes and args.number_of_cores != 1:
+                if args.verbose >= 2: sys.stderr.write(" [W::map_db] Warning: multiple cores computation is implemented only if the number of cores is equal to the number of lanes ("+str(number_of_lanes)+"). Set -c "+str(number_of_lanes)+"\n")
+                multiple_cores = False
+            #prepare data
+            if multiple_cores:
+                processes = list()
+                results_bwa = list()
+
+            # ------------ execute bwa ---------------------------------------------
+            all_sam_lines = list()
+            avg_length_reads = list()
+            for i in range(number_of_lanes):
+                if args.verbose>2: sys.stderr.write("[main] Run bwa on lane "+str(i+1)+"\n")
+
+                forward_reads = ""
+                reverse_reads = ""
+                single_reads = ""
+                if (args.reverseReads!=None):
+                    if len(forw)> i:
+                        forward_reads = forw[i]
+                        reverse_reads = reve[i]
+                if (args.singleReads!=None):
+                    if len(singles)> i:
+                        single_reads = singles[i]
+
+                lane_id = "lane"+str(i)
+                output = ""
+                bamOutput = False
+                msam_script = relative_path+"bin/msamtools_python.py"
+                technology = "" # should we implement this?
+
+                profile_mode = True
+
+                # check that the files are fastq and get the average reads length
+                if forward_reads != "":
+                    avg_length_reads.append(motu_utilities.is_fastq(forward_reads,args.verbose))
+                if reverse_reads != "":
+                    avg_length_reads.append(motu_utilities.is_fastq(reverse_reads,args.verbose))
+                if single_reads != "":
+                    avg_length_reads.append(motu_utilities.is_fastq(single_reads,args.verbose))
+
+
+                if multiple_cores:
+                    manager = multiprocessing.Manager()
+                    result = manager.list()
+                    processes.append(multiprocessing.Process(target=run_bwa_multiple_cores, args=(forward_reads,  reverse_reads,  single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id, result)) )
+                    results_bwa.append(result)
+                else:
+                    if args.command == 'profile':
+                        sam_lines_list = runbwa.runBWAmapping( forward_reads,  reverse_reads,  single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id,default_min_len_align_length_map_tax)
+                    else: # if it is map_snv
+                        if (args.load_sam_lines == None):
+                            sam_lines_list = runbwa_snv.runBWAmapping( forward_reads,  reverse_reads,  single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id,default_min_len_align_length_map_tax)
+                        else:
+                            sam_lines_list = list()
+                    all_sam_lines = all_sam_lines + sam_lines_list
+
+            if multiple_cores:
+                for i in range(max(len(singles),len(forw),len(reve))):
+                    processes[i].start()
+
+                for i in range(max(len(singles),len(forw),len(reve))):
+                    processes[i].join()
+                for i in range(max(len(singles),len(forw),len(reve))):
+                    all_sam_lines = all_sam_lines + list(results_bwa[i])
+
+            ####### ONLY SNVs   ====================================================
+            # if we compute the SNVs, then we have to keep only uniq hits and sort
+            if args.command == 'map_snv':
+
+                # quick and dirty save and load all_sam_lines
+                if (args.load_sam_lines != None):
+                    temp_f = open(args.load_sam_lines,"r")
+                    for jj in temp_f:
+                        all_sam_lines.append(jj)
+                    temp_f.close()
+                if (args.save_sam_lines != None):
+                    temp_f = open(args.save_sam_lines,"w")
+                    for jj in all_sam_lines:
+                        temp_f.write(jj)
+                    temp_f.close()
+
+
+
+
+                start_time_metaSNV = time.time()
+                if args.verbose>3:
+                    sys.stderr.write("[main] -- After calling bwa there are "+str(len(all_sam_lines))+" sam lines\n")
+                if args.verbose>2:
+                    sys.stderr.write("[main] process the sam/bam file for the snv calling\n")
+
+                # First: PE filtering
+                database_prefix = "mOTU.v2b"
+                database_dir = relative_path+"db_mOTU"
+
+                # coordinates for the padding of the genes are different for centroids
+                dictReference2geneLocation = os.path.sep.join([database_dir,  database_prefix + ".padded.coords_for_centroids"])
+                if args.verbose>3:
+                    sys.stderr.write("[main] -- File with gene padding coordinates: "+dictReference2geneLocation+"\n")
+
+                all_sam_lines_pe_filtered = PEfiltering.parseBWA_SAMoutput(all_sam_lines, dictReference2geneLocation)
+                if args.verbose>3:
+                    sys.stderr.write("[main] -- After calling PE filtering there are "+str(len(all_sam_lines_pe_filtered))+" sam lines\n")
+
+                # Second: keep only uniq mappers
+                sam_lines_uniques = dict()
+                list_remove = set()
+                for sam_line in all_sam_lines_pe_filtered:
+                    read_id = sam_line.split('\t')[0]
+                    if not(read_id in sam_lines_uniques):
+                        sam_lines_uniques[read_id] = sam_line
+                    else:
+                        sam_lines_uniques[read_id] = "discard"
+                        list_remove.add(read_id)
+
+                for id_rem in list_remove:
+                    del sam_lines_uniques[id_rem]
+
+                if args.verbose>2:
+                    time_after_unique = time.time()
+                    sys.stderr.write(" [map_snv] select only reads that map uniquely: ")
+                    sys.stderr.write(str("{0:.2f}".format(time_after_unique  - start_time_metaSNV))+" sec\n")
+
+                if args.verbose>3:
+                    sys.stderr.write("[main] -- After selecting reads that map uniquely there are "+str(len(all_sam_lines_pe_filtered))+" sam lines\n")
+
+
+
+                # Third: samtool sort
+                # samtool sort needs a bam file as input
+                if args.verbose>4: sys.stderr.write("   [map_snv] saving temporary sam file\n")
+                temp_file = tempfile.NamedTemporaryFile(delete=False, mode = "w")
+                try:
+                    h_file = open(header_file,'r')
+                except:
+                    sys.stderr.write("[E::map_db] Error loading file: "+header_file+"\n [map_db] Try to download again the motus profiler\n\n")
+                    sys.exit(1)
+
+                try:
+                    for i in h_file:
+                        temp_file.write(i)
+                    for i in sam_lines_uniques:
+                        temp_file.write(sam_lines_uniques[i])
+                    temp_file.flush()
+                    os.fsync(temp_file.fileno())
+                    temp_file.close()
+                except:
+                    sys.stderr.write("[E::map_snv] Error saving the intermediate sam file, used for sorting\n")
+                    sys.exit(1)
+
+                if args.verbose>4: sys.stderr.write("   [man_snv] saving intermediate sam file in "+temp_file.name + "\n")
+
+                # take stdout of samtools view and go through sort
+                if args.output == "":
+                    outfile_bam = sys.stdout # if the output is not specified, then we choose stdout
+                else:
+                    #outfile_bam = open(args.output, "w")
+                    outfile_bam = tempfile.NamedTemporaryFile(delete=False, mode = "w")
+                    os.chmod(outfile_bam.name, 0o644)
+
+
+                convertCMD = "samtools view -b -Sh "+temp_file.name + " |  samtools sort - "
+                if args.verbose>4: sys.stderr.write("call for sorting: samtools view -b -Sh "+temp_file.name + " |  samtools sort - \n")
+                try:
+                    if is_tool("samtools"):
+                        convert_cmd = subprocess.call(convertCMD, stdout=outfile_bam, shell=True)
+                    else:
+                        sys.stderr.write("[E::map_snv] Error: samtools is not in the path\n")
+                        sys.exit(1)
+                except:
+                    sys.stderr.write("[E::map_snv] Error: couldn't save the sorted file\n")
+                    sys.exit(1)
+
+                # remove temporary file1
+                os.remove(temp_file.name) #the file used before sorting
+                # move temporary file2 to the final destination
+                if args.output != "":
+                    try:
+                        outfile_bam.flush()
+                        os.fsync(outfile_bam.fileno())
+                        outfile_bam.close()
+                    except:
+                        sys.stderr.write("[E::map_snv] Error: failed to save the final bam/sam file\n")
+                        sys.exit(1)
+                    try:
+                        #os.rename(outfile_bam.name,args.output) # atomic operation
+                        shutil.move(outfile_bam.name,args.output) #It is not atomic if the files are on different filsystems.
+                    except:
+                        sys.stderr.write("[E::map_snv] Error: failed to save the final bam/sam file\n")
+                        sys.stderr.write("[E::map_snv] you can find the file here:\n"+outfile_bam.name+"\n")
+                        sys.exit(1)
+
+                # print info
+                time_final_SNV = time.time()
+                if args.verbose>2:
+                    sys.stderr.write(" [map_snv] sort bam file: " + str("{0:.2f}".format(time_final_SNV - time_after_unique))+" sec\n")
+                    sys.stderr.write("[main] Total time: " + str("{0:.2f}".format(time_final_SNV  - initial_start_time))+" sec\n")
+
+                return 0 #map_snv is finished, so we can exit
+
+
+
+
+            ####### end ONLY SNVs   ================================================
+
+            # calculate average length of the reads
+            reads_avg_length = int(sum(avg_length_reads) / float(len(avg_length_reads)))
+
+
+            first_script_header = "map_tax "+versions["runBWA"]+" | gene database: "+version_db+" | "+str(reads_avg_length)
+
+            if args.profile_bam_file != None: # save bam file -----------------------
+                if is_tool("samtools"):
+                    start_time_save_bam = time.time()
+                    error_save_intermediate_bam_file = False
+
+                    # load the header
+                    try:
+                        h_file = open(header_file,'r')
+                    except:
+                        sys.stderr.write("[E::map_db] Error loading file: "+header_file+"\n[E::map_db] Try to download again the motus profiler\n\n")
+                        sys.exit(1)
+
+                    # create the temp sam file with the result
+                    try:
+                        sam_temp_file = tempfile.NamedTemporaryFile(delete=False, mode = "w")
+
+                        if args.verbose>4: sys.stderr.write("  \n[map_db] saving intermediate sam file in "+sam_temp_file.name + "\n")
+
+                        str_end_header = "@PG\tID:bwa\tPN:map_tax "+versions["runBWA"]+" | gene database: "+version_db+" | "+str(reads_avg_length)+"\n"
+                        sam_temp_file.write(str_end_header)
+
+                        str_info_min_len = "@CO min_len_alignment "+str(default_min_len_align_length_map_tax)+"\n"
+                        sam_temp_file.write(str_info_min_len)
+
+                        str_perc_id = "@CO min_perc_id 97\n"
+                        sam_temp_file.write(str_perc_id)
+
+                        str_min_perc_query = "@CO min_perc_query 45\n"
+                        sam_temp_file.write(str_min_perc_query)
+
+                        for i in h_file:
+                            sam_temp_file.write(i)
+                        for i in all_sam_lines:
+                            sam_temp_file.write(i)
+                    except:
+                        sys.stderr.write(" [W::map_db] Warning: failed to save intermediate bam file\n")
+                        if args.verbose>4: sys.stderr.write("Error when saving the intermediate sam file\n")
+                        error_save_intermediate_bam_file = True
+
+                    # close the sam file
+                    try:
+                        sam_temp_file.flush()
+                        os.fsync(sam_temp_file.fileno())
+                        sam_temp_file.close()
+                    except:
+                        if args.verbose>4: sys.stderr.write("Error when closing sam file\n")
+                        if not error_save_intermediate_bam_file:
+                            sys.stderr.write(" [W::map_db] Warning: failed to save intermediate bam file\n")
+
+                    # convert to bam
+                    try:
+                        bam_temp_file = tempfile.NamedTemporaryFile(delete=False, mode = "w")
+                        os.chmod(bam_temp_file.name, 0o644)
+                        convertCMD = "samtools view -b -Sh "+ sam_temp_file.name
+                        convert_popenCMD = shlex.split(convertCMD)
+                        convert_cmd = subprocess.Popen(convert_popenCMD,stdout=bam_temp_file,)
+
+                        stdout_s,stderr_s = convert_cmd.communicate()
+                        if convert_cmd.returncode:
+                            if not error_save_intermediate_bam_file:
+                                sys.stderr.write("[W::map_db] Warning: failed to save intermediate bam file\n")
+                                sys.stderr.write(stderr_s.decode('ascii'))
+                                sys.exit(1)
+                    except:
+                        if args.verbose>4: sys.stderr.write("Error when converting to bam\n")
+                        if not error_save_intermediate_bam_file:
+                            sys.stderr.write(" [W::map_db] Warning: failed to save intermediate bam file\n")
+
+                    # move the temp file to the final destination
+                    try:
+                        #os.rename(bam_temp_file.name,args.profile_bam_file) # atomic operation
+                        shutil.move(bam_temp_file.name,args.profile_bam_file) #It is not atomic if the files are on different filsystems.
+                    except:
+                        if args.verbose>4: sys.stderr.write("Error when copying intermediate bam to the final destination\n")
+                        if not error_save_intermediate_bam_file:
+                            sys.stderr.write(" [W::map_db] Warning: failed to save intermediate bam file\n")
+                            sys.stderr.write(" [W::map_db] you can find the file here:\n"+bam_temp_file.name+"\n")
+
+                    # remove the temporary sam file
+                    os.remove(sam_temp_file.name)
+
+                    if args.verbose>2: sys.stderr.write("[main] (Save bam file produced by bwa) "+str("{0:.2f}".format(time.time() - start_time_save_bam))+" sec\n")
+
+
+
+                else:
+                    sys.stderr.write("[E::main] Error: samtools is not in the path. The intemediate bam file (-I) was not saved.\n")
+
+            if args.verbose>2:
+                time_after_bwa = time.time()
+                sys.stderr.write("[main] Total time map_tax: " + str("{0:.2f}".format(time_after_bwa - initial_start_time))+" sec\n")
+
+
+#-------# map genes ------------------------------------------------------------
+        if args.motu_read_counts_file==None:
+
+            if args.verbose>2: sys.stderr.write("[main]  CALC_MGC -----------\n")
+
+            if (args.listInputFiles != None):
+                if args.verbose>2:
+                    sys.stderr.write("[main] Load sam/bam files and inizialize the parametrs for calc_mgc\n")
+
+
+            # prepare inputs
+            listInputFiles = ['unused list']
+            database_prefix = "mOTU.v2b"
+            database_dir = relative_path+"db_mOTU"
+            sample_name = "trial"
+            if (args.sampleName != None): sample_name = args.sampleName
+            multThreshold = 3
+            winnerThreshold = 0.95
+            loserThreshold = 0.01
+
+            output = ""
+            msam_script = relative_path+"bin/msamtools_python.py"
+            return_dictionary = True
+            profile_mode = True
+
+            if (args.listInputFiles != None):
+                listInputFiles = args.listInputFiles.split(",")
+                profile_mode = False
+                all_sam_lines_input_map_motu = ""
+                #check what was the filter (-l) used during map_tax
+                for kk in listInputFiles:
+                    filter_l_temp = motu_utilities.read_filter_len_from_bam_file(kk)
+                    if args.verbose>5 and filter_l_temp == None: sys.stderr.write("filter from bwa not found\n")
+                    if filter_l_temp != None:
+                        if args.verbose>5: sys.stderr.write("Map_tax used -l "+str(filter_l_temp)+"\n")
+                        if args.min_len_align_length < filter_l_temp:
+                            if args.verbose>1: sys.stderr.write("[W::main] Warning: The bam input file was filtered with -l "+str(filter_l_temp)+". If you want to set a lower value for -l, you have to run profile again from the fastq files\n")
+
+
+
+                # we have to check what is the average length of the reads
+                all_length_avg = list()
+                for kk in listInputFiles:
+                    l_temp = motu_utilities.read_length_from_bam_file(kk)
+                    if l_temp == None:
+                        if args.verbose>1: sys.stderr.write("[W::main] Warning: Cannot find the average read length for the file: "+kk+"\n")
+                    else:
+                        all_length_avg.append(l_temp)
+                # if we are inside this if, then reads_avg_length is not present and we create it here
+                if len(all_length_avg) != 0:
+                    reads_avg_length = int(sum(all_length_avg) / float(len(all_length_avg)))
+                else:
+                    if args.verbose>1: sys.stderr.write("[W::main] Warning: no file with information of the length of the reads\n")
+                    reads_avg_length = "unknown" # if we dont know the average length of the file, we set it to 100
+
+
+            # choose the proper value for min_len_align -------------------
+            min_len_align = args.min_len_align_length
+            if reads_avg_length != "unknown":
+                if reads_avg_length < min_len_align:
+                    if args.verbose>1: sys.stderr.write("[W::main] Warning. Average read length ("+str(reads_avg_length)+") is lower than the -l filter ("+str(min_len_align)+"). We suggest to decrease the value of -l\n")
+
+            if args.verbose>2: sys.stderr.write("[main] Minimum alignment length: "+str(min_len_align)+" (average read length: "+str(reads_avg_length)+")\n")
+
+            # set min clipped length
+            if args.verbose>4: sys.stderr.write("[main] Selecting the clipped length:...")
+            #minClippedAlignLength = max(args.min_clip_length,min_len_align)
+            minClippedAlignLength = min_len_align
+            if args.verbose>4: sys.stderr.write(str(minClippedAlignLength)+"\n")
+
+
+
+            # we have to filter the sam lines if they are not given as input -- note that the filtering (inside the second script) is done only for the one that are loaded, and not during bwa
+            if (args.listInputFiles == None):
+                all_sam_lines_input_map_motu = filter_sam.run_all_lines ((args.min_perc_id/100),min_len_align,args.min_perc_align,all_sam_lines)
+
+
+            version_information_map_read,mOTU_counts = map_motu.run_mOTUs_v2_mapping(listInputFiles, database_dir, database_prefix, sample_name, multThreshold, winnerThreshold, loserThreshold, minClippedAlignLength, output, msam_script, args.type_output,args.verbose,profile_mode,all_sam_lines_input_map_motu,return_dictionary, args.min_perc_id,min_len_align,args.min_perc_align)
+
+            # header for mgc table ----------------
+            mgc_table_header = "# "
+            if version_information_map_read != "no_info":
+                mgc_table_header = mgc_table_header + version_information_map_read + " | "
+            else:
+                mgc_table_header = mgc_table_header + first_script_header + " | "
+            # add info of the parameters
+            mgc_table_header = mgc_table_header + "calc_mgc "+versions["map_genes_to_mOTUs"]+" -y "+args.type_output+" "+info_parameters_p
+
+
+            #save the mOTU read count, actually the mgc table
+            if args.profile_mOTU_reads_file != None:
+                start_time_save_motu = time.time()
+
+                try:
+                    mgc_temp_file = tempfile.NamedTemporaryFile(delete=False, mode = "w")
+                    os.chmod(mgc_temp_file.name, 0o644)
+                    mgc_temp_file.write(mgc_table_header+"\n")
+                    mgc_temp_file.write(sample_name+"\n")
+                    for i in mOTU_counts:
+                        mgc_temp_file.write(i+"\t"+str(mOTU_counts[i])+"\n")
+                except:
+                    sys.stderr.write("[W::main] Warning: failed to save the intermediate mgc table\n")
+
+
+                try:
+                    mgc_temp_file.flush()
+                    os.fsync(mgc_temp_file.fileno())
+                    mgc_temp_file.close()
+                except:
+                    sys.stderr.write("[W::main] Warning: failed to save the intermediate mgc table\n")
+                try:
+                    #os.rename(mgc_temp_file.name,args.profile_mOTU_reads_file) # atomic operation
+                    shutil.move(mgc_temp_file.name,args.profile_mOTU_reads_file) #It is not atomic if the files are on different filsystems.
+                except:
+                    sys.stderr.write("[W::main] Warning: failed to save the intermediate mgc table\n")
+                    sys.stderr.write("[W::main] you can find the file here:\n"+mgc_temp_file.name+"\n")
+
+                if args.verbose>2: sys.stderr.write("[main] (Save mgc abundance table) " + str("{0:.2f}".format(time.time() - start_time_save_motu))+" sec\n")
+
+            if args.verbose>2:
+                time_after_map_genes = time.time()
+                sys.stderr.write("[main] Total time calc_mgc: " + str("{0:.2f}".format(time_after_map_genes - time_after_bwa))+" sec\n")
+
+
+#-------# create LGs -----------------------------------------------------------
+        if args.verbose>2:
+            sys.stderr.write("[main]  CALC_MOTU -----------\n")
+        if args.motu_read_counts_file!=None:# we load the mOTU read count table
+            if args.verbose>2:sys.stderr.write("[main] Load the mgc table and compute the profile\n")
+
+        database_dir = relative_path+"db_mOTU/"
+        LGs_map = database_dir+"mOTU-LG.map.tsv"
+        LGs_map_l = database_dir+"mOTU-LG.map.line.tsv"
+        specI_taxonomy = database_dir+"prok-refdb-v11.0.0_specI-v2_taxonomy_v1.map"
+        mOTULG_taxonomy = database_dir+"mOTULG.taxonomy"
+        short_name_file = database_dir+"short_names.txt"
+        infile=""
+        sample_name = "trial"
+        if (args.sampleName != None): sample_name = args.sampleName
+
+        profile_mode = True
+
+        if args.motu_read_counts_file!=None: # we load the mOTU read count table
+            profile_mode = False
+            mOTU_counts = ""
+            mgc_table_header = ""
+            infile = args.motu_read_counts_file
+            if not os.path.isfile(infile):
+                sys.stderr.write("[E::main] Error: "+infile+': No such file.\n')
+                sys.exit(1)
+
+        map_lgs.calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxonomy, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, args.taxonomic_level, args.BIOM_output, profile_mode,mOTU_counts, args.print_NCBI_id, args.print_rel_ab,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,args.print_full_rank,args.print_long_names,short_name_file,version_tool)
+
+        if args.verbose>2:
+            sys.stderr.write(" [calc_motu] (Create taxonomy profile) " + str("{0:.2f}".format(time.time() - time_after_map_genes))+" sec\n")
+            executed_steps = "map_tax+calc_mgc+calc_motu"
+            if (args.listInputFiles != None and args.motu_read_counts_file==None): executed_steps = "calc_mgc+calc_motu"
+            if (args.motu_read_counts_file!=None): executed_steps = "calc_motu"
+            sys.stderr.write("[main]  TOTAL TIME ("+executed_steps+"): " + str("{0:.2f}".format(time.time() - initial_start_time))+" sec\n")
+
+
+
+
+
+
+
+
+
+
+    # --------------------------------------------------------------------------
+    #                                     BWA
+    # --------------------------------------------------------------------------
+    if args.command == 'map_tax':
+
+        if args.verbose>2: sys.stderr.write("[main]  MAP_TAX -----------\n")
+
+        if args.verbose>2:
+            initial_start_time = time.time()
+            time_after_bwa = time.time() # for now we initialize it, so that if we skip bwa, then we use the initial time
+            time_after_map_genes = time.time() # for now we initialize it, so that if we skip calc_mgc, then we use the initial time
+
+        # check that there is at least one file with reads
+        if (args.forwardReads==None) and (args.reverseReads==None) and (args.singleReads==None):
+            sys.stderr.write("[E::map_db] Error: input is missing. Please provide -f,-r or -s\n")
+            sys.exit(1)
+        # check that for and rev reads are present togehter
+        if ((args.forwardReads!=None) and (args.reverseReads==None) and (args.listInputFiles == None) and (args.motu_read_counts_file==None)):
+            sys.stderr.write("[E::map_db] Error: reverse reads (-r) missing\n")
+            sys.exit(1)
+        if ((args.forwardReads==None) and (args.reverseReads!=None) and (args.listInputFiles == None) and (args.motu_read_counts_file==None)):
+            sys.stderr.write("[E::map_db] Error: forward reads (-f) missing\n")
+            sys.exit(1)
+
+        # ---------------------- divide the lanes ------------------------------
+        singles = list()
+        forw = list()
+        reve = list()
+        if (args.singleReads!=None): singles = args.singleReads.split(",")
+        if (args.forwardReads!=None): forw = args.forwardReads.split(",")
+        if (args.reverseReads!=None): reve = args.reverseReads.split(",")
+
+        number_of_lanes = max(len(singles),len(forw),len(reve))
+        if args.verbose > 2: sys.stderr.write("[main] Number of detected lanes: "+str(number_of_lanes)+"\n")
+
+        # ----check input: check number of files for forw and rev --------------
+        if (args.forwardReads!=None):
+            if len(forw) != len(reve):
+                sys.stderr.write("[E::map_db] Error: number of files for forward reads ("+str(len(forw))+") is different from number of files for reverse reads ("+str(len(reve))+")\n")
+                sys.exit(1)
+
+        # ----check if use multicores and prepere data for multicores ----------
+        if args.number_of_cores > 1:
+            multiple_cores = True
+        else:
+            multiple_cores = False
+
+        # check that we have the same number
+        #of cores as the number of lanes
+        if args.number_of_cores > number_of_lanes:
+            if args.verbose >= 2: sys.stderr.write(" [W::map_db] Warning: We use only "+str(number_of_lanes)+" out of "+str(args.number_of_cores)+" cores\n")
+        if args.number_of_cores < number_of_lanes and args.number_of_cores != 1:
+            if args.verbose >= 2: sys.stderr.write(" [W::map_db] Warning: multiple cores computation is implemented only if the number of cores is equal to the number of lanes ("+str(number_of_lanes)+"). Set -c "+str(number_of_lanes)+"\n")
+            multiple_cores = False
+        #prepare data
+        if multiple_cores:
+            processes = list()
+            results_bwa = list()
+
+        # ------------ execute bwa ---------------------------------------------
+        all_sam_lines = list()
+        avg_length_reads = list()
+        for i in range(number_of_lanes):
+            if args.verbose>2: sys.stderr.write("[main] Run bwa on lane "+str(i+1)+"\n")
+
+            forward_reads = ""
+            reverse_reads = ""
+            single_reads = ""
+            if (args.reverseReads!=None):
+                if len(forw)> i:
+                    forward_reads = forw[i]
+                    reverse_reads = reve[i]
+            if (args.singleReads!=None):
+                if len(singles)> i:
+                    single_reads = singles[i]
+
+            lane_id = "lane"+str(i)
+            output = ""
+            bamOutput = False
+            msam_script = relative_path+"bin/msamtools_python.py"
+            technology = "" # should we implement this?
+
+            profile_mode = True
+
+            # check that the files are fastq and get the average reads length
+            if forward_reads != "":
+                avg_length_reads.append(motu_utilities.is_fastq(forward_reads,args.verbose))
+            if reverse_reads != "":
+                avg_length_reads.append(motu_utilities.is_fastq(reverse_reads,args.verbose))
+            if single_reads != "":
+                avg_length_reads.append(motu_utilities.is_fastq(single_reads,args.verbose))
+
+            if multiple_cores:
+                manager = multiprocessing.Manager()
+                result = manager.list()
+                processes.append(multiprocessing.Process(target=run_bwa_multiple_cores, args=(forward_reads,  reverse_reads,  single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id, result)) )
+                results_bwa.append(result)
+            else:
+                sam_lines_list = runbwa.runBWAmapping( forward_reads,  reverse_reads,  single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id,default_min_len_align_length_map_tax)
+                all_sam_lines = all_sam_lines + sam_lines_list
+
+        if multiple_cores:
+            for i in range(max(len(singles),len(forw),len(reve))):
+                processes[i].start()
+
+            for i in range(max(len(singles),len(forw),len(reve))):
+                processes[i].join()
+            for i in range(max(len(singles),len(forw),len(reve))):
+                all_sam_lines = all_sam_lines + list(results_bwa[i])
+
+
+
+        # print output -------------------------------------------------------
+        if args.verbose>2:
+            if args.output != "":
+                sys.stderr.write("[main] Saving sam/bam file\n")
+
+        # calculate average length of the reads
+        reads_avg_length = int(sum(avg_length_reads) / float(len(avg_length_reads)))
+
+        str_end_header = "@PG\tID:bwa\tPN:map_tax "+versions["runBWA"]+" | gene database: "+version_db+" | "+str(reads_avg_length)+"\n"
+
+        str_info_min_len = "@CO min_len_alignment "+str(default_min_len_align_length_map_tax)+"\n"
+        str_perc_id = "@CO min_perc_id 97\n"
+        str_min_perc_query = "@CO min_perc_query 45\n"
+
+        prepare_output_bwa(args.output,args.outPutIsBam,header_file,all_sam_lines,str_end_header,args.verbose,str_info_min_len,str_perc_id,str_min_perc_query)
+
+        if args.verbose>2:
+            time_after_bwa = time.time()
+            sys.stderr.write("[main] Total time map_tax: " + str("{0:.2f}".format(time_after_bwa - initial_start_time))+" sec\n")
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # --------------------------------------------------------------------------
+    #                                MAP mOTU
+    # --------------------------------------------------------------------------
+    if args.command == 'calc_mgc':
+        if args.verbose>2:
+            sys.stderr.write("[main]  CALC_MGC -----------\n")
+            sys.stderr.write("[main] Load sam/bam files and inizialize the parametrs for calc_mgc\n")
+        if args.verbose>2:
+            initial_start_time = time.time()
+
+        if (args.listInputFiles == None):
+            sys.stderr.write("[calc_mgc] Please provide at least one input file.\n")
+            sys.exit(1)
+
+        listInputFiles = args.listInputFiles.split(",")
+        database_prefix = "mOTU.v2b"
+        database_dir = relative_path+"db_mOTU"
+        sample_name = "trial"
+        if (args.sampleName != None): sample_name = args.sampleName
+        multThreshold = 3
+        winnerThreshold = 0.95
+        loserThreshold = 0.01
+        msam_script = relative_path+"bin/msamtools_python.py"
+        return_dictionary = True # the result is printed inside the function map_motu.run_mOTUs_v2_mapping
+        profile_mode = False
+        all_sam_lines = ""
+        output = ""
+
+        #check what was the filter (-l) used during map_tax
+        for kk in listInputFiles:
+            filter_l_temp = motu_utilities.read_filter_len_from_bam_file(kk)
+            if args.verbose>5 and filter_l_temp == None: sys.stderr.write("filter from bwa not found\n")
+            if filter_l_temp != None:
+                if args.verbose>5: sys.stderr.write("Map_tax used -l "+str(filter_l_temp)+"\n")
+                if args.min_len_align_length < filter_l_temp:
+                    if args.verbose>1: sys.stderr.write("[W::main] Warning: The bam input file was filtered with -l "+str(filter_l_temp)+". If you want to set a lower value for -l, you have to run profile again from the fastq files\n")
+
+
+        # we have to check what is the average length of the reads
+        all_length_avg = list()
+        for kk in listInputFiles:
+            l_temp = motu_utilities.read_length_from_bam_file(kk)
+            if l_temp == None:
+                if args.verbose>1: sys.stderr.write("[W::main] Warning: Cannot find the average read length for the file: "+kk+"\n")
+            else:
+                all_length_avg.append(l_temp)
+        # if we are inside this if, then reads_avg_length is not present and we create it here
+        if len(all_length_avg) != 0:
+            reads_avg_length = int(sum(all_length_avg) / float(len(all_length_avg)))
+        else:
+            if args.verbose>1: sys.stderr.write("[W::main] Warning: no file with information of the length of the reads\n")
+            reads_avg_length = "unknown" # if we dont know the average length of the file, we set it to 100
+        # choose the proper valur for min_len_align -------------------
+        min_len_align = args.min_len_align_length
+        if reads_avg_length != "unknown":
+            if reads_avg_length < min_len_align:
+                if args.verbose>1: sys.stderr.write("[W::main] Warning. Average read length ("+str(reads_avg_length)+") is lower than the -l filter ("+str(min_len_align)+"). We suggest to decrease the value of -l\n")
+
+        if args.verbose>2: sys.stderr.write("[main] Minimum alignment length: "+str(min_len_align)+" (average read length: "+str(reads_avg_length)+")\n")
+
+        # set min clipped length
+        if args.verbose>4: sys.stderr.write(" [calc_mgc] Selecting the clipped length:...")
+        #minClippedAlignLength = max(args.min_clip_length,min_len_align)
+        minClippedAlignLength = min_len_align
+        if args.verbose>4: sys.stderr.write(str(minClippedAlignLength)+"\n")
+
+
+
+
+        version_information_map_read,mOTU_counts = map_motu.run_mOTUs_v2_mapping(listInputFiles, database_dir, database_prefix, sample_name, multThreshold, winnerThreshold, loserThreshold, minClippedAlignLength, output, msam_script, args.type_output,args.verbose,profile_mode,all_sam_lines,return_dictionary, args.min_perc_id,min_len_align,args.min_perc_align)
+
+        # header for mgc table ----------------
+        mgc_table_header = "# "
+        if version_information_map_read != "no_info":
+            mgc_table_header = mgc_table_header + version_information_map_read + " | "
+        # add info of the parameters
+        mgc_table_header = mgc_table_header + "calc_mgc "+versions["map_genes_to_mOTUs"]+" -y "+args.type_output+" "+info_parameters_p
+
+
+        #save the mOTU read count, actually the mgc table
+        if args.output != "":
+            outfile = tempfile.NamedTemporaryFile(delete=False, mode = "w")
+            os.chmod(outfile.name, 0o644)
+            #outfile = open(args.output, "w")
+            if args.verbose>2: sys.stderr.write("[main] Saving mgc abundance table\n")
+        else:
+            outfile = sys.stdout
+
+        try:
+            outfile.write(mgc_table_header+"\n")
+            outfile.write(sample_name+"\n")
+            for i in mOTU_counts:
+                outfile.write(i+"\t"+str(mOTU_counts[i])+"\n")
+        except:
+            sys.stderr.write("[E::main] Error: failed to save the mgc table\n")
+            sys.exit(1)
+
+        if args.output != "":
+            try:
+                outfile.flush()
+                os.fsync(outfile.fileno())
+                outfile.close()
+            except:
+                sys.stderr.write("[E::main] Error: failed to save the intermediate mgc table\n")
+                sys.exit(1)
+            try:
+                #os.rename(outfile.name,args.output) # atomic operation
+                shutil.move(outfile.name,args.output) #It is not atomic if the files are on different filsystems.
+            except:
+                sys.stderr.write("[E::main] Error: failed to save the intermediate mgc table\n")
+                sys.stderr.write("[E::main] you can find the file here:\n"+outfile.name+"\n")
+                sys.exit(1)
+
+        if args.verbose>2:
+            sys.stderr.write("[main] Total time calc_mgc: " + str("{0:.2f}".format(time.time() - initial_start_time))+" sec\n")
+
+
+
+
+
+
+
+
+
+    # --------------------------------------------------------------------------
+    #                                 MAP LGs
+    # --------------------------------------------------------------------------
+    if args.command == 'calc_motu':
+        initial_start_time = time.time()
+        if args.verbose>2:
+            sys.stderr.write("[main]  CALC_MOTU -----------\n")
+            initial_start_time = time.time()
+        if (args.listInputFiles == None):
+            sys.stderr.write("[calc_motu] Please provide at least one input file.\n")
+            sys.exit(1)
+
+        database_dir = relative_path+"db_mOTU/"
+        LGs_map = database_dir+"mOTU-LG.map.tsv"
+        LGs_map_l = database_dir+"mOTU-LG.map.line.tsv"
+        specI_taxonomy = database_dir+"prok-refdb-v11.0.0_specI-v2_taxonomy_v1.map"
+        mOTULG_taxonomy = database_dir+"mOTULG.taxonomy"
+        short_name_file = database_dir+"short_names.txt"
+        sample_name = "trial"
+        if (args.sampleName != None): sample_name = args.sampleName
+
+        profile_mode = False
+        mOTU_counts = ""
+        infile = args.listInputFiles
+        mgc_table_header=""
+        if not os.path.isfile(infile):
+            sys.stderr.write("[E::main] Error: "+infile+': No such file.\n')
+            sys.exit(1)
+
+        if args.verbose>2: sys.stderr.write(" [calc_motu] (Create taxonomy profile)\n")
+
+        map_lgs.calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy,mOTULG_taxonomy, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, args.taxonomic_level, args.BIOM_output, profile_mode,mOTU_counts, args.print_NCBI_id, args.print_rel_ab,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,args.print_full_rank,args.print_long_names,short_name_file,version_tool)
+
+        if args.verbose>2:
+            sys.stderr.write("[main] Total time calc_motu: " + str("{0:.2f}".format(time.time() - initial_start_time))+" sec\n")
+
+
+    # --------------------------------------------------------------------------
+    #                                  APPEND
+    # --------------------------------------------------------------------------
+    if args.command == 'merge':
+        initial_start_time = time.time()
+        if args.verbose>2: sys.stderr.write("[main]  MERGE -----------\n")
+        # check that there is at least one input
+        if (args.directory_append == None) and (args.listInputFiles==None):
+            sys.stderr.write ("[E::merge] Error: input option missing\n")
+            sys.exit(1)
+
+        # check that we dont have both inputs
+        if (args.directory_append != None) and (args.listInputFiles!=None):
+            sys.stderr.write ("[E::merge] Error: too many inputs (-i and -d)\n")
+            sys.exit(1)
+
+        if (args.listInputFiles!=None):
+            if args.verbose>2: sys.stderr.write(" [merge] Merge all the files in the list of input\n")
+
+        if args.directory_append  != None:
+            if args.verbose>2: sys.stderr.write(" [merge] Merge all the files in the directory\n")
+            if (args.directory_append [-1]!="/"):
+                args.directory_append  = args.directory_append  + "/"
+
+
+        append.append_profilings(args.directory_append, args.listInputFiles, args.output, args.verbose, args.BIOM_output,version_append,motu_call,version_tool)
+
+        if args.verbose>2:
+            sys.stderr.write("[main] Total time merge: " + str("{0:.2f}".format(time.time() - initial_start_time))+" sec\n")
+
+
+    return 0        # success
+
+#-------------------------------- run main -------------------------------------
+if __name__ == '__main__':
+    status = main()
+    sys.exit(status)
