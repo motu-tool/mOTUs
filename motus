@@ -447,18 +447,18 @@ def main(argv=None):
     '''
     Edit Hans
     '''
-    parser.add_argument('-fb', metavar='FLOAT', type=float, default=40.0,
+    parser.add_argument('-fb', metavar='FLOAT', type=float, default=None,
                         help="Coverage breadth: minimal horizontal genome coverage percentage per sample per species")
-    parser.add_argument('-fd', metavar='FLOAT', type=float, default=5.0,
+    parser.add_argument('-fd', metavar='FLOAT', type=float, default=None,
                         help="Coverage depth: minimal average vertical genome coverage per sample per species")
-    parser.add_argument('-fm', metavar='INT', type=int, help="Minimum number of samples per species", default=2)
+    parser.add_argument('-fm', metavar='INT', type=int, help="Minimum number of samples per species", default=None)
     parser.add_argument('-fc', metavar='FLOAT', type=float,
                         help="FILTERING STEP II:"
-                             "minimum coverage per position per sample per species", default=5.0)
+                             "minimum coverage per position per sample per species", default=None)
     parser.add_argument('-fp', metavar='FLOAT', type=float,
                         help="FILTERING STEP II:"
                              "required proportion of informative samples (coverage non-zero) per position",
-                        default=0.50)
+                        default=None)
     '''
     Edit Hans
     '''
@@ -469,7 +469,7 @@ def main(argv=None):
     if (args.forwardReads == None) and (args.reverseReads == None) and (args.singleReads == None) and (args.output == None) and (args.threads == None) and (args.onlySpecI == None) and (args.outPutIsBam == None):
         if (args.type_output == None) and (args.sampleName == None) and (args.listInputFiles == None) and (args.motu_read_counts_file == None) and (args.verbose == None) and (args.directory_append == None):
              if (args.BIOM_output == None) and (args.taxonomic_level == None) and (args.profile_bam_file == None) and (args.profile_mOTU_reads_file == None) and (args.map_lgs_cutoff == None) and (args.number_of_cores == None):
-                 if (args.print_rel_ab == None) and (args.print_NCBI_id == None) and (args.print_long_names == None):
+                 if (args.print_rel_ab == None) and (args.print_NCBI_id == None) and (args.print_long_names == None) and (args.fb == None) and (args.fd == None) and (args.fm == None) and (args.fc == None) and (args.fp == None):
                      if args.command == 'profile': print_menu_profile()
                      if args.command == 'map_snv': print_menu_map_snv()
                      if args.command == 'map_tax': print_menu_bwa()
@@ -478,7 +478,7 @@ def main(argv=None):
                      if args.command == 'merge': print_menu_append()
                      if args.command == 'snv_call': print_menu_snv_call()
                      sys.exit(1)
-    # set default for args.erbose
+    # set default for args.verbose
     if (args.verbose == None): args.verbose = 3
 
     # print parameters that are ignored -------------------------------------------
@@ -588,6 +588,13 @@ def main(argv=None):
     if (args.print_long_names == None): args.print_long_names = False
     if (args.output == None): args.output = ""
 
+    # default for snv_call
+    if (args.fb == None): args.fb = 40.0
+    if (args.fd == None): args.fd = 5.0
+    if (args.fm == None): args.fm = 2
+    if (args.fp == None): args.fp = 5.0
+    if (args.fc == None): args.fc = 0.50
+
     # check min length alignment
     default_min_len_align_length = 75 # min length align that we use to filter for profiling
     default_min_len_align_length_map_tax = 75 # min length align that we use in map_tax
@@ -650,6 +657,13 @@ def main(argv=None):
     # I leave all settings here. They might need to be put to a different location later.
     # --------------------------------------------------------------------------
     if args.command == 'snv_call':
+        if args.directory_append == None:
+            sys.stderr.write("[E::main] Error: -d is missing\n")
+            sys.exit(1)
+        if args.output == "":
+            sys.stderr.write("[E::main] Error: -o is missing\n")
+            sys.exit(1)
+
         sys.stderr.write("Warning: snv_call has not been tested.\n")
         if (args.verbose>2): sys.stderr.write("[main] Begin metaSNV\n")
     # --------------------------------------------------------------------------
