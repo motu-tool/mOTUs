@@ -650,7 +650,8 @@ def main(argv=None):
     # I leave all settings here. They might need to be put to a different location later.
     # --------------------------------------------------------------------------
     if args.command == 'snv_call':
-        sys.stderr.write("[main] Begin metaSNV\n")
+        sys.stderr.write("Warning: snv_call has not been tested.\n")
+        if (args.verbose>2): sys.stderr.write("[main] Begin metaSNV\n")
     # --------------------------------------------------------------------------
     #                       Settings/Params
     # --------------------------------------------------------------------------
@@ -675,7 +676,7 @@ def main(argv=None):
             sys.stderr.write("[E::main] The output directory already exists: %s Existing. Delete and restart\n" % (outdir))
             sys.exit(1)
         msnv_log_file = os.path.abspath(os.path.join(outdir, 'metaSNV.log'))
-        sys.stderr.write("[main] metaSNV stderr/stdout log file: %s\n" % (msnv_log_file))
+        if (args.verbose>=2): sys.stderr.write("[main] metaSNV stderr/stdout log file: %s\n" % (msnv_log_file))
     # --------------------------------------------------------------------------
     #                           create sample_list file
     # --------------------------------------------------------------------------
@@ -779,7 +780,7 @@ def main(argv=None):
             sys.stderr.write("[E::main] %s\n" %(stdout))
             mlf.close()
             sys.exit(1)
-        sys.stderr.write("[main] End metaSNV\n")
+        if (args.verbose>=2): sys.stderr.write("[main] End metaSNV\n")
         mlf.close()
         sys.exit(0)
     # --------------------------------------------------------------------------
