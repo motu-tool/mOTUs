@@ -13,6 +13,12 @@ import tempfile
 import shutil
 import subprocess
 
+try:
+	import requests
+except:
+	sys.stderr.write("Error: request library is not installed. Run:\npipenv install requests\n(check http://docs.python-requests.org/en/master/user/install/)")
+	sys.exit(1)
+
 
 
 # position of the script -------------------------------------------------------
@@ -36,57 +42,28 @@ def is_tool(name):
 # MAIN
 # ------------------------------------------------------------------------------
 def main(argv=None):
+	sys.stdout.write("\n--- INSTALL MOTUS v2 ---\n")
 	# path of the file that will contain the git commit id--------------------------
-	sys.stdout.write("Creating file with the information of the git repository\n")
-	path_version_git = relative_path + "db_mOTU/version_git_commit"
+	sys.stdout.write("Download the compressed motus database\n")
 
-	if not(is_tool("git")):
-		sys.stderr.write("Error: git is not in the path\n")
-		sys.exit(1)
+	link = "https://oc.embl.de/index.php/s/wrz9YfKfrNyYCaY/download"
+	file_name = relative_path+"db_mOTU.tar.gz"
+	with open(file_name, "wb") as f:
+		response = requests.get(link, stream=True)
+		total_length = response.headers.get('content-length')
 
-	gitCMD = "git --git-dir="+relative_path+".git log"
-	try:
-		git_cmd = subprocess.Popen(gitCMD,stdout=subprocess.PIPE,shell = True)
-		stdout_s,stderr_s = git_cmd.communicate()
-		if git_cmd.returncode:
-			sys.stderr.write("Error while parsing git output\n")
-			sys.exit(1)
+		if total_length is None: # no content length header
+			f.write(response.content)
 		else:
-			list_stdout = (stdout_s.decode('ascii')).split("\n")
-		commit_id_dir = (list_stdout[0].split(" "))[1]
-	except:
-		sys.stderr.write("Error while parsing git output\n")
-		sys.exit(1)
-
-
-	# write file to tempfile
-	try:
-		outfile = tempfile.NamedTemporaryFile(delete=False, mode = "w")
-		outfile.write("#\tgit commit id\n")
-		outfile.write("git_commit_id\t"+commit_id_dir+"\n")
-		outfile.write("#\ttag version\n")
-
-		# ------------------------------------------------------tag version number ----------------
-		outfile.write("git_tag_version\t0.5\n")
-
-		# close file
-		outfile.flush()
-		os.fsync(outfile.fileno())
-		outfile.close()
-	except:
-		sys.stderr.write("Error while saving the file\n")
-		sys.exit(1)
-
-	# move temp file to the final destination
-	if os.path.isfile(path_version_git):
-		sys.stderr.write("Warning. overwriting the old file\n")
-
-	try:
-		shutil.move(outfile.name,path_version_git)
-	except:
-		sys.stderr.write("Error while saving the file\n")
-		sys.exit(1)
-
+			dl = 0
+			total_length = int(total_length)
+			for data in response.iter_content(chunk_size=4096):
+				dl += len(data)
+				f.write(data)
+				done = int(50 * dl / total_length)
+				sys.stdout.write("\r[%s%s]" % ('=' * done, ' ' * (50-done)) )
+				sys.stdout.flush()
+		sys.stdout.write("\n")
 
 	return 0		# success
 
