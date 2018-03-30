@@ -47,8 +47,8 @@ def main(argv=None):
 	sys.stdout.write("Download the compressed motus database\n")
 
 	link = "https://oc.embl.de/index.php/s/wrz9YfKfrNyYCaY/download"
-	file_name = relative_path+"db_mOTU.tar.gz"
-	with open(file_name, "wb") as f:
+	db_name = relative_path+"db_mOTU.tar.gz"
+	with open(db_name, "wb") as f:
 		response = requests.get(link, stream=True)
 		total_length = response.headers.get('content-length')
 
@@ -64,6 +64,21 @@ def main(argv=None):
 				sys.stdout.write("\r[%s%s]" % ('=' * done, ' ' * (50-done)) )
 				sys.stdout.flush()
 		sys.stdout.write("\n")
+
+	sys.stdout.write("\nExtract files from the archive:\n")
+	extract_cmd = "tar -zxvf "+db_name+" -C "+relative_path
+	try:
+		process = subprocess.Popen(extract_cmd.split(), stdout=subprocess.PIPE)
+		output, error = process.communicate()
+	except:
+		sys.stderr.write("Error: failed to extract files\n")
+		sys.exit(1)
+	if process.returncode:
+		sys.stderr.write("Error: failed to extract files\n")
+		sys.exit(1)
+
+
+
 
 	return 0		# success
 
