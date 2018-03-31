@@ -2,7 +2,6 @@
 
 # ============================================================================ #
 # motus.py: mOTU profiling tools
-version_tool = "0.5"
 # ============================================================================ #
 
 import os
@@ -25,6 +24,24 @@ path_mOTUs = os.path.realpath(__file__)
 path_array = path_mOTUs.split("/")
 relative_path = "/".join(path_array[0:-1])
 relative_path = relative_path + "/"
+
+#-------------------------------------------------------------------------------
+# tool version
+path_info_version = relative_path + "db_mOTU/versions"
+try:
+    location = open(path_info_version,'r')
+    versions = dict()
+    for line in location:
+        l = line.rstrip().split('\t')
+        if l[0] != "#":
+            versions[l[0]] = l[1]
+    location.close()
+except:
+    sys.stderr.write("[E::main] Error loading file: "+path_info_version+"\n[E::main] Try to download again the motus profiler\n\n")
+    sys.exit(1)
+
+version_tool = versions["motus"]
+git_commit_id =  "# git tag version "+version_tool
 
 # add /bin to the path ---------------------------------------------------------
 try:
@@ -246,29 +263,6 @@ def print_menu_append():
     sys.stderr.write("Algorithm options:\n")
     sys.stderr.write("   -v INT        verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n\n")
 
-
-# ------------------------------------------------------------------------------
-#      function to get the last git commit id
-# ------------------------------------------------------------------------------
-def check_commit_id(commit_id_in_file):
-    if not(is_tool("git")):
-        return
-
-    gitCMD = "git --git-dir="+relative_path+".git log"
-    try:
-        git_cmd = subprocess.Popen(gitCMD,stdout=subprocess.PIPE,shell = True)
-        stdout_s,stderr_s = git_cmd.communicate()
-        if git_cmd.returncode:
-            return
-        else:
-            list_stdout = (stdout_s.decode('ascii')).split("\n")
-        commit_id_dir = list_stdout[0]
-        # check that they are the same
-        if commit_id_dir != commit_id_in_file:
-            sys.stderr.write("[W::main] Warning: the commit id saved during the setup ("+commit_id_in_file+") is different from the git commit id of this git repository ("+str(commit_id_dir)+"). Run 'python "+relative_path+"setup.py'\n\n")
-    except:
-        return
-
 # ------------------------------------------------------------------------------
 # function for multiple cores for bwa
 def run_bwa_multiple_cores(forward_reads,  reverse_reads,  single_reads, reference, threads, output, bamOutput, msam_script, technology, verbose, profile_mode, lane_id, result):
@@ -443,10 +437,6 @@ def main(argv=None):
     parser.add_argument('-min_perc_id', action="store", default = None, dest='min_perc_id', help='minimum percentage of identity when filtering - choose between 97 and 100')
     parser.add_argument('-min_clip_length', action="store", default = None, dest='min_clip_length', help='min. length of alignment when clipped')
     parser.add_argument('-min_perc_align', action="store", default = None, dest='min_perc_align', help='min. percent of the query that must be aligned, between 0 and 100')
-
-    '''
-    Edit Hans
-    '''
     parser.add_argument('-fb', metavar='FLOAT', type=float, default=None,
                         help="Coverage breadth: minimal horizontal genome coverage percentage per sample per species")
     parser.add_argument('-fd', metavar='FLOAT', type=float, default=None,
@@ -459,9 +449,7 @@ def main(argv=None):
                         help="FILTERING STEP II:"
                              "required proportion of informative samples (coverage non-zero) per position",
                         default=None)
-    '''
-    Edit Hans
-    '''
+
     args = parser.parse_args()
 
 
@@ -816,19 +804,6 @@ def main(argv=None):
     # --------------------------------------------------------------------------
     #                      VERSION of DB,scripts,taxonomy
     # --------------------------------------------------------------------------
-    # --- load the file with the information of the versions
-    path_info_version = relative_path + "db_mOTU/versions"
-    try:
-        location = open(path_info_version,'r')
-        versions = dict()
-        for line in location:
-            l = line.rstrip().split('\t')
-            if l[0] != "#":
-                versions[l[0]] = l[1]
-        location.close()
-    except:
-        sys.stderr.write("[E::main] Error loading file: "+path_info_version+"\n[E::main] Try to download again the motus profiler\n\n")
-        sys.exit(1)
 
     # db -----------
     version_db = args_db+versions[args_db]
@@ -846,39 +821,6 @@ def main(argv=None):
 
     version_append = "# motus version "+str(version_tool)+" | merge "+str(versions["append"])
 
-
-    # --------------------------------------------------------------------------
-    #                           GITLAB commit id
-    # --------------------------------------------------------------------------
-    # --- load the file with the information of the versions
-    path_info_version_git = relative_path + "db_mOTU/version_git_commit"
-    version_git_file = True
-    try:
-        location = open(path_info_version_git,'r')
-        version_git = dict()
-        for line in location:
-            l = line.rstrip().split('\t')
-            if l[0] != "#":
-                version_git[l[0]] = l[1]
-        location.close()
-    except:
-        sys.stderr.write("[W::map_db] Warning: There is no information of the git commit id. Run 'python "+relative_path+"setup.py'.\n\n")
-        version_git_file = False
-
-    # version in github
-    commit_id_version = "commit unknown"
-    if version_git_file:
-        if "git_commit_id" in version_git:
-            commit_id_version = "commit "+version_git["git_commit_id"]
-            # check that the git commit id that is saved in version is the same of the one that we get from the current git repo
-            check_commit_id(commit_id_version)
-            if "git_tag_version" in version_git:
-                commit_id_version = "tag version "+version_git["git_tag_version"]
-        else:
-            if args.verbose >= 2: sys.stderr.write("[W::map_db] Warning: There is no information of the git commit id. Run 'python "+relative_path+"setup.py'.\n\n")
-            commit_id_version = "commit unknown"
-
-    git_commit_id =  "# git "+commit_id_version
 
     # --------------------------------------------------------------------------
     #                                     PROFILE
