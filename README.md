@@ -3,9 +3,11 @@
 mOTUs profiler
 ========
 
-The mOTUs profiler is a computational tool that estimates relative abundance of known and currently unknown microbial community members using metagenomic shotgun sequencing data. The profiling method is based on ~100,000 universal single-copy marker genes that have been extracted from more than 3,000 metagenomic samples and ~25,000 reference genomes.
+The mOTUs profiler is a computational tool that estimates relative abundance of known and currently unknown microbial community members using metagenomic shotgun sequencing data. 
 
 Check the [wiki](https://github.com/motu-tool/mOTUs_v2/wiki) for more information.
+
+[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/hyperium/hyper/master/LICENSE)
 
 Pre-requisites
 --------------
