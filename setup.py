@@ -2,10 +2,9 @@
 
 # ============================================================================ #
 # setup.py: prepare the mOTU profiler
-#
-# This will be better implemented as a package, for now it just creates a couple
-# of files after cloning the directory
 # ============================================================================ #
+
+motus_version = "0.6"
 
 import os
 import sys
@@ -43,7 +42,7 @@ def is_tool(name):
 # ------------------------------------------------------------------------------
 def main(argv=None):
 	sys.stdout.write("\n--- INSTALL MOTUS v2 ---\n")
-	# path of the file that will contain the git commit id--------------------------
+	# download the files -------------------------------------------------------
 	sys.stdout.write("Download the compressed motus database\n")
 
 	link = "https://oc.embl.de/index.php/s/wrz9YfKfrNyYCaY/download"
@@ -65,6 +64,7 @@ def main(argv=None):
 				sys.stdout.flush()
 		sys.stdout.write("\n")
 
+	# extract files ------------------------------------------------------------
 	sys.stdout.write("\nExtract files from the archive:\n")
 	extract_cmd = "tar -zxvf "+db_name+" -C "+relative_path
 	try:
@@ -76,6 +76,47 @@ def main(argv=None):
 	if process.returncode:
 		sys.stderr.write("Error: failed to extract files\n")
 		sys.exit(1)
+
+	# --- remove db file
+	sys.stdout.write("\nRemove zipped file...")
+	os.remove(db_name)
+	sys.stdout.write("done\n")
+
+
+
+	# --------------- add file with version informations -----------------------
+	sys.stdout.write("\nAdd version file...")
+	path_versions = relative_path + "db_mOTU/versions"
+	try:
+		outfile = tempfile.NamedTemporaryFile(delete=False, mode = "w")
+		outfile.write("motus\t"+motus_version+"\n")
+		outfile.write("#\tdatabase\n")
+		outfile.write("nr\t"+motus_version+"\n")
+		outfile.write("cen\t"+motus_version+"\n")
+		outfile.write("#\tscripts\n")
+		outfile.write("append\t"+motus_version+"\n")
+		outfile.write("map_genes_to_mOTUs\t"+motus_version+"\n")
+		outfile.write("map_mOTUs_to_LGs\t"+motus_version+"\n")
+		outfile.write("runBWA\t"+motus_version+"\n")
+		outfile.write("#\ttaxonomy\n")
+		outfile.write("specI_tax\t"+motus_version+"\n")
+		outfile.write("mOTULG_tax\t"+motus_version+"\n")
+
+		# close file
+		outfile.flush()
+		os.fsync(outfile.fileno())
+		outfile.close()
+	except:
+		sys.stderr.write("\nError while saving the file\n")
+		sys.exit(1)
+
+	try:
+		shutil.move(outfile.name,path_versions)
+	except:
+		sys.stderr.write("\nError while saving the file\n")
+		sys.exit(1)
+
+	sys.stdout.write("done\n")
 
 
 
