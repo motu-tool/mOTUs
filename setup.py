@@ -6,17 +6,30 @@
 
 motus_version = "0.6"
 
+link_db = "https://oc.embl.de/index.php/s/gqM8uOn3OZfRzB5/download"
+md5_db = "52b0bb668282fdeecfacd1c63fa94339"
+
 import os
 import sys
 import tempfile
 import shutil
 import subprocess
+import hashlib
 
 try:
 	import requests
 except:
 	sys.stderr.write("Error: request library is not installed. Run:\npipenv install requests\n(check http://docs.python-requests.org/en/master/user/install/)")
 	sys.exit(1)
+
+
+
+def md5(fname):
+    hash_md5 = hashlib.md5()
+    with open(fname, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()
 
 
 
@@ -45,10 +58,9 @@ def main(argv=None):
 	# download the files -------------------------------------------------------
 	sys.stdout.write("Download the compressed motus database\n")
 
-	link = "https://oc.embl.de/index.php/s/gqM8uOn3OZfRzB5/download"
 	db_name = relative_path+"db_mOTU.tar.gz"
 	with open(db_name, "wb") as f:
-		response = requests.get(link, stream=True)
+		response = requests.get(link_db, stream=True)
 		total_length = response.headers.get('content-length')
 
 		if total_length is None: # no content length header
@@ -63,6 +75,18 @@ def main(argv=None):
 				sys.stdout.write("\r[%s%s]" % ('=' * done, ' ' * (50-done)) )
 				sys.stdout.flush()
 		sys.stdout.write("\n")
+
+	# check md5 ----------------------------------------------------------------
+	sys.stdout.write("\nCheck md5: ")
+	current_md5 = md5(db_name)
+
+	if current_md5 == md5_db:
+		sys.stdout.write("MD5 verified\n")
+	else:
+		sys.stdout.write("MD5 verification failed!\n")
+		os.remove(db_name)
+		sys.exit(1)
+
 
 	# extract files ------------------------------------------------------------
 	sys.stdout.write("\nExtract files from the archive:\n")
