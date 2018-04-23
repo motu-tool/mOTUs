@@ -45,7 +45,7 @@ def main(argv=None):
 	# download the files -------------------------------------------------------
 	sys.stdout.write("Download the compressed motus database\n")
 
-	link = "https://oc.embl.de/index.php/s/wrz9YfKfrNyYCaY/download"
+	link = "https://oc.embl.de/index.php/s/gqM8uOn3OZfRzB5/download"
 	db_name = relative_path+"db_mOTU.tar.gz"
 	with open(db_name, "wb") as f:
 		response = requests.get(link, stream=True)
