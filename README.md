@@ -37,14 +37,14 @@ Simple examples
 Here is a simple example on how to obtain a taxonomic profiling from a raw read file:
 
 ```bash
-motus profile -s metagenomic_sample.fastq > taxonomic_profiling.txt
+motus profile -s metagenomic_sample.fastq > taxonomy_profile.txt
 ```
 
 You can separate the previous call as:
 ```bash
 motus map_tax -s metagenomic_sample.fastq -o mapped_reads.sam
 motus calc_mgc -i mapped_reads.sam -o mgc_ab_table.count
-motus calc_motu -i mgc_ab_table.count > taxonomic_profiling.txt
+motus calc_motu -i mgc_ab_table.count > taxonomy_profile.txt
 rm mapped_reads.sam mgc_ab_table.count
 ```
 
@@ -52,18 +52,18 @@ rm mapped_reads.sam mgc_ab_table.count
 The use of multiple threads (`-t`) is recommended, since bwa will finish faster. Here is an example with Paired-End reads:
 
 ```bash
-motus profile -f for_sample.fastq -r rev_sample.fastq -s no_pair.fastq -t 6 > taxonomic_profiling.txt
+motus profile -f for_sample.fastq -r rev_sample.fastq -s no_pair.fastq -t 6 > taxonomy_profile.txt
 ```
 
 You can merge taxonomy files from different samples with `mOTU merge`:
 
 ```shell
-motus profile -s metagenomic_sample_1.fastq -o taxonomic_profiling_1.txt
-motus profile -s metagenomic_sample_2.fastq -o taxonomic_profiling_2.txt
-motus merge -i taxonomic_profiling_1.txt,taxonomic_profiling_2.txt > all_samples_profiling.txt
+motus profile -s metagenomic_sample_1.fastq -o taxonomy_profile_1.txt
+motus profile -s metagenomic_sample_2.fastq -o taxonomy_profile_2.txt
+motus merge -i taxonomy_profile_1.txt,taxonomy_profile_2.txt > all_sample_profiles.txt
 ```
 
 You can profile samples that have been sequenced through different runs:
 ```shell
-motus profile -f sample1_run1_for.fastq,sample1_run2_for.fastq -r sample1_run1_rev.fastq,sample1_run2_rev.fastq -s sample1_run1_single.fastq > taxonomic_profiling.txt
+motus profile -f sample1_run1_for.fastq,sample1_run2_for.fastq -r sample1_run1_rev.fastq,sample1_run2_rev.fastq -s sample1_run1_single.fastq > taxonomy_profile.txt
 ```
