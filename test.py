@@ -1,7 +1,14 @@
 #!/usr/bin/env python
 
 # ============================================================================ #
-# test.py: prepare the mOTU profiler
+# test.py: test the motus profiler
+#
+# Author: Alessio Milanese (milanese@embl.de)
+#
+# Main steps:
+#    * Test the tools and their versions
+#    * Check the taxonomy profiling
+#
 # ============================================================================ #
 
 import os
