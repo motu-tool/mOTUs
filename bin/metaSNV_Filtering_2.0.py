@@ -256,7 +256,7 @@ if __name__ == "__main__":
     samples_of_interest = relevant_taxa(args)['SoI']
     header_cov = relevant_taxa(args)['h']
 
-    print samples_of_interest.keys()
+    print (samples_of_interest.keys())
 
     # =========================================
     # Filtering II - Position wise filtering
