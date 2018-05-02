@@ -24,6 +24,12 @@ except:
 	sys.stderr.write("Error: request library is not installed. Run:\npipenv install requests\n(check http://docs.python-requests.org/en/master/user/install/)")
 	sys.exit(1)
 
+# position of the script -------------------------------------------------------
+path_mOTUs = os.path.realpath(__file__)
+path_array = path_mOTUs.split("/")
+relative_path = "/".join(path_array[0:-1])
+relative_path = relative_path + "/"
+
 # ------------------------------------------------------------------------------
 # function to check if a specific tool exists
 # ------------------------------------------------------------------------------
@@ -44,6 +50,15 @@ def main(argv=None):
 	sys.stderr.write(" ------------------------------------------------------------------------------\n")
 	sys.stderr.write("|                               TEST MOTUS TOOL                                |\n")
 	sys.stderr.write(" ------------------------------------------------------------------------------\n")
+
+	# check if setup.py has been ran already -----------------------------------
+	sys.stderr.write(" ran setup.py: ")
+	if os.path.isdir(relative_path+'db_mOTU'):
+	    sys.stderr.write("correct\n\n")
+	else:
+		sys.stderr.write("ERROR. Run setup.py\n\n")
+
+
 	sys.stderr.write("-- Tools and versions\n")
 	# check python version -----------------------------------------------------
 	sys.stderr.write(" python:   ")

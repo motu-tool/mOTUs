@@ -51,7 +51,7 @@ path_array = path_mOTUs.split("/")
 relative_path = "/".join(path_array[0:-1])
 relative_path = relative_path + "/"
 
-# check that setup.py ran already ----------------------------------------------
+# check if setup.py has been ran already ---------------------------------------
 if not(os.path.isdir(relative_path+'db_mOTU')):
     sys.stderr.write("[E::main] Error: database has not been downloaded. Run setup.py before using the motus profiler\n\n")
     sys.exit(1)
