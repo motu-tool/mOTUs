@@ -1,7 +1,14 @@
 #!/usr/bin/env python
 
 # ============================================================================ #
-# setup.py: prepare the mOTU profiler
+# setup.py: prepare the motus tool after cloning from github
+#
+# Author: Alessio Milanese (milanese@embl.de)
+#
+# Main steps:
+#    * Download the mOTUs database
+#    * Create a file with the version information
+#
 # ============================================================================ #
 
 motus_version = "0.6"
