@@ -7,8 +7,6 @@ The mOTUs profiler is a computational tool that estimates relative abundance of 
 
 Check the [wiki](https://github.com/motu-tool/mOTUs_v2/wiki) for more information.
 
-[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/hyperium/hyper/master/LICENSE)
-
 Pre-requisites
 --------------
 
