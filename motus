@@ -1,8 +1,17 @@
 #!/usr/bin/env python
 
 # ============================================================================ #
-# motus.py: mOTU profiling tools
+# motus - a tool for marker gene-based OTU (mOTU) profiling of metagenomes
+#
+# Authors: Alessio Milanese (milanese@embl.de),
+#          Daniel R. Mende (danielrmende@gmail.com),
+#          Georg Zeller (zeller@embl.de),
+#          Shinichi Sunagawa(ssunagawa@ethz.ch)
+#
+# Type "motus" for usage help
+#
 # ============================================================================ #
+
 
 import os
 import sys
