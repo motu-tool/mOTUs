@@ -798,7 +798,7 @@ def main(argv=None):
     # --------------------------------------------------------------------------
         if args.verbose>=4:
             sys.stderr.write("[main] Executing metaSNV remove padded routine.\n")
-        metaSNVRMPadded_command = 'python '+relative_path+'bin/motus.remove.padded.sh %s/filtered%s/pop' % (outdir, paramsdir)
+        metaSNVRMPadded_command = 'bash '+relative_path+'bin/motus.remove.padded.sh %s/filtered%s/pop' % (outdir, paramsdir)
         if args.verbose>=4:
             sys.stderr.write("[main] Command: %s\n" % metaSNVRMPadded_command)
         metaSNVRMPadded_popenCMD = shlex.split(metaSNVRMPadded_command)
