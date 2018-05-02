@@ -24,6 +24,7 @@ Installation
 git clone https://github.com/motu-tool/mOTUs_v2.git
 cd mOTUs_v2
 python setup.py
+python test.py
 export PATH=`pwd`:$PATH
 ```
 
