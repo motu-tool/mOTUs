@@ -778,7 +778,7 @@ def main(argv=None):
         if args.verbose>=4:
             sys.stderr.write("[main] Executing metaSNV filter routine.\n")
             params = '-m 5 -d 10 -b 80 -p 0.9'
-        metaSNVFilter_command = 'metaSNV_Filtering_2.0.py %s -m %d -d %f -b %f -p %f -c %f --n_threads %d' %(outdir, fm, fd, fb, fp, fc, args.threads)
+        metaSNVFilter_command = 'python '+relative_path+'db_mOTU/metaSNV_Filtering_2.0.py %s -m %d -d %f -b %f -p %f -c %f --n_threads %d' %(outdir, fm, fd, fb, fp, fc, args.threads)
         if args.verbose>=4:
             sys.stderr.write("[main] Command: %s\n" % metaSNVFilter_command)
         metaSNVFilter_popenCMD = shlex.split(metaSNVFilter_command)
@@ -798,7 +798,7 @@ def main(argv=None):
     # --------------------------------------------------------------------------
         if args.verbose>=4:
             sys.stderr.write("[main] Executing metaSNV remove padded routine.\n")
-        metaSNVRMPadded_command = 'motus.remove.padded.sh %s/filtered%s/pop' % (outdir, paramsdir)
+        metaSNVRMPadded_command = 'python '+relative_path+'db_mOTU/motus.remove.padded.sh %s/filtered%s/pop' % (outdir, paramsdir)
         if args.verbose>=4:
             sys.stderr.write("[main] Command: %s\n" % metaSNVRMPadded_command)
         metaSNVRMPadded_popenCMD = shlex.split(metaSNVRMPadded_command)
@@ -818,7 +818,7 @@ def main(argv=None):
     # --------------------------------------------------------------------------
         if args.verbose>=4:
             sys.stderr.write("[main] Executing metaSNV distance routine.\n")
-        metaSNVDist_command = 'metaSNV_DistDiv.py --filt %s/filtered%s --dist --n_threads %d' % (outdir, paramsdir, args.threads)
+        metaSNVDist_command = 'python '+relative_path+'db_mOTU/metaSNV_DistDiv.py --filt %s/filtered%s --dist --n_threads %d' % (outdir, paramsdir, args.threads)
         if args.verbose>=4:
             sys.stderr.write("[main] Command: %s\n" % metaSNVDist_command)
         metaSNVDist_popenCMD = shlex.split(metaSNVDist_command)
