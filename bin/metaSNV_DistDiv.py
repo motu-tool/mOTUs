@@ -32,14 +32,14 @@ def get_arguments():
     '''
     ## Initialize Parser
     parser = argparse.ArgumentParser(prog='metaSNV_DistDiv.py', description='metaSNV distance and diversity computation', epilog='''Note:''', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    
+
     # Not Showns:
     parser.add_argument('--version', action='version', version='%(prog)s 2.0', help=argparse.SUPPRESS)
     parser.add_argument("--debug", action="store_true", help=argparse.SUPPRESS)
 
     # REQUIRED  arguments:
     parser.add_argument('--filt', metavar=': Filtered frequency files', help="Folder containing /pop/*.filtered.freq", required = True)
-    
+
     # OPTIONAL  arguments:
     parser.add_argument('--dist',action='store_true', help="Compute distances")
     parser.add_argument('--div',action='store_true', help="Compute Diversity and FST")
@@ -52,10 +52,10 @@ def get_arguments():
 
 ############################################################
 ### Basic functions
-    
+
 def file_check():
     ''' Check if required files exist (True / False)'''
-    
+
     args.projdir = '/'.join(args.filt.rstrip('/').split('/')[:-1])
     args.pars = args.filt.rstrip('/').split('/')[-1].strip('filtered')
     args.coverage_file = args.projdir+'/'+args.projdir.split('/')[-1]+'.all_cov.tab'
@@ -104,19 +104,19 @@ def computeDist(filt_file):
     ''' Compute distances per species '''
     species = filt_file.split('/')[-1].replace('.freq','')
     data = pd.read_table(filt_file, index_col=0, na_values=['-1']).T
-    
+
     dist = [[l1nonans(data.iloc[i], data.iloc[j]) for i in range(len(data))] for j in range(len(data))]
     dist = pd.DataFrame(dist, index=data.index, columns=data.index)
     dist.to_csv(outdir + '/' + '%s.mann.dist' % species, sep='\t')
-    
+
     dist = [[alleledist(data.iloc[i], data.iloc[j]) for i in range(len(data))] for j in range(len(data))]
     dist = pd.DataFrame(dist, index=data.index, columns=data.index)
     dist.to_csv(outdir + '/' + '%s.allele.dist' %species , sep='\t')
 
 def computeAllDist(args):
-    
-    print "Computing distances"
-    
+
+    print ("Computing distances")
+
     allFreq = glob.glob(args.filt + '/pop/*.freq')
 
     p = Pool(processes = args.n_threads)
@@ -144,11 +144,11 @@ def compute_diversity(sample1, sample2):
     s1 = np.vstack([s1, 1 - s1])
     s2 = np.vstack([s2, 1 - s2])
     dist_nd = (s1[0]*s2[1]+s1[1]*s2[0]).sum()
-    
+
     def position_diversity(x):
         out = np.outer(x.s1.values, x.s2.values)
         return np.nansum(out) - np.nansum(out.diagonal())
-    
+
     sample1d = sample1.ix[sample1.index[sample1.index.duplicated()]]
     sample2d = sample2.ix[sample2.index[sample2.index.duplicated()]]
 
@@ -168,15 +168,15 @@ def compute_diversity(sample1, sample2):
 
 def computeDiv(filt_file, horizontal_coverage, vertical_coverage, bedfile_tab, matched):
     '''Per species computation'''
-    
+
     species = int(filt_file.split('/')[-1].split('.')[0])
     data = pd.read_table(filt_file, index_col=0, na_values=['-1'])
-    
+
     pre_index = [i.split(':') for i in list(data.index)]
     # Setting index for each position
     data = data.set_index(pd.Index([item[0] + ':' + item[1] + ':' + item[2] for item in pre_index]))
     data = data.sort_index()
-    
+
     ########
     ## If matched, filter for 'common' positions :
     if matched:
@@ -185,10 +185,10 @@ def computeDiv(filt_file, horizontal_coverage, vertical_coverage, bedfile_tab, m
                 x = x.iloc[1]
             n = np.count_nonzero(np.isnan(x))
             return n>(len(x)*(0.1))
-        
+
         index_drop = [index for index in data.index if filt_proportion(data.loc[index])]
         data = data.drop(index_drop)
-    
+
     ########
     ## Number of bases observed :
     genome_length = bedfile_tab.loc[str(species), 2].sum()
@@ -201,14 +201,14 @@ def computeDiv(filt_file, horizontal_coverage, vertical_coverage, bedfile_tab, m
         j = list(data.columns).index(i)
         correction_within = vertical_coverage.loc[species,i] / (vertical_coverage.loc[species,i] - 1)
         correction_coverage[j][j] = correction_coverage[j][j] / correction_within
-    
+
     div = [[compute_diversity(data.iloc[:, i], data.iloc[:, j]) / correction_coverage[j][i] for i in range(j + 1)] for j in range(len(data.columns))]
     FST = [[(1-(div[i][i]+div[j][j])/(2*div[j][i])) for i in range(j + 1)] for j in range(len(div))]
-    
+
     div = pd.DataFrame(div, index=data.columns, columns=data.columns)
 
     FST = pd.DataFrame(FST, index=data.columns, columns=data.columns)
-    
+
     div.to_csv(outdir + '/' + '%s.diversity' % species, sep='\t')
     FST.to_csv(outdir + '/' + '%s.FST' % species, sep='\t')
 
@@ -218,10 +218,10 @@ def computeDiv(filt_file, horizontal_coverage, vertical_coverage, bedfile_tab, m
 
 def computeDivNS(filt_file, horizontal_coverage, vertical_coverage, bedfile_tab, matched):
     '''Per species computation'''
-    
+
     species = int(filt_file.split('/')[-1].split('.')[0])
     data = pd.read_table(filt_file, index_col=0, na_values=['-1'])
-    
+
     pre_index = [i.split(':') for i in list(data.index)]
     # Setting index for each position
     index1 = [item[0] + ':' + item[1] + ':' + item[2] for item in pre_index]
@@ -229,10 +229,10 @@ def computeDivNS(filt_file, horizontal_coverage, vertical_coverage, bedfile_tab,
     index2 = [item[4].split('[')[0] for item in pre_index]
     data = data.set_index(pd.MultiIndex.from_arrays([index1, index2], names=['index', 'significance']))
     data = data.sort_index()
-    
+
     data_N = data.xs('N', level='significance')
     data_S = data.xs('S', level='significance')
-    
+
     ########
     ## If matched, filter for 'common' positions :
     if matched:
@@ -241,26 +241,26 @@ def computeDivNS(filt_file, horizontal_coverage, vertical_coverage, bedfile_tab,
                 x = x.iloc[1]
             n = np.count_nonzero(np.isnan(x))
             return n>(len(x)*(0.1))
-        
+
         index_drop = [index for index in data_N.index if filt_proportion(data_N.loc[index])]
         data_N = data_N.drop(index_drop)
 
         index_drop = [index for index in data_S.index if filt_proportion(data_S.loc[index])]
         data_S = data_S.drop(index_drop)
-    
+
     ########
     ## Number of bases observed :
     genome_length = bedfile_tab.loc[str(species), 2].sum()
     # Genome length corrected for horizontal coverage
     correction_coverage = [[(min(horizontal_coverage.loc[species, i], horizontal_coverage.loc[species, j]) * genome_length) / 100 for i in data.columns] for j in data.columns]
-    
+
     ########
     ## Vertical coverage in pi within : AvgCov / (AvgCov - 1)
     for i in data.columns:
         j = list(data.columns).index(i)
         correction_within = vertical_coverage.loc[species,i] / (vertical_coverage.loc[species,i] - 1)
         correction_coverage[j][j] = correction_coverage[j][j] / correction_within
-    
+
     div_N = [[compute_diversity(data_N.iloc[:, i], data_N.iloc[:, j]) / correction_coverage[j][i] for i in range(j + 1)] for j in range(len(data_N.columns))]
     div_N = pd.DataFrame(div, index=data_N.columns, columns=data_N.columns)
     div_N.to_csv(outdir + '/' + '%s.N_diversity' % species, sep='\t')
@@ -278,20 +278,20 @@ def computeDivNS(filt_file, horizontal_coverage, vertical_coverage, bedfile_tab,
 def computeAllDiv(args):
 
     '''Computing diversities & FST'''
-    
-    print "Computing diversities & FST"
-    
+
+    print ("Computing diversities & FST")
+
     # Load external info : Coverage, genomes size, genes size
     horizontal_coverage = pd.read_table(args.percentage_file, skiprows=[1], index_col=0)
     vertical_coverage = pd.read_table(args.coverage_file, skiprows=[1], index_col=0)
-    
+
     bedfile_tab = pd.read_table(args.bedfile, index_col=0, header=None)
     bed_index = [i.split('.')[0] for i in list(bedfile_tab.index)]
     bedfile_tab = bedfile_tab.set_index(pd.Index(bed_index))
 
     #All filtered.freq files in input folder
     allFreq = glob.glob(args.filt + '/pop/*.freq')
-    
+
     if args.div:
         p = Pool(processes = args.n_threads)
         partial_Div = partial(computeDiv,  horizontal_coverage = horizontal_coverage, vertical_coverage = vertical_coverage, bedfile_tab = bedfile_tab, matched = args.matched)
@@ -311,13 +311,13 @@ def computeAllDiv(args):
 ### Script
 
 if __name__ == "__main__":
-    
+
     #####################
 
     args = get_arguments()
     print_arguments()
     file_check()
-    
+
     if args.debug:
         print_arguments()
 
@@ -332,17 +332,9 @@ if __name__ == "__main__":
         os.makedirs(outdir)
 
     #####################
-    
+
     if args.dist:
         computeAllDist(args)
-        
+
     if args.div or args.divNS:
         computeAllDiv(args)
-
-
-
-
-
-
-
-
