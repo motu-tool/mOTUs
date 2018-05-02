@@ -12,9 +12,8 @@
 # ============================================================================ #
 
 motus_version = "0.6"
-
-link_db = "https://oc.embl.de/index.php/s/gqM8uOn3OZfRzB5/download"
-md5_db = "52b0bb668282fdeecfacd1c63fa94339"
+link_db = "https://oc.embl.de/index.php/s/znSp2EH6ca407hk/download"
+md5_db = "a031a0e3b9402db1653bc7a447470e6c"
 
 import os
 import sys
