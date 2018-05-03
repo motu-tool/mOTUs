@@ -64,7 +64,7 @@ def main(argv=None):
 	sys.stderr.write("|                              SETUP MOTUS TOOL                                |\n")
 	sys.stderr.write(" ------------------------------------------------------------------------------\n")
 	# download the files -------------------------------------------------------
-	sys.stdout.write("Download the compressed motus database\n")
+	sys.stderr.write("Download the compressed motus database\n")
 
 	db_name = relative_path+"db_mOTU.tar.gz"
 	with open(db_name, "wb") as f:
@@ -80,24 +80,24 @@ def main(argv=None):
 				dl += len(data)
 				f.write(data)
 				done = int(50 * dl / total_length)
-				sys.stdout.write("\r[%s%s]" % ('=' * done, ' ' * (50-done)) )
+				sys.stderr.write("\r[%s%s]" % ('=' * done, ' ' * (50-done)) )
 				sys.stdout.flush()
-		sys.stdout.write("\n")
+		sys.stderr.write("\n")
 
 	# check md5 ----------------------------------------------------------------
-	sys.stdout.write("\nCheck md5: ")
+	sys.stderr.write("\nCheck md5: ")
 	current_md5 = md5(db_name)
 
 	if current_md5 == md5_db:
-		sys.stdout.write("MD5 verified\n")
+		sys.stderr.write("MD5 verified\n")
 	else:
-		sys.stdout.write("MD5 verification failed!\n")
+		sys.stderr.write("MD5 verification failed!\n")
 		os.remove(db_name)
 		sys.exit(1)
 
 
 	# extract files ------------------------------------------------------------
-	sys.stdout.write("Extract files from the archive...")
+	sys.stderr.write("Extract files from the archive...")
 	extract_cmd = "tar -zxvf "+db_name+" -C "+relative_path
 	try:
 		FNULL = open(os.devnull, 'w')
@@ -113,14 +113,14 @@ def main(argv=None):
 		sys.stderr.write("done\n")
 
 	# --- remove db file
-	sys.stdout.write("Remove zipped file...")
+	sys.stderr.write("Remove zipped file...")
 	os.remove(db_name)
-	sys.stdout.write("done\n")
+	sys.stderr.write("done\n")
 
 
 
 	# --------------- add file with version informations -----------------------
-	sys.stdout.write("Add version file...")
+	sys.stderr.write("Add version file...")
 	path_versions = relative_path + "db_mOTU/versions"
 	try:
 		outfile = tempfile.NamedTemporaryFile(delete=False, mode = "w")
@@ -151,7 +151,7 @@ def main(argv=None):
 		sys.stderr.write("\nError while saving the file\n")
 		sys.exit(1)
 
-	sys.stdout.write("done\n\n")
+	sys.stderr.write("done\n\n")
 
 
 
