@@ -60,7 +60,9 @@ def is_tool(name):
 # MAIN
 # ------------------------------------------------------------------------------
 def main(argv=None):
-	sys.stdout.write("\n--- INSTALL MOTUS v2 ---\n")
+	sys.stderr.write(" ------------------------------------------------------------------------------\n")
+	sys.stderr.write("|                              SETUP MOTUS TOOL                                |\n")
+	sys.stderr.write(" ------------------------------------------------------------------------------\n")
 	# download the files -------------------------------------------------------
 	sys.stdout.write("Download the compressed motus database\n")
 
