@@ -217,7 +217,7 @@ def print_menu_snv_call():
     sys.stderr.write("Usage: motus snv_call -d Directory -o Directory [options]\n\n")
     sys.stderr.write("Input options:\n")
     sys.stderr.write("   -d  DIR     Call metaSNV on all bam files in the directory. [Mandatory]\n")
-    sys.stderr.write("   -fb FLOAT   Coverage breadth: minimal horizontal genome coverage percentage per sample per species. Default=40.0\n")
+    sys.stderr.write("   -fb FLOAT   Coverage breadth: minimal horizontal genome coverage percentage per sample per species. Default=80.0\n")
     sys.stderr.write("   -fd FLOAT   Coverage depth: minimal average vertical genome coverage per sample per species. Default=5.0\n")
     sys.stderr.write("   -fm INT     Minimum number of samples per species. Default=2\n")
     sys.stderr.write("   -fp FLOAT   FILTERING STEP II: Required proportion of informative samples (coverage non-zero) per position. Default=0.50\n")
@@ -660,7 +660,7 @@ def main(argv=None):
     if (args.output == None): args.output = ""
 
     # default for snv_call
-    if (args.fb == None): args.fb = 40.0
+    if (args.fb == None): args.fb = 80.0
     if (args.fd == None): args.fd = 5.0
     if (args.fm == None): args.fm = 2
     if (args.fp == None): args.fp = 5.0
