@@ -101,7 +101,7 @@ def main(argv=None):
 	extract_cmd = "tar -zxvf "+db_name+" -C "+relative_path
 	try:
 		FNULL = open(os.devnull, 'w')
-		process = subprocess.Popen(extract_cmd.split(),stderr=FNULL)
+		process = subprocess.Popen(extract_cmd.split(),stderr=FNULL,stdout=FNULL)
 		output, error = process.communicate()
 	except:
 		sys.stderr.write("Error: failed to extract files\n")
