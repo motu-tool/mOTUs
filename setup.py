@@ -97,10 +97,11 @@ def main(argv=None):
 
 
 	# extract files ------------------------------------------------------------
-	sys.stdout.write("\nExtract files from the archive:\n")
+	sys.stdout.write("Extract files from the archive...")
 	extract_cmd = "tar -zxvf "+db_name+" -C "+relative_path
 	try:
-		process = subprocess.Popen(extract_cmd.split(), stdout=subprocess.PIPE)
+		FNULL = open(os.devnull, 'w')
+		process = subprocess.Popen(extract_cmd.split(),stderr=FNULL)
 		output, error = process.communicate()
 	except:
 		sys.stderr.write("Error: failed to extract files\n")
@@ -108,16 +109,18 @@ def main(argv=None):
 	if process.returncode:
 		sys.stderr.write("Error: failed to extract files\n")
 		sys.exit(1)
+	else:
+		sys.stderr.write("done\n")
 
 	# --- remove db file
-	sys.stdout.write("\nRemove zipped file...")
+	sys.stdout.write("Remove zipped file...")
 	os.remove(db_name)
 	sys.stdout.write("done\n")
 
 
 
 	# --------------- add file with version informations -----------------------
-	sys.stdout.write("\nAdd version file...")
+	sys.stdout.write("Add version file...")
 	path_versions = relative_path + "db_mOTU/versions"
 	try:
 		outfile = tempfile.NamedTemporaryFile(delete=False, mode = "w")
@@ -148,7 +151,7 @@ def main(argv=None):
 		sys.stderr.write("\nError while saving the file\n")
 		sys.exit(1)
 
-	sys.stdout.write("done\n")
+	sys.stdout.write("done\n\n")
 
 
 
