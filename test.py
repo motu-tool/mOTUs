@@ -76,7 +76,7 @@ def main(argv=None):
 		sys.stderr.write(" correct\n")
 		#TODO: maybe check version? at least 0.7.15-r1140
 	else:
-		sys.stderr.write(" WARNING\n         bwa is not in the path\n\n")
+		sys.stderr.write(" WARNING. BWA is not in the path\n\n")
 
 	# check samtools -----------------------------------------------------------
 	sys.stderr.write("- samtools: ")
@@ -84,7 +84,7 @@ def main(argv=None):
 		sys.stderr.write(" correct\n")
 		#TODO: maybe check version? at least 1.5
 	else:
-		sys.stderr.write(" WARNING\n         samtools is not in the path\n\n")
+		sys.stderr.write(" WARNING. Samtools is not in the path\n\n")
 
 	# check metaSNV ------------------------------------------------------------
 	sys.stderr.write("- metaSNV:  ")
@@ -92,7 +92,7 @@ def main(argv=None):
 		sys.stderr.write(" correct\n")
 		#TODO: maybe check version? at least metaSNV v1.0.3
 	else:
-		sys.stderr.write(" WARNING\n         metaSNV is not in the path\n\n")
+		sys.stderr.write(" WARNING. metaSNV is not in the path\n\n")
 
 
 	#===========================================================================
