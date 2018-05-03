@@ -125,18 +125,22 @@ def main(argv=None):
 
 	# check values
 	error_flag = False
-	for i in range(1,len(pr)):
-		if i != 0 and i != 1 and i != 2: # do not check the first 3 lines
-			gt1 = gt[i].split("\t")[0]
-			gt2 = int(float(gt[i].rstrip().split("\t")[1]))
-			pr1 = pr[i].split("\t")[0]
-			pr2 = int(float(pr[i].rstrip().split("\t")[1]))
-			if (gt1 != pr1):
-				error_flag = True
-				sys.stderr.write("ERROR. Different values in line "+str(i+1)+":\n"+gt1+"\n"+pr1+" \n\n")
-			if (gt2 != pr2):
-				error_flag = True
-				sys.stderr.write("ERROR. Different values in line "+str(i+1)+":\n"+str(gt2)+"\n"+str(pr2)+" \n\n")
+	if len(pr) != len(gt):
+		error_flag = True
+		sys.stderr.write("ERROR. profiled sample is not correct\n\n")
+	else:
+		for i in range(1,len(pr)):
+			if i != 0 and i != 1 and i != 2: # do not check the first 3 lines
+				gt1 = gt[i].split("\t")[0]
+				gt2 = int(float(gt[i].rstrip().split("\t")[1]))
+				pr1 = pr[i].split("\t")[0]
+				pr2 = int(float(pr[i].rstrip().split("\t")[1]))
+				if (gt1 != pr1):
+					error_flag = True
+					sys.stderr.write("ERROR. Different values in line "+str(i+1)+":\n"+gt1+"\n"+pr1+" \n\n")
+				if (gt2 != pr2):
+					error_flag = True
+					sys.stderr.write("ERROR. Different values in line "+str(i+1)+":\n"+str(gt2)+"\n"+str(pr2)+" \n\n")
 
 	if not(error_flag):
 		sys.stderr.write("correct\n\n")
