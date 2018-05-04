@@ -18,12 +18,6 @@ import shutil
 import subprocess
 import hashlib
 
-try:
-	import requests
-except:
-	sys.stderr.write("Error: request library is not installed. Run:\npipenv install requests\n(check http://docs.python-requests.org/en/master/user/install/)")
-	sys.exit(1)
-
 # position of the script -------------------------------------------------------
 path_mOTUs = os.path.realpath(__file__)
 path_array = path_mOTUs.split("/")
