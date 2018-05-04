@@ -864,6 +864,19 @@ def main(argv=None):
             sys.stderr.write("[E::main] %s\n" %(stdout))
             mlf.close()
             sys.exit(1)
+    # --------------------------------------------------------------------------
+    #                          KEEP ONLY INTERESTING FILES
+    # --------------------------------------------------------------------------
+        # remove files
+        os.remove(os.path.abspath(os.path.join(outdir, 'all_samples')))
+        os.remove(os.path.abspath(os.path.join(outdir, 'bed_header')))
+        shutil.rmtree(os.path.abspath(os.path.join(outdir, 'bestsplits')))
+        shutil.rmtree(os.path.abspath(os.path.join(outdir, 'cov')))
+        shutil.rmtree(os.path.abspath(os.path.join(outdir, 'distances')))
+        shutil.rmtree(os.path.abspath(os.path.join(outdir, 'filtered')))
+        shutil.rmtree(os.path.abspath(os.path.join(outdir, 'snpCaller')))
+
+
         if (args.verbose>=2): sys.stderr.write("[main] End metaSNV\n")
         mlf.close()
         sys.exit(0)
