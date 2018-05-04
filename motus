@@ -735,7 +735,6 @@ def main(argv=None):
             sys.stderr.write("[E::main] Error: -o is missing\n")
             sys.exit(1)
 
-        sys.stderr.write("Warning: snv_call has not been tested.\n")
         if (args.verbose>2): sys.stderr.write("[main] Begin metaSNV\n")
     # --------------------------------------------------------------------------
     #                       Settings/Params
