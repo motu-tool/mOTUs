@@ -1,0 +1,9 @@
+channels:
+  - bioconda
+  - defaults
+  - conda-forge
+dependencies:
+  - metasnv=1.0.3
+  - samtools
+  - bwa
+  - python=3.6.5
