@@ -18,6 +18,8 @@ The mOTU profiler requires:
 In order to use the command ```snv_call``` you need:
 * [metaSNV v1.0.3](https://git.embl.de/costea/metaSNV), available also on [bioconda](https://anaconda.org/bioconda/metasnv) (we assume metaSNV.py to be in the system path)
 
+Check [installation wiki](https://github.com/motu-tool/mOTUs_v2/wiki/Installation) to see how to install the dependencies with conda.
+
 Installation
 --------------
 ```bash
