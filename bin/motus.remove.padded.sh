@@ -1,10 +1,7 @@
 #!/bin/bash
 
-path=$1"_filt"
-mkdir $path
+path=$1"/pop/"
 
-for i in $(ls $1); do grep -v ":-:" $1/$i > $path/$i; done
+for i in $(ls $path); do grep -v ":-:" $path/$i > $1/$i; done
 
-mv $1 $1_padded
-mv $path $1
-
+rm -r $path
