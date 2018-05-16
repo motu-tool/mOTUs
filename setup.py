@@ -1,22 +1,70 @@
 #!/usr/bin/env python
 
 # ============================================================================ #
-# setup.py: prepare the mOTU profiler
+# setup.py: prepare the motus tool after cloning from github
+#
+# Author: Alessio Milanese (milanese@embl.de)
+#
+# Main steps:
+#    * Download the mOTUs database
+#    * Create a file with the version information
+#
 # ============================================================================ #
 
-motus_version = "0.6"
+motus_version = "2.0.0-rc1"
+link_db = "https://zenodo.org/record/1244715/files/db_mOTU_v2.0.0-rc1.tar.gz"
+md5_db = "a031a0e3b9402db1653bc7a447470e6c"
+DOI_db = "10.5281/zenodo.1244715"
 
 import os
 import sys
 import tempfile
 import shutil
 import subprocess
+import hashlib
+import time
 
-try:
-	import requests
-except:
-	sys.stderr.write("Error: request library is not installed. Run:\npipenv install requests\n(check http://docs.python-requests.org/en/master/user/install/)")
-	sys.exit(1)
+#function that detect the python version
+def python_version():
+	if(sys.version_info >= (3,0,0)):
+		return(3)
+	else:
+		return(2)
+
+# load correct library
+type_download = ""
+if python_version() == 2:
+	import urllib2
+	type_download = "python2"
+else:
+	import urllib.request
+	type_download = "python3"
+
+# function to print progress bar for python 3
+def reporthook(count, block_size, total_size):
+    global start_time
+    if count == 0:
+        start_time = time.time()
+        return
+    duration = time.time() - start_time
+    progress_size = int(count * block_size)
+    speed = int(progress_size / (1024 * duration))
+    percent = int(count * block_size * 100 / total_size)
+    sys.stdout.write("\r %d%%, %d MB, %d KB/s, %d seconds passed" %
+                    (percent, progress_size / (1024 * 1024), speed, duration))
+    sys.stdout.flush()
+
+def save_f(url, filename):
+    urllib.request.urlretrieve(url, filename, reporthook)
+
+
+# function to check md5
+def md5(fname):
+    hash_md5 = hashlib.md5()
+    with open(fname, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()
 
 
 
@@ -27,48 +75,60 @@ relative_path = "/".join(path_array[0:-1])
 relative_path = relative_path + "/"
 
 # ------------------------------------------------------------------------------
-# function to check if a specific tool exists
-def is_tool(name):
-	try:
-		devnull = open(os.devnull)
-		subprocess.Popen([name], stdout=devnull, stderr=devnull).communicate()
-	except OSError as e:
-		if e.errno == os.errno.ENOENT:
-			return False
-	return True
-
-# ------------------------------------------------------------------------------
 # MAIN
 # ------------------------------------------------------------------------------
 def main(argv=None):
-	sys.stdout.write("\n--- INSTALL MOTUS v2 ---\n")
+	sys.stderr.write(" ------------------------------------------------------------------------------\n")
+	sys.stderr.write("|                              SETUP MOTUS TOOL                                |\n")
+	sys.stderr.write(" ------------------------------------------------------------------------------\n")
 	# download the files -------------------------------------------------------
-	sys.stdout.write("Download the compressed motus database\n")
-
-	link = "https://oc.embl.de/index.php/s/wrz9YfKfrNyYCaY/download"
+	sys.stderr.write("Download the compressed motus database (~1Gb)\n")
 	db_name = relative_path+"db_mOTU.tar.gz"
-	with open(db_name, "wb") as f:
-		response = requests.get(link, stream=True)
-		total_length = response.headers.get('content-length')
 
-		if total_length is None: # no content length header
-			f.write(response.content)
-		else:
-			dl = 0
-			total_length = int(total_length)
-			for data in response.iter_content(chunk_size=4096):
-				dl += len(data)
-				f.write(data)
-				done = int(50 * dl / total_length)
-				sys.stdout.write("\r[%s%s]" % ('=' * done, ' ' * (50-done)) )
-				sys.stdout.flush()
-		sys.stdout.write("\n")
+	if type_download == "python2":
+		u = urllib2.urlopen(link_db)
+		f = open(db_name, 'wb')
+		meta = u.info()
+		file_size = int(meta.getheaders("Content-Length")[0])
+
+		file_size_dl = 0
+		block_sz = 100000
+		while True:
+		    buffer = u.read(block_sz)
+		    if not buffer:
+		        break
+
+		    file_size_dl += len(buffer)
+		    f.write(buffer)
+		    status = r"%10d  [%3.2f%%]" % (file_size_dl, file_size_dl * 100. / file_size)
+		    status = status + chr(8)*(len(status)+1)
+		    sys.stderr.write(status)
+
+		f.close()
+		sys.stderr.write("\n")
+
+	if type_download == "python3":
+		save_f(link_db, db_name)
+		sys.stderr.write("\n")
+
+	# check md5 ----------------------------------------------------------------
+	sys.stderr.write("\nCheck md5: ")
+	current_md5 = md5(db_name)
+
+	if current_md5 == md5_db:
+		sys.stderr.write("MD5 verified\n")
+	else:
+		sys.stderr.write("MD5 verification failed!\n")
+		os.remove(db_name)
+		sys.exit(1)
+
 
 	# extract files ------------------------------------------------------------
-	sys.stdout.write("\nExtract files from the archive:\n")
+	sys.stderr.write("Extract files from the archive...")
 	extract_cmd = "tar -zxvf "+db_name+" -C "+relative_path
 	try:
-		process = subprocess.Popen(extract_cmd.split(), stdout=subprocess.PIPE)
+		FNULL = open(os.devnull, 'w')
+		process = subprocess.Popen(extract_cmd.split(),stderr=FNULL,stdout=FNULL)
 		output, error = process.communicate()
 	except:
 		sys.stderr.write("Error: failed to extract files\n")
@@ -76,16 +136,18 @@ def main(argv=None):
 	if process.returncode:
 		sys.stderr.write("Error: failed to extract files\n")
 		sys.exit(1)
+	else:
+		sys.stderr.write("done\n")
 
 	# --- remove db file
-	sys.stdout.write("\nRemove zipped file...")
+	sys.stderr.write("Remove zipped file...")
 	os.remove(db_name)
-	sys.stdout.write("done\n")
+	sys.stderr.write("done\n")
 
 
 
 	# --------------- add file with version informations -----------------------
-	sys.stdout.write("\nAdd version file...")
+	sys.stderr.write("Add version file...")
 	path_versions = relative_path + "db_mOTU/versions"
 	try:
 		outfile = tempfile.NamedTemporaryFile(delete=False, mode = "w")
@@ -116,7 +178,7 @@ def main(argv=None):
 		sys.stderr.write("\nError while saving the file\n")
 		sys.exit(1)
 
-	sys.stdout.write("done\n")
+	sys.stderr.write("done\n\n")
 
 
 

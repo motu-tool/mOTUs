@@ -1,8 +1,34 @@
 #!/usr/bin/env python
 
 # ============================================================================ #
-# motus.py: mOTU profiling tools
+# motus - a tool for marker gene-based OTU (mOTU) profiling of metagenomes
+#
+# Authors: Alessio Milanese (milanese@embl.de),
+#          Daniel R. Mende (danielrmende@gmail.com),
+#          Georg Zeller (zeller@embl.de),
+#          Shinichi Sunagawa(ssunagawa@ethz.ch)
+#
+# Type "motus" for usage help
+#
+#  LICENSE:
+#    motus - a tool for marker gene-based OTU (mOTU) profiling
+#    Copyright (C) 2018  A. Milanese, D. R. Mende, G. Zeller & S. Sunagawa
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 # ============================================================================ #
+
 
 import os
 import sys
@@ -25,6 +51,11 @@ path_array = path_mOTUs.split("/")
 relative_path = "/".join(path_array[0:-1])
 relative_path = relative_path + "/"
 
+# check if setup.py has been ran already ---------------------------------------
+if not(os.path.isdir(relative_path+'db_mOTU')):
+    sys.stderr.write("[E::main] Error: database has not been downloaded. Run setup.py before using the motus profiler\n\n")
+    sys.exit(1)
+
 #-------------------------------------------------------------------------------
 # tool version
 path_info_version = relative_path + "db_mOTU/versions"
@@ -42,6 +73,7 @@ except:
 
 version_tool = versions["motus"]
 git_commit_id =  "# git tag version "+version_tool
+
 
 # add /bin to the path ---------------------------------------------------------
 try:
@@ -185,7 +217,7 @@ def print_menu_snv_call():
     sys.stderr.write("Usage: motus snv_call -d Directory -o Directory [options]\n\n")
     sys.stderr.write("Input options:\n")
     sys.stderr.write("   -d  DIR     Call metaSNV on all bam files in the directory. [Mandatory]\n")
-    sys.stderr.write("   -fb FLOAT   Coverage breadth: minimal horizontal genome coverage percentage per sample per species. Default=40.0\n")
+    sys.stderr.write("   -fb FLOAT   Coverage breadth: minimal horizontal genome coverage percentage per sample per species. Default=80.0\n")
     sys.stderr.write("   -fd FLOAT   Coverage depth: minimal average vertical genome coverage per sample per species. Default=5.0\n")
     sys.stderr.write("   -fm INT     Minimum number of samples per species. Default=2\n")
     sys.stderr.write("   -fp FLOAT   FILTERING STEP II: Required proportion of informative samples (coverage non-zero) per position. Default=0.50\n")
@@ -628,7 +660,7 @@ def main(argv=None):
     if (args.output == None): args.output = ""
 
     # default for snv_call
-    if (args.fb == None): args.fb = 40.0
+    if (args.fb == None): args.fb = 80.0
     if (args.fd == None): args.fd = 5.0
     if (args.fm == None): args.fm = 2
     if (args.fp == None): args.fp = 5.0
@@ -703,7 +735,6 @@ def main(argv=None):
             sys.stderr.write("[E::main] Error: -o is missing\n")
             sys.exit(1)
 
-        sys.stderr.write("Warning: snv_call has not been tested.\n")
         if (args.verbose>2): sys.stderr.write("[main] Begin metaSNV\n")
     # --------------------------------------------------------------------------
     #                       Settings/Params
@@ -764,8 +795,8 @@ def main(argv=None):
         (stdout, stderr) = p.communicate()
         mlf = open(msnv_log_file, 'w')
         mlf.write(metaSNV_command + '\n')
-        mlf.write(stdout + '\n')
-        mlf.write(stderr + '\n')
+        mlf.write(stdout.decode('ascii') + '\n')
+        mlf.write(stderr.decode('ascii') + '\n')
         if p.returncode:
             sys.stderr.write("[E::main] metaSNV finished with an error. Exiting\n")
             sys.stderr.write("[E::main] %s\n" %(stderr))
@@ -778,15 +809,15 @@ def main(argv=None):
         if args.verbose>=4:
             sys.stderr.write("[main] Executing metaSNV filter routine.\n")
             params = '-m 5 -d 10 -b 80 -p 0.9'
-        metaSNVFilter_command = 'metaSNV_Filtering_2.0.py %s -m %d -d %f -b %f -p %f -c %f --n_threads %d' %(outdir, fm, fd, fb, fp, fc, args.threads)
+        metaSNVFilter_command = 'python '+relative_path+'bin/metaSNV_Filtering_2.0.py %s -m %d -d %f -b %f -p %f -c %f --n_threads %d' %(outdir, fm, fd, fb, fp, fc, args.threads)
         if args.verbose>=4:
             sys.stderr.write("[main] Command: %s\n" % metaSNVFilter_command)
         metaSNVFilter_popenCMD = shlex.split(metaSNVFilter_command)
         p = subprocess.Popen(metaSNVFilter_popenCMD, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (stdout, stderr) = p.communicate()
         mlf.write(metaSNVFilter_command + '\n')
-        mlf.write(stdout + '\n')
-        mlf.write(stderr + '\n')
+        mlf.write(stdout.decode('ascii') + '\n')
+        mlf.write(stderr.decode('ascii') + '\n')
         if p.returncode:
             sys.stderr.write("[E::main] metaSNVFilter finished with an error. Exiting\n")
             sys.stderr.write("[E::main] %s\n" %(stderr))
@@ -798,15 +829,15 @@ def main(argv=None):
     # --------------------------------------------------------------------------
         if args.verbose>=4:
             sys.stderr.write("[main] Executing metaSNV remove padded routine.\n")
-        metaSNVRMPadded_command = 'motus.remove.padded.sh %s/filtered%s/pop' % (outdir, paramsdir)
+        metaSNVRMPadded_command = 'bash '+relative_path+'bin/motus.remove.padded.sh %s/filtered%s/pop' % (outdir, paramsdir)
         if args.verbose>=4:
             sys.stderr.write("[main] Command: %s\n" % metaSNVRMPadded_command)
         metaSNVRMPadded_popenCMD = shlex.split(metaSNVRMPadded_command)
         p = subprocess.Popen(metaSNVRMPadded_popenCMD, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (stdout, stderr) = p.communicate()
         mlf.write(metaSNVRMPadded_command + '\n')
-        mlf.write(stdout + '\n')
-        mlf.write(stderr + '\n')
+        mlf.write(stdout.decode('ascii') + '\n')
+        mlf.write(stderr.decode('ascii') + '\n')
         if p.returncode:
             sys.stderr.write("[E::main] metaSNVRMPadded finished with an error. Exiting\n")
             sys.stderr.write("[E::main] %s\n" %(stderr))
@@ -818,21 +849,34 @@ def main(argv=None):
     # --------------------------------------------------------------------------
         if args.verbose>=4:
             sys.stderr.write("[main] Executing metaSNV distance routine.\n")
-        metaSNVDist_command = 'metaSNV_DistDiv.py --filt %s/filtered%s --dist --n_threads %d' % (outdir, paramsdir, args.threads)
+        metaSNVDist_command = 'python '+relative_path+'bin/metaSNV_DistDiv.py --filt %s/filtered%s --dist --n_threads %d' % (outdir, paramsdir, args.threads)
         if args.verbose>=4:
             sys.stderr.write("[main] Command: %s\n" % metaSNVDist_command)
         metaSNVDist_popenCMD = shlex.split(metaSNVDist_command)
         p = subprocess.Popen(metaSNVDist_popenCMD, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (stdout, stderr) = p.communicate()
         mlf.write(metaSNVDist_command + '\n')
-        mlf.write(stdout + '\n')
-        mlf.write(stderr + '\n')
+        mlf.write(stdout.decode('ascii') + '\n')
+        mlf.write(stderr.decode('ascii') + '\n')
         if p.returncode:
             sys.stderr.write("[E::main] metaSNVDist finished with an error. Exiting\n")
             sys.stderr.write("[E::main] %s\n" %(stderr))
             sys.stderr.write("[E::main] %s\n" %(stdout))
             mlf.close()
             sys.exit(1)
+    # --------------------------------------------------------------------------
+    #                          KEEP ONLY INTERESTING FILES
+    # --------------------------------------------------------------------------
+        # remove files
+        os.remove(os.path.abspath(os.path.join(outdir, 'all_samples')))
+        os.remove(os.path.abspath(os.path.join(outdir, 'bed_header')))
+        shutil.rmtree(os.path.abspath(os.path.join(outdir, 'bestsplits')))
+        shutil.rmtree(os.path.abspath(os.path.join(outdir, 'cov')))
+        shutil.rmtree(os.path.abspath(os.path.join(outdir, 'distances')))
+        shutil.rmtree(os.path.abspath(os.path.join(outdir, 'filtered')))
+        shutil.rmtree(os.path.abspath(os.path.join(outdir, 'snpCaller')))
+
+
         if (args.verbose>=2): sys.stderr.write("[main] End metaSNV\n")
         mlf.close()
         sys.exit(0)
