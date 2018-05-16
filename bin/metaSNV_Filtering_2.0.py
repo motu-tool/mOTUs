@@ -262,7 +262,7 @@ if __name__ == "__main__":
     # Filtering II - Position wise filtering
     # =========================================
 
-    pars_toprint = '-m{}-d{}-b{}-p{}'.format(int(args.m), int(args.d), int(args.b), float(args.p))
+    pars_toprint = '-m{}-d{}-b{}-c{}-p{}'.format(int(args.m), int(args.d), int(args.b), int(args.c), float(args.p))
     filt_folder = args.projdir + '/filtered' + pars_toprint + '/'
 
     if not os.path.exists(filt_folder):
