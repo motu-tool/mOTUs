@@ -178,7 +178,7 @@ def print_menu_profile():
     sys.stderr.write("   -M FILE         save the mgc reads count (intermediate step) [None]\n")
     sys.stderr.write("   -e              profile only reference species (ref_mOTUs)\n")
     #sys.stderr.write("   -p       visualize the specI ID instead of the species name\n") # alway visualize
-    sys.stderr.write("   -w              print result as relative abundance instead of raw reads\n")
+    sys.stderr.write("   -w              print result as relative abundances instead of counts\n")
     sys.stderr.write("   -p              print NCBI id\n")
     sys.stderr.write("   -u              print the full name of the species\n")
     sys.stderr.write("   -q              print the full rank taxonomy\n")
@@ -272,7 +272,7 @@ def print_menu_map_lgs():
     sys.stderr.write("   -o FILE  output file name [stdout]\n")
     sys.stderr.write("   -e       profile only reference species (ref_mOTUs)\n")
     sys.stderr.write("   -B       print result in BIOM format\n")
-    sys.stderr.write("   -w       print result as relative abundance instead of raw reads\n")
+    sys.stderr.write("   -w       print result as relative abundances instead of counts\n")
     sys.stderr.write("   -p       print NCBI id\n")
     sys.stderr.write("   -u       print the full name of the species\n")
     sys.stderr.write("   -q       print the full rank taxonomy\n")
