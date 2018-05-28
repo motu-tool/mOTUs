@@ -38,7 +38,7 @@ def get_arguments():
     parser.add_argument("--debug", action="store_true", help=argparse.SUPPRESS)
 
     # REQUIRED  arguments:
-    parser.add_argument('--filt', metavar=': Filtered frequency files', help="Folder containing /pop/*.filtered.freq", required = True)
+    parser.add_argument('--filt', metavar=': Filtered frequency files', help="Folder containing /*.filtered.freq", required = True)
 
     # OPTIONAL  arguments:
     parser.add_argument('--dist',action='store_true', help="Compute distances")
@@ -117,7 +117,7 @@ def computeAllDist(args):
 
     print ("Computing distances")
 
-    allFreq = glob.glob(args.filt + '/pop/*.freq')
+    allFreq = glob.glob(args.filt + '/*.freq')
 
     p = Pool(processes = args.n_threads)
     p.map(computeDist, allFreq)
@@ -290,7 +290,7 @@ def computeAllDiv(args):
     bedfile_tab = bedfile_tab.set_index(pd.Index(bed_index))
 
     #All filtered.freq files in input folder
-    allFreq = glob.glob(args.filt + '/pop/*.freq')
+    allFreq = glob.glob(args.filt + '/*.freq')
 
     if args.div:
         p = Pool(processes = args.n_threads)

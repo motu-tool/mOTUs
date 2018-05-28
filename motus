@@ -663,8 +663,9 @@ def main(argv=None):
     if (args.fb == None): args.fb = 80.0
     if (args.fd == None): args.fd = 5.0
     if (args.fm == None): args.fm = 2
-    if (args.fp == None): args.fp = 5.0
-    if (args.fc == None): args.fc = 0.50
+    if (args.fc == None): args.fc = 5.0
+    if (args.fp == None): args.fp = 0.9
+
 
     # check min length alignment
     default_min_len_align_length = 75 # min length align that we use to filter for profiling
@@ -752,7 +753,7 @@ def main(argv=None):
         fm = args.fm
         fp = args.fp
         fc = args.fc
-        paramsdir = '-m{}-d{}-b{}-p{}'.format(int(args.fm), int(args.fd), int(args.fb), float(args.fp))
+        paramsdir = '-m{}-d{}-b{}-c{}-p{}'.format(int(args.fm), int(args.fd), int(args.fb), int(args.fc), float(args.fp))
         threads = args.threads
         sample_file = os.path.abspath(os.path.join(bamdir, 'sample_list'))
         outdir = os.path.abspath(args.output)
@@ -829,7 +830,7 @@ def main(argv=None):
     # --------------------------------------------------------------------------
         if args.verbose>=4:
             sys.stderr.write("[main] Executing metaSNV remove padded routine.\n")
-        metaSNVRMPadded_command = 'bash '+relative_path+'bin/motus.remove.padded.sh %s/filtered%s/pop' % (outdir, paramsdir)
+        metaSNVRMPadded_command = 'bash '+relative_path+'bin/motus.remove.padded.sh %s/filtered%s/' % (outdir, paramsdir)
         if args.verbose>=4:
             sys.stderr.write("[main] Command: %s\n" % metaSNVRMPadded_command)
         metaSNVRMPadded_popenCMD = shlex.split(metaSNVRMPadded_command)
