@@ -256,7 +256,7 @@ if __name__ == "__main__":
     samples_of_interest = relevant_taxa(args)['SoI']
     header_cov = relevant_taxa(args)['h']
 
-    print (samples_of_interest.keys())
+    print(samples_of_interest.keys())
 
     # =========================================
     # Filtering II - Position wise filtering
@@ -273,11 +273,11 @@ if __name__ == "__main__":
         os.makedirs(filt_folder)
         os.makedirs(filt_folder + '/pop/')
 
-    p = Pool(processes = args.n_threads)
+    p = Pool(processes=args.n_threads)
     partial_Div = partial(filter_two,
-                          args = args,
-                          snp_files = glob.glob(args.projdir + '/snpCaller/called*'),
-                          outdir = filt_folder + '/pop')
+                          args=args,
+                          snp_files=glob.glob(args.projdir + '/snpCaller/called*'),
+                          outdir=filt_folder + '/pop')
     p.map(partial_Div, samples_of_interest.keys())
     p.close()
     p.join()

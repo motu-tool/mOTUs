@@ -11,7 +11,6 @@ from bz2 import BZ2File
 import sys
 import os
 import shlex
-import tempfile
 import subprocess
 
 # ------------------------------------------------------------------------------
@@ -173,7 +172,7 @@ def is_fastq(fastq_file,verbose):
 # ------------------------------------------------------------------------------
 # read the length from a bam/sam file
 # ------------------------------------------------------------------------------
-def read_length_from_bam_file (SAM_BAM_file):
+def read_length_from_bam_file(SAM_BAM_file):
     samLines = readSAMfile(SAM_BAM_file)
     try:
         for strSamline in samLines:
