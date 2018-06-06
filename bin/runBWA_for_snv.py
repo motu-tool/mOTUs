@@ -11,7 +11,6 @@ import argparse
 import shlex
 import time
 import subprocess
-import glob
 import re
 
 
@@ -84,9 +83,9 @@ def runBWA_singleEnd(strFilteredReadFile, reference, msamPercID, msamminLength, 
 	# run bwa
 	try:
 		if (zippedInput):
-			bwaCMD = "bwa mem -Y -v 1 -a" + techFlag + threadsFlag + " " + reference  + " -"
+			bwaCMD = "bwa mem -Y -v 1 -a" + techFlag + threadsFlag + " " + reference + " -"
 		else:
-			bwaCMD = "bwa mem -Y -v 1 -a" + techFlag + threadsFlag + " " + reference  + " " + strFilteredReadFile
+			bwaCMD = "bwa mem -Y -v 1 -a" + techFlag + threadsFlag + " " + reference + " " + strFilteredReadFile
 
 		if verbose >= 5: sys.stderr.write("bwa call:\n"+bwaCMD+"\n")
 
@@ -179,7 +178,7 @@ def runBWA_singleEnd(strFilteredReadFile, reference, msamPercID, msamminLength, 
 # ------------------------------------------------------------------------------
 # run the bwa mapping considering paired end
 # ------------------------------------------------------------------------------
-def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, output, bamOutput, msam_script,technology, verbose, profile_mode ,lane_id,msamminLength_from_motus):
+def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, output, bamOutput, msam_script, technology, verbose, profile_mode, lane_id,msamminLength_from_motus):
 	# parameters for msamtools are fixed
 	msamPercID = 0.97
 	msamminLength = msamminLength_from_motus
@@ -293,7 +292,7 @@ def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, o
 def main(argv=None):
 
 	#----------------------------- input parameters ----------------------------
-	parser = argparse.ArgumentParser(description='This program calculates mOTU abundances for one sample', add_help = True)
+	parser = argparse.ArgumentParser(description='This program calculates mOTU abundances for one sample', add_help=True)
 	parser.add_argument('reference', action="store", help='name/prefix of bwa indexed reference')
 	parser.add_argument('--forwardReads', '-f', action="store", default="",dest='forwardReads', help='name of input file for reads in forward orientation, fastq formatted, can be gzipped')
 	parser.add_argument('--reverseReads', '-r', action="store", default="",dest='reverseReads', help='name of input file for reads in reverse orientation, fastq formatted, can be gzipped')

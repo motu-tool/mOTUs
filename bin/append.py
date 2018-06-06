@@ -27,22 +27,22 @@ def cArray(size1,size2):
 # ------------------------------------------------------------------------------
 def append_profilings(directory, list_files, output, verbose, BIOM_output,version_append,motu_call,version_tool):
 	#--------------------------- save files ------------------------------------
-	if directory == None and list_files == None:
+	if directory is None and list_files is None:
 		sys.stderr.write("[E::merge] Error: both -d and -i are empty")
 		sys.exit(1)
 
-	if list_files != None:
+	if list_files is not None:
 		list_files = list_files.split(",")
 		first_file = list_files[0]
 
-	if directory != None:
+	if directory is not None:
 		try:
 			list_files = os.listdir(directory)
 		except:
 			sys.stderr.write("[E::merge] Error: failed to open directory: "+directory+"\n")
 			sys.exit(1)
 		list_files = sorted(list_files)
-		if verbose>2:sys.stderr.write(" [merge] Number of detected files: " +str(len(list_files))+"\n")
+		if verbose>2: sys.stderr.write(" [merge] Number of detected files: " +str(len(list_files))+"\n")
 		first_file = directory+list_files[0]
 
 	# first file to get informations
@@ -84,7 +84,6 @@ def append_profilings(directory, list_files, output, verbose, BIOM_output,versio
 	array_c = cArray(len(list_files),len(taxa_id))
 
 	#for all the files
-	info_version = ""
 	headers = ""
 	cont_files = 0
 	all_info_version = dict()
@@ -163,7 +162,7 @@ def append_profilings(directory, list_files, output, verbose, BIOM_output,versio
 
 	#----------------------------- append files --------------------------------
 	if output != "":
-		outfile = tempfile.NamedTemporaryFile(delete=False, mode = "w")
+		outfile = tempfile.NamedTemporaryFile(delete=False, mode="w")
 		os.chmod(outfile.name, 0o644)
 		#outfile = open(output, "w")
 	else:
@@ -260,7 +259,7 @@ def append_profilings(directory, list_files, output, verbose, BIOM_output,versio
 
 
 	if output != "":
-		if verbose>2:sys.stderr.write(" [merge] (Saving the the merged profiles)\n")
+		if verbose>2: sys.stderr.write(" [merge] (Saving the the merged profiles)\n")
 		try:
 			outfile.flush()
 			os.fsync(outfile.fileno())

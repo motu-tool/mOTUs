@@ -4,7 +4,7 @@ import sys
 import re
 
 # to execute for 1 line
-def check_one_line (line,min_perc_id,min_length_align,min_perc_cover,res_stdout):
+def check_one_line(line,min_perc_id,min_length_align,min_perc_cover,res_stdout):
     if len(line) == 0:
         if not res_stdout:
             return "None"
@@ -63,7 +63,7 @@ def check_one_line (line,min_perc_id,min_length_align,min_perc_cover,res_stdout)
 
 
 # run for all lines
-def run_all_lines (min_perc_id,min_length_align,min_perc_cover,input_t):
+def run_all_lines(min_perc_id,min_length_align,min_perc_cover,input_t):
     if input_t == "None":
         for line in sys.stdin:
             check_one_line(line,min_perc_id,min_length_align,min_perc_cover,True)
@@ -86,7 +86,7 @@ def main(argv=None):
     #type of input - if it is null then we choose stdin, otherwise it is the input itself
     input_t = sys.argv[4]
 
-    run_all_lines (min_perc_id,min_length_align,min_perc_cover,input_t)
+    run_all_lines(min_perc_id,min_length_align,min_perc_cover,input_t)
 
 
 

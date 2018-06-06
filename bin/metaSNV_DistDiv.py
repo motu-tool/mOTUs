@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 import os
 import sys
-import time
 import argparse
 import glob
-from shutil import copyfile
 from multiprocessing import Pool
 from functools import partial
 
@@ -38,7 +36,7 @@ def get_arguments():
     parser.add_argument("--debug", action="store_true", help=argparse.SUPPRESS)
 
     # REQUIRED  arguments:
-    parser.add_argument('--filt', metavar=': Filtered frequency files', help="Folder containing /*.filtered.freq", required = True)
+    parser.add_argument('--filt', metavar=': Filtered frequency files', help="Folder containing /*.filtered.freq", required=True)
 
     # OPTIONAL  arguments:
     parser.add_argument('--dist',action='store_true', help="Compute distances")
@@ -115,11 +113,11 @@ def computeDist(filt_file):
 
 def computeAllDist(args):
 
-    print ("Computing distances")
+    print("Computing distances")
 
     allFreq = glob.glob(args.filt + '/*.freq')
 
-    p = Pool(processes = args.n_threads)
+    p = Pool(processes=args.n_threads)
     p.map(computeDist, allFreq)
     p.close()
     p.join()
@@ -156,7 +154,7 @@ def compute_diversity(sample1, sample2):
         # No duplicates
         return dist_nd
 
-    both = pd.DataFrame({'s1' : sample1d, 's2' : sample2d})
+    both = pd.DataFrame({'s1': sample1d, 's2': sample2d})
     both = both.reset_index()
     both = pd.concat([both,(1. - both.groupby('index').sum()).reset_index()])
     dist_d = both.groupby('index', group_keys=False).apply(position_diversity).sum()
@@ -279,7 +277,7 @@ def computeAllDiv(args):
 
     '''Computing diversities & FST'''
 
-    print ("Computing diversities & FST")
+    print("Computing diversities & FST")
 
     # Load external info : Coverage, genomes size, genes size
     horizontal_coverage = pd.read_table(args.percentage_file, skiprows=[1], index_col=0)
@@ -293,15 +291,15 @@ def computeAllDiv(args):
     allFreq = glob.glob(args.filt + '/*.freq')
 
     if args.div:
-        p = Pool(processes = args.n_threads)
-        partial_Div = partial(computeDiv,  horizontal_coverage = horizontal_coverage, vertical_coverage = vertical_coverage, bedfile_tab = bedfile_tab, matched = args.matched)
+        p = Pool(processes=args.n_threads)
+        partial_Div = partial(computeDiv, horizontal_coverage=horizontal_coverage, vertical_coverage=vertical_coverage, bedfile_tab=bedfile_tab, matched=args.matched)
         p.map(partial_Div, allFreq)
         p.close()
         p.join()
 
     if args.divNS:
-        p = Pool(processes = args.n_threads)
-        partial_DivNS = partial(computeDivNS,  horizontal_coverage = horizontal_coverage, vertical_coverage = vertical_coverage, bedfile_tab = bedfile_tab, matched = args.matched)
+        p = Pool(processes=args.n_threads)
+        partial_DivNS = partial(computeDivNS, horizontal_coverage=horizontal_coverage, vertical_coverage=vertical_coverage, bedfile_tab=bedfile_tab, matched=args.matched)
         p.map(partial_DivNS, allFreq)
         p.close()
         p.join()

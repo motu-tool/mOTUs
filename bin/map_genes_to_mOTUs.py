@@ -8,7 +8,7 @@ import string
 import shlex
 import time
 import subprocess
-import glob
+import tempfile
 import shutil
 
 #function that detect the python version
@@ -42,7 +42,7 @@ def printDictToFile(dictData, header, outfileName, return_dictionary):
 
 	if outfileName!="":
 		#outfile = open(outfileName,"w")
-		outfile = tempfile.NamedTemporaryFile(delete=False, mode = "w")
+		outfile = tempfile.NamedTemporaryFile(delete=False, mode="w")
 		os.chmod(outfile.name, 0o644)
 		if (header):
 			outfile.write(header + "\n")
@@ -570,7 +570,6 @@ def filterInsert(listInsertSAMdicts, dictGene2mOTUs,verbose):
 	dictSecondReadsRef2alignmentScore = defaultdict(int)
 	dictRef2alignmentScore = defaultdict(int)
 
-	counter = 0
 	#this loop divides all alignments of an insert into forward and reverse reads
 	#if neither the firstRead nor the secondRead is set, the read is assigned to the forward reads
 	#forward read is the default so inserts or single ended reads will be stored as such
@@ -719,7 +718,7 @@ def parseBWA_SAMoutput(samLines, dictGene2counts, dictGene2basecount, dictRefere
 		count0 += 1
 
 		dictSAMline = parseSamLine(strSamline)
-		if dictSAMline == None:
+		if dictSAMline is None:
 			sys.stderr.write("[calc_mgc] Warning. Skip line: "+strSamline+"\n")
 			continue
 		dictSAMflag = parseSAMflag(dictSAMline["samflag"])
@@ -876,7 +875,7 @@ def get_mOTU_abundances(dictUniqueInsertCounts, dictUniqueBaseCounts, listMultip
 
 		currInsertCount = dictUniqueInsertCounts[geneName]
 		currInsertCoverage = float(currInsertCount)/float(geneLength)
-		totalInsertCoverage =+ currInsertCoverage
+		totalInsertCoverage += currInsertCoverage
 		dictmOTU_insert_rawCounts[mOTUname] += currInsertCount
 		dictmOTU_insert_coverage[mOTUname] += currInsertCoverage
 		dictmOTU_insert_rawCounts_uniq[mOTUname] += currInsertCount
@@ -884,7 +883,7 @@ def get_mOTU_abundances(dictUniqueInsertCounts, dictUniqueBaseCounts, listMultip
 
 		currBaseCount = dictUniqueBaseCounts[geneName]
 		currBaseCoverage = float(currBaseCount)/float(geneLength)
-		totalBaseCoverage =+ currBaseCoverage
+		totalBaseCoverage += currBaseCoverage
 		dictmOTU_bases_rawCounts[mOTUname] += currBaseCount
 		dictmOTU_bases_coverage[mOTUname] += currBaseCoverage
 		dictmOTU_bases_rawCounts_uniq[mOTUname] += currBaseCount
@@ -1202,7 +1201,7 @@ def run_mOTUs_v2_mapping(listInputFiles, databaseDir, databasePrefix, sampleName
 	# version used in the 1st script
 	version_information_map_read = {0:"no_info"}
 
-	if profile_mode == False:
+	if profile_mode is False:
 		cont = 0
 		all_infor_map_reads = dict()
 		for inputFile in listInputFiles:

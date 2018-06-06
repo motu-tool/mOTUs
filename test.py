@@ -14,9 +14,7 @@
 import os
 import sys
 import tempfile
-import shutil
 import subprocess
-import hashlib
 
 # position of the script -------------------------------------------------------
 path_mOTUs = os.path.realpath(__file__)
@@ -48,7 +46,7 @@ def main(argv=None):
 	# check if setup.py has been ran already -----------------------------------
 	sys.stderr.write("\n1-- ran setup.py: ")
 	if os.path.isdir(relative_path+'db_mOTU'):
-	    sys.stderr.write("done\n\n")
+		sys.stderr.write("done\n\n")
 	else:
 		sys.stderr.write("ERROR. Run setup.py\n\n")
 		sys.exit(1)
@@ -94,7 +92,7 @@ def main(argv=None):
 	# Run motus on a test file
 	test_file = relative_path+'db_mOTU/test0001.fastq'
 	ground_truth_file = relative_path+'db_mOTU/test0001.motus'
-	temp_file_profile = tempfile.NamedTemporaryFile(delete=False, mode = "w")
+	temp_file_profile = tempfile.NamedTemporaryFile(delete=False, mode="w")
 
 	sys.stderr.write("\n3-- Taxonomy profiling test:\n")
 	sys.stderr.write("- Run motus (-v 1, only error messages):\n")
