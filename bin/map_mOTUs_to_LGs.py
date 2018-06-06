@@ -276,7 +276,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
     # divide by sum
     rel_ab_LGs_rel = dict()
     s = sum(rel_ab_LGs.values())
-    if print_rel_ab:
+    if not print_rel_ab:
         if s != 0:
             for j in list_LGs:
                 rel_ab_LGs_rel[j] = float(rel_ab_LGs[j])/s
@@ -549,7 +549,7 @@ def main(argv=None):
     parser.add_argument('--sampleName', '-sn', action="store", dest='sampleName', default="", help='sample name for the current mapping')
     parser.add_argument('--taxonomic_level', action="store", default="species", dest='taxonomic_level', help='Taxonomic level for the profiling')
     parser.add_argument('--BIOM_output', action="store_true", default=False, dest='BIOM_output', help='print the result in BIOM format')
-    parser.add_argument('-w', action='store_true', default=False, dest='print_rel_ab', help='print result as relative abundance instead of raw reads')
+    parser.add_argument('-c', action='store_true', default=False, dest='print_rel_ab', help='print result as counts instead of relative abundance')
     parser.add_argument('-e', action='store_true', default=False, dest='print_NCBI_id', help='print NCBI id')
     parser.add_argument('--version', '-v', action='version', version='%(prog)s 1.0')
     args = parser.parse_args()
