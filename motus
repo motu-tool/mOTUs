@@ -178,7 +178,7 @@ def print_menu_profile():
     sys.stderr.write("   -M FILE         save the mgc reads count (intermediate step) [None]\n")
     sys.stderr.write("   -e              profile only reference species (ref_mOTUs)\n")
     #sys.stderr.write("   -p       visualize the specI ID instead of the species name\n") # alway visualize
-    sys.stderr.write("   -w              print result as relative abundances instead of counts\n")
+    sys.stderr.write("   -c              print result as counts instead of relative abundances\n")
     sys.stderr.write("   -p              print NCBI id\n")
     sys.stderr.write("   -u              print the full name of the species\n")
     sys.stderr.write("   -q              print the full rank taxonomy\n")
@@ -189,7 +189,7 @@ def print_menu_profile():
     sys.stderr.write("   -g INT          number of marker genes cutoff: 1=higher recall, 6=higher precision [3]\n")
     sys.stderr.write("   -l INT          min. length of alignment for the reads (number of nucleotides) [75]\n")
     #sys.stderr.write("   -L FLOAT        min. length of alignment for the reads (percentage of the average read length) [None]\n")
-    #sys.stderr.write("   -c INT          number of cores for bwa (max one per lane) [1]\n")
+    #sys.stderr.write("   -C INT          number of cores for bwa (max one per lane) [1]\n")
     sys.stderr.write("   -t INT          number of threads [1]\n")
     sys.stderr.write("   -v INT          verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n")
     sys.stderr.write("   -y STR          type of read counts [insert.scaled_counts]\n")
@@ -207,7 +207,7 @@ def print_menu_map_snv():
     sys.stderr.write("   -o FILE         output bam file name [stdout]\n\n")
     sys.stderr.write("Algorithm options:\n")
     sys.stderr.write("   -l INT          min. length of alignment for the reads (number of nucleotides) [75]\n")
-    #sys.stderr.write("   -c INT          number of cores for bwa (max one per lane) [1]\n")
+    #sys.stderr.write("   -C INT          number of cores for bwa (max one per lane) [1]\n")
     sys.stderr.write("   -t INT          number of threads [1]\n")
     sys.stderr.write("   -v INT          verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n\n")
 
@@ -241,7 +241,7 @@ def print_menu_bwa():
     sys.stderr.write("   -b              save the result of bwa in bam format\n\n")
     sys.stderr.write("Algorithm options:\n")
     sys.stderr.write("   -l INT          min. length of alignment for the reads (number of nucleotides) [75]\n")
-    #sys.stderr.write("   -c INT          number of cores for bwa (max one per lane) [1]\n")
+    #sys.stderr.write("   -C INT          number of cores for bwa (max one per lane) [1]\n")
     sys.stderr.write("   -t INT          number of threads [1]\n")
     sys.stderr.write("   -v INT          verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n\n")
 
@@ -272,7 +272,7 @@ def print_menu_map_lgs():
     sys.stderr.write("   -o FILE  output file name [stdout]\n")
     sys.stderr.write("   -e       profile only reference species (ref_mOTUs)\n")
     sys.stderr.write("   -B       print result in BIOM format\n")
-    sys.stderr.write("   -w       print result as relative abundances instead of counts\n")
+    sys.stderr.write("   -c       print result as counts instead of relative abundances\n")
     sys.stderr.write("   -p       print NCBI id\n")
     sys.stderr.write("   -u       print the full name of the species\n")
     sys.stderr.write("   -q       print the full rank taxonomy\n")
@@ -450,7 +450,7 @@ def main(argv=None):
     parser.add_argument('-v', action='store', type=int, default=None, dest='verbose', help='Verbose levels')
     parser.add_argument('-d', action="store", default=None, dest='directory_append', help='directory from where to take the files to append')
     parser.add_argument('-B', action='store_true', default=None, dest='BIOM_output', help='print output in BIOM format')
-    parser.add_argument('-w', action='store_true', default=None, dest='print_rel_ab', help='print result as relative abundance instead of raw reads')
+    parser.add_argument('-c', action='store_true', default=None, dest='print_rel_ab', help='print result as count instead of relative abundance')
     parser.add_argument('-u', action='store_true', default=None, dest='print_long_names', help='print names of the species in long format')
     parser.add_argument('-q', action='store_true', default=None, dest='print_full_rank', help='print the full rank of the taxonomy')
     parser.add_argument('-p', action='store_true', default=None, dest='print_NCBI_id', help='print NCBI id')
@@ -461,7 +461,7 @@ def main(argv=None):
     parser.add_argument('-l', type=int, action="store", dest='min_len_align_length', default=None, help='Minimum length of the alignment')
     #parser.add_argument('-L', type=float, action="store", dest='min_len_align_perc', default=None, help='Minimum length of the alignment, as percentage of the average read length')
     # develope, but to be checked
-    parser.add_argument('-c', type=int, action="store", dest='number_of_cores', default=None, help='Number of cores to use for bwa')
+    parser.add_argument('-C', type=int, action="store", dest='number_of_cores', default=None, help='Number of cores to use for bwa')
     # db has to be deleted
     #parser.add_argument('-db', action="store", default = None, dest='db', help='database of marker genes',choices=['nr', 'aug.cen', 'cen'])
     parser.add_argument('-save_sam_lines', action="store", dest='save_sam_lines', default=None, help='name of output file')
@@ -518,7 +518,7 @@ def main(argv=None):
         if ((args.listInputFiles != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -i ignored\n")
         if ((args.motu_read_counts_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -m ignored\n")
         if ((args.BIOM_output != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -B ignored\n")
-        if ((args.print_rel_ab != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -w ignored\n")
+        if ((args.print_rel_ab != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -c ignored\n")
         if ((args.print_full_rank != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -q ignored\n")
         if ((args.print_NCBI_id != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -p ignored\n")
         if ((args.print_long_names != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -u ignored\n")
@@ -536,7 +536,7 @@ def main(argv=None):
         if ((args.type_output != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -y ignored\n")
         if ((args.sampleName != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -n ignored\n")
         if ((args.motu_read_counts_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -m ignored\n")
-        if ((args.print_rel_ab != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -w ignored\n")
+        if ((args.print_rel_ab != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -c ignored\n")
         if ((args.print_full_rank != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -q ignored\n")
         if ((args.print_NCBI_id != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -p ignored\n")
         if ((args.print_long_names != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -u ignored\n")
@@ -563,7 +563,7 @@ def main(argv=None):
         if ((args.listInputFiles != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -i ignored\n")
         if ((args.motu_read_counts_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -m ignored\n")
         if ((args.BIOM_output != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -B ignored\n")
-        if ((args.print_rel_ab != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -w ignored\n")
+        if ((args.print_rel_ab != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -c ignored\n")
         if ((args.print_full_rank != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -q ignored\n")
         if ((args.print_NCBI_id != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -p ignored\n")
         if ((args.print_long_names != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -u ignored\n")
@@ -587,7 +587,7 @@ def main(argv=None):
         if ((args.onlySpecI != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -e ignored\n")
         if ((args.motu_read_counts_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -m ignored\n")
         if ((args.BIOM_output != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -B ignored\n")
-        if ((args.print_rel_ab != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -w ignored\n")
+        if ((args.print_rel_ab != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -c ignored\n")
         if ((args.print_full_rank != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -q ignored\n")
         if ((args.print_NCBI_id != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -p ignored\n")
         if ((args.print_long_names != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -u ignored\n")
@@ -622,7 +622,7 @@ def main(argv=None):
         if ((args.type_output != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -y ignored\n")
         if ((args.sampleName != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -n ignored\n")
         if ((args.motu_read_counts_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -m ignored\n")
-        if ((args.print_rel_ab != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -w ignored\n")
+        if ((args.print_rel_ab != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -c ignored\n")
         if ((args.print_full_rank != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -q ignored\n")
         if ((args.print_NCBI_id != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -p ignored\n")
         if ((args.print_long_names != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -u ignored\n")
@@ -714,7 +714,7 @@ def main(argv=None):
         sys.stderr.write("[E::main] Error: number of threads (-t) is less than 1\n")
         sys.exit(1)
     if args.number_of_cores < 1:
-        sys.stderr.write("[E::main] Error: number of cores (-c) is less than 1\n")
+        sys.stderr.write("[E::main] Error: number of cores (-C) is less than 1\n")
         sys.exit(1)
     if args.map_lgs_cutoff<1 or args.map_lgs_cutoff>6:
         sys.stderr.write("[E::main] Error: invalid number of marker genes cutoff (-g): "+str(args.map_lgs_cutoff)+" (possible values: from 1 to 6)\n")
@@ -909,7 +909,7 @@ def main(argv=None):
     version_map_lgs = version_map_lgs + " -k "+args.taxonomic_level
     version_map_lgs = version_map_lgs + " -g "+str(args.map_lgs_cutoff)
     if args.onlySpecI: version_map_lgs = version_map_lgs + " -e"
-    if args.print_rel_ab: version_map_lgs = version_map_lgs + " -w"
+    if args.print_rel_ab: version_map_lgs = version_map_lgs + " -c"
     if args.print_NCBI_id: version_map_lgs = version_map_lgs + " -p"
     if args.print_long_names: version_map_lgs = version_map_lgs + " -u"
     version_map_lgs = version_map_lgs + " | taxonomy: ref_mOTU_"+str(versions["specI_tax"])
@@ -984,7 +984,7 @@ def main(argv=None):
             if args.number_of_cores > number_of_lanes:
                 if args.verbose >= 2: sys.stderr.write(" [W::map_db] Warning: We use only "+str(number_of_lanes)+" out of "+str(args.number_of_cores)+" cores\n")
             if args.number_of_cores < number_of_lanes and args.number_of_cores != 1:
-                if args.verbose >= 2: sys.stderr.write(" [W::map_db] Warning: multiple cores computation is implemented only if the number of cores is equal to the number of lanes ("+str(number_of_lanes)+"). Set -c "+str(number_of_lanes)+"\n")
+                if args.verbose >= 2: sys.stderr.write(" [W::map_db] Warning: multiple cores computation is implemented only if the number of cores is equal to the number of lanes ("+str(number_of_lanes)+"). Set -C "+str(number_of_lanes)+"\n")
                 multiple_cores = False
             #prepare data
             if multiple_cores:
@@ -1508,7 +1508,7 @@ def main(argv=None):
         if args.number_of_cores > number_of_lanes:
             if args.verbose >= 2: sys.stderr.write(" [W::map_db] Warning: We use only "+str(number_of_lanes)+" out of "+str(args.number_of_cores)+" cores\n")
         if args.number_of_cores < number_of_lanes and args.number_of_cores != 1:
-            if args.verbose >= 2: sys.stderr.write(" [W::map_db] Warning: multiple cores computation is implemented only if the number of cores is equal to the number of lanes ("+str(number_of_lanes)+"). Set -c "+str(number_of_lanes)+"\n")
+            if args.verbose >= 2: sys.stderr.write(" [W::map_db] Warning: multiple cores computation is implemented only if the number of cores is equal to the number of lanes ("+str(number_of_lanes)+"). Set -C "+str(number_of_lanes)+"\n")
             multiple_cores = False
         #prepare data
         if multiple_cores:
