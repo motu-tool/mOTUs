@@ -260,11 +260,11 @@ def computeDivNS(filt_file, horizontal_coverage, vertical_coverage, bedfile_tab,
         correction_coverage[j][j] = correction_coverage[j][j] / correction_within
 
     div_N = [[compute_diversity(data_N.iloc[:, i], data_N.iloc[:, j]) / correction_coverage[j][i] for i in range(j + 1)] for j in range(len(data_N.columns))]
-    div_N = pd.DataFrame(div, index=data_N.columns, columns=data_N.columns)
+    div_N = pd.DataFrame(div_N, index=data_N.columns, columns=data_N.columns)
     div_N.to_csv(outdir + '/' + '%s.N_diversity' % species, sep='\t')
 
     div_S = [[compute_diversity(data_S.iloc[:, i], data_S.iloc[:, j]) / correction_coverage[j][i] for i in range(j + 1)] for j in range(len(data_S.columns))]
-    div_S = pd.DataFrame(div, index=data_S.columns, columns=data_S.columns)
+    div_S = pd.DataFrame(div_S, index=data_S.columns, columns=data_S.columns)
     div_S.to_csv(outdir + '/' + '%s.S_diversity' % species, sep='\t')
 
 
