@@ -875,7 +875,7 @@ def get_mOTU_abundances(dictUniqueInsertCounts, dictUniqueBaseCounts, listMultip
 
 		currInsertCount = dictUniqueInsertCounts[geneName]
 		currInsertCoverage = float(currInsertCount)/float(geneLength)
-		totalInsertCoverage += currInsertCoverage
+		totalInsertCoverage = currInsertCoverage # this variable is not used?
 		dictmOTU_insert_rawCounts[mOTUname] += currInsertCount
 		dictmOTU_insert_coverage[mOTUname] += currInsertCoverage
 		dictmOTU_insert_rawCounts_uniq[mOTUname] += currInsertCount
@@ -883,7 +883,7 @@ def get_mOTU_abundances(dictUniqueInsertCounts, dictUniqueBaseCounts, listMultip
 
 		currBaseCount = dictUniqueBaseCounts[geneName]
 		currBaseCoverage = float(currBaseCount)/float(geneLength)
-		totalBaseCoverage += currBaseCoverage
+		totalBaseCoverage = currBaseCoverage # this variable is not used?
 		dictmOTU_bases_rawCounts[mOTUname] += currBaseCount
 		dictmOTU_bases_coverage[mOTUname] += currBaseCoverage
 		dictmOTU_bases_rawCounts_uniq[mOTUname] += currBaseCount
