@@ -334,7 +334,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
 	else:
 		header_complete = "consensus_taxonomy\t"
 	if print_NCBI_id: header_complete = header_complete + "NCBI_tax_id\t"
-	header_complete = header_complete + sample_id_header+ "\n"
+	header_complete += sample_id_header+ "\n"
 
 	if not BIOM_output:
 		outfile.write("#"+header_complete)
