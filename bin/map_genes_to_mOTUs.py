@@ -718,7 +718,7 @@ def parseBWA_SAMoutput(samLines, dictGene2counts, dictGene2basecount, dictRefere
 		count0 += 1
 
 		dictSAMline = parseSamLine(strSamline)
-		if dictSAMline == None:
+		if dictSAMline is None:
 			sys.stderr.write("[calc_mgc] Warning. Skip line: "+strSamline+"\n")
 			continue
 		dictSAMflag = parseSAMflag(dictSAMline["samflag"])
@@ -1201,7 +1201,7 @@ def run_mOTUs_v2_mapping(listInputFiles, databaseDir, databasePrefix, sampleName
 	# version used in the 1st script
 	version_information_map_read = {0:"no_info"}
 
-	if profile_mode == False:
+	if profile_mode is False:
 		cont = 0
 		all_infor_map_reads = dict()
 		for inputFile in listInputFiles:

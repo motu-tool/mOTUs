@@ -27,15 +27,15 @@ def cArray(size1,size2):
 # ------------------------------------------------------------------------------
 def append_profilings(directory, list_files, output, verbose, BIOM_output,version_append,motu_call,version_tool):
 	#--------------------------- save files ------------------------------------
-	if directory == None and list_files == None:
+	if directory is None and list_files is None:
 		sys.stderr.write("[E::merge] Error: both -d and -i are empty")
 		sys.exit(1)
 
-	if list_files != None:
+	if list_files is not None:
 		list_files = list_files.split(",")
 		first_file = list_files[0]
 
-	if directory != None:
+	if directory is not None:
 		try:
 			list_files = os.listdir(directory)
 		except:

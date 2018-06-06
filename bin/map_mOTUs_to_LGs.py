@@ -18,7 +18,7 @@ def save_file_to_dict(file_r,col_key,col_value,header,divide_with_tab,skip_not_p
 		res_dict = dict()
 		for line in location:
 			l = line.rstrip().split('\t')
-			if not(l[col_key] == "not_profilable" and skip_not_profilable == True):
+			if not(l[col_key] == "not_profilable" and skip_not_profilable is True):
 				if divide_with_tab:
 					# divide first word from the rest with a tab
 					ncbi_id = l[col_value].split(" ")[0]
@@ -68,7 +68,7 @@ def save_file_to_dict_full_rank(file_r,col_key,col_value,header,skip_not_profila
 			ncbi_id_join = "|".join(ncbi_id_temp)
 			cons_name_join = "|".join(consensus_name_temp)
 
-			if not(l[col_key] == "not_profilable" and skip_not_profilable == True):
+			if not(l[col_key] == "not_profilable" and skip_not_profilable is True):
 				res_dict[l[col_key]] = ncbi_id_join + "\t" + cons_name_join
 
 		location.close()
