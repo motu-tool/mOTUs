@@ -312,6 +312,9 @@ def main(argv=None):
 
     profile_mode = False # when using motu profile, this is set to True
 
+    #default paramenters
+    msamminLength_from_motus = 75
+
     # run bwa
     runBWAmapping( args.forwardReads,  args.reverseReads,  args.singleReads, args.reference, args.threads, args.output, args.bamOutput, msam_script, args.technology, args.verbose, profile_mode, args.lane,msamminLength_from_motus)
 
