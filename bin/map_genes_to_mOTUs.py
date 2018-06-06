@@ -42,7 +42,7 @@ def printDictToFile(dictData, header, outfileName, return_dictionary):
 
 	if outfileName!="":
 		#outfile = open(outfileName,"w")
-		outfile = tempfile.NamedTemporaryFile(delete=False, mode = "w")
+		outfile = tempfile.NamedTemporaryFile(delete=False, mode="w")
 		os.chmod(outfile.name, 0o644)
 		if (header):
 			outfile.write(header + "\n")

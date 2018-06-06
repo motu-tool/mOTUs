@@ -92,7 +92,7 @@ def main(argv=None):
 	# Run motus on a test file
 	test_file = relative_path+'db_mOTU/test0001.fastq'
 	ground_truth_file = relative_path+'db_mOTU/test0001.motus'
-	temp_file_profile = tempfile.NamedTemporaryFile(delete=False, mode = "w")
+	temp_file_profile = tempfile.NamedTemporaryFile(delete=False, mode="w")
 
 	sys.stderr.write("\n3-- Taxonomy profiling test:\n")
 	sys.stderr.write("- Run motus (-v 1, only error messages):\n")

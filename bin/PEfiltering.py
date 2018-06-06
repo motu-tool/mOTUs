@@ -302,9 +302,9 @@ def filterInsert_uniq(listInsertSAMdicts):
 
 	elif(len(commonPreferedRefs) == 0 and (len(normalSAMdicts_firstRead) >= 1 or (len(normalSAMdicts_secondRead) >= 1))):
 		if (len(list(normalSAMdicts_firstRead))== 1):
-			listInsertSAMdicts_uniq  += normalSAMdicts_firstRead
+			listInsertSAMdicts_uniq += normalSAMdicts_firstRead
 		if (len(list(normalSAMdicts_secondRead))== 1):
-			listInsertSAMdicts_uniq  += normalSAMdicts_secondRead
+			listInsertSAMdicts_uniq += normalSAMdicts_secondRead
 
 
 	return(listInsertSAMdicts_uniq)

@@ -229,7 +229,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
 		for i in range(len(counts_mOTUs_j)):
 			if counts_mOTUs_j[i]>0:
 				list_diff_zero.append(counts_mOTUs_j[i]) # find the one that are different from zero
-				cog_type.append (genes_list[i].split('.')[0]) # and save the COG type
+				cog_type.append(genes_list[i].split('.')[0]) # and save the COG type
 
 		rel_ab_LGs[j] = 0
 		if j != '-1':
@@ -314,7 +314,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
 	# general print
 	if output != "":
 		#outfile = open(output, "w")
-		outfile = tempfile.NamedTemporaryFile(delete=False, mode = "w")
+		outfile = tempfile.NamedTemporaryFile(delete=False, mode="w")
 		os.chmod(outfile.name, 0o644)
 	else:
 		outfile = sys.stdout
@@ -377,7 +377,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
 				if not BIOM_output:
 					name = j+"\t" # mOTU id
 					name = name + all_val[1]# consensus_name
-					if print_NCBI_id: name = name +  "\t"+all_val[0] # NCBI_tax_id
+					if print_NCBI_id: name = name + "\t"+all_val[0] # NCBI_tax_id
 					name = name + "\t" + str(rel_ab_LGs_rel[j]) +"\n" # value
 					outfile.write(name)
 				else:
@@ -421,7 +421,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
 					name = all_val[1] # the short name for meta-mOTUs is the normal name
 				# line to print
 				name = name + " ["+j+"]"
-				if print_NCBI_id: name = name +  "\t"+all_val[0] # NCBI_tax_id
+				if print_NCBI_id: name = name + "\t"+all_val[0] # NCBI_tax_id
 				name = name + "\t" + str(rel_ab_LGs_rel[j]) +"\n" # value
 				outfile.write(name)
 			elif j == "-1": # -1
@@ -459,7 +459,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
 		rel_abundance_taxon = dict()
 		for i in list_taxon:
 			rel_abundance_taxon[i] = 0
-		for i in  rel_ab_LGs_rel:
+		for i in rel_ab_LGs_rel:
 			if i != "-1":
 				if i in taxonomy_s_2:
 					rel_abundance_taxon[taxonomy_s_2[i]] = rel_abundance_taxon[taxonomy_s_2[i]] + rel_ab_LGs_rel[i]
@@ -474,7 +474,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
 				all_val = i.split("\t")
 				# prepare line to print
 				name = all_val[1] # consensus_name
-				if print_NCBI_id: name = name +  "\t"+all_val[0] # NCBI_tax_id
+				if print_NCBI_id: name = name + "\t"+all_val[0] # NCBI_tax_id
 				name = name + "\t" + str(rel_abundance_taxon[i]) +"\n" # value
 				if not BIOM_output:
 					outfile.write(name)
@@ -539,16 +539,16 @@ def main(argv=None):
 	if(not argv):
 		argv = sys.argv[1:]
 
-	parser = argparse.ArgumentParser(description='This script sum the mOTUs reads and calulates the LGs abundances ', add_help = True)
+	parser = argparse.ArgumentParser(description='This script sum the mOTUs reads and calulates the LGs abundances ', add_help=True)
 	parser.add_argument('infile', action="store", help='Infile represents a vector of relative abundace of the mOTUs')
-	parser.add_argument('--outfile','-o', action="store", default = "", dest='outfile', help='outfile for resulting table. If it is not set, then it will be print in standard output')
-	parser.add_argument('--databaseDir', action='store', default = "", dest='databaseDir', help='directory of the database')
+	parser.add_argument('--outfile','-o', action="store", default="", dest='outfile', help='outfile for resulting table. If it is not set, then it will be print in standard output')
+	parser.add_argument('--databaseDir', action='store', default="", dest='databaseDir', help='directory of the database')
 	parser.add_argument('--onlySpecI', '-s', action='store_true', default=False, dest='onlySpecI', help='Set if you want to profile only specI (mOTU-LGs will go in -1)')
 	parser.add_argument('--specI_ID', '-i', action='store_true', default=False, dest='specI_ID', help='Visualize the specI ID instead of the species name')
 	parser.add_argument('--cutoff', '-c', action='store', dest='cutoff', default=2, type=int, help="minimum number of genes different from zero for deciding that a LG is present.")
 	parser.add_argument('--sampleName', '-sn', action="store", dest='sampleName', default="", help='sample name for the current mapping')
-	parser.add_argument('--taxonomic_level', action="store", default = "species", dest='taxonomic_level', help='Taxonomic level for the profiling')
-	parser.add_argument('--BIOM_output', action="store_true", default = False, dest='BIOM_output', help='print the result in BIOM format')
+	parser.add_argument('--taxonomic_level', action="store", default="species", dest='taxonomic_level', help='Taxonomic level for the profiling')
+	parser.add_argument('--BIOM_output', action="store_true", default=False, dest='BIOM_output', help='print the result in BIOM format')
 	parser.add_argument('-w', action='store_true', default=False, dest='print_rel_ab', help='print result as relative abundance instead of raw reads')
 	parser.add_argument('-e', action='store_true', default=False, dest='print_NCBI_id', help='print NCBI id')
 	parser.add_argument('--version', '-v', action='version', version='%(prog)s 1.0')
