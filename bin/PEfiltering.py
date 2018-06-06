@@ -1,15 +1,8 @@
 #!/usr/bin/env python
 
-import os
 import sys
-import argparse
 from collections import defaultdict
 import string
-import shlex
-import time
-import subprocess
-import glob
-import shutil
 
 #function that detect the python version
 def python_version():
@@ -223,12 +216,6 @@ def filterInsert_uniq(listInsertSAMdicts):
 	insertName = ""
 	listInsertSAMdicts_firstRead = []
 	listInsertSAMdicts_secondRead = []
-	listInsertInfos = []
-
-	listInsertSAMdicts_filtered_paired = []
-
-	mapped = False
-	mappedUnique = False
 	setFirstReadsRefs = set()
 	setSecondReadsRefs = set()
 
@@ -236,7 +223,6 @@ def filterInsert_uniq(listInsertSAMdicts):
 	dictSecondReadsRef2alignmentScore = defaultdict(int)
 	dictRef2alignmentScore = defaultdict(int)
 
-	counter = 0
 	#this loop divides all alignments of an insert into forward and reverse reads
 	#if neither the firstRead nor the secondRead is set, the read is assigned to the forward reads
 	#forward read is the default so both inserts or single ended reads will be stored as such
@@ -375,7 +361,6 @@ def parseBWA_SAMoutput(samLines, geneLocationFileName):
 	dictReference2geneLocation = getReferenceDict(geneLocationFileName, boolGeneBased)
 
 	listInsertSAMdicts = []
-	intMappedInserts = 0
 	filtered_sam_lines = list()
 
 	prevInsert = ''

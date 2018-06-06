@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 import os
 import sys
-import time
 import argparse
 import glob
-from shutil import copyfile
 from multiprocessing import Pool
 from functools import partial
 

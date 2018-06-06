@@ -84,7 +84,6 @@ def append_profilings(directory, list_files, output, verbose, BIOM_output,versio
 	array_c = cArray(len(list_files),len(taxa_id))
 
 	#for all the files
-	info_version = ""
 	headers = ""
 	cont_files = 0
 	all_info_version = dict()

@@ -11,7 +11,6 @@ from bz2 import BZ2File
 import sys
 import os
 import shlex
-import tempfile
 import subprocess
 
 # ------------------------------------------------------------------------------

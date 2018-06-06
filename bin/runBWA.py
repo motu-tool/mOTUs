@@ -11,7 +11,6 @@ import argparse
 import shlex
 import time
 import subprocess
-import glob
 import re
 
 

@@ -8,7 +8,7 @@ import string
 import shlex
 import time
 import subprocess
-import glob
+import tempfile
 import shutil
 
 #function that detect the python version
@@ -570,7 +570,6 @@ def filterInsert(listInsertSAMdicts, dictGene2mOTUs,verbose):
 	dictSecondReadsRef2alignmentScore = defaultdict(int)
 	dictRef2alignmentScore = defaultdict(int)
 
-	counter = 0
 	#this loop divides all alignments of an insert into forward and reverse reads
 	#if neither the firstRead nor the secondRead is set, the read is assigned to the forward reads
 	#forward read is the default so inserts or single ended reads will be stored as such
