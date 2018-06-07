@@ -149,16 +149,16 @@ def runBWA_singleEnd(strFilteredReadFile, reference, msamPercID, msamminLength, 
                             min_query_al = min_query_al + int(n)
 
                     if tot >= float(min_length_align):
-                         flag2 = True
+                        flag2 = True
 
                     flag1 = False
                     if ((int(arr[11].split(":")[2])/float(len_seq)) < (1-float(min_perc_id))): # TODO: here we assume that the NM value is in position 11, it should be checked
-                         flag1 = True
+                        flag1 = True
 
                     # min. percent of the query that must be aligned, between 0 and 100 (required)
                     flag3 = False
                     if (float(min_query_al)/float(tott)) >= (float(min_perc_cover)/100 ):
-                         flag3 = True
+                        flag3 = True
 
                     if flag1 and flag2 and flag3:
                         yield line
@@ -336,7 +336,7 @@ def main(argv=None):
     msamminLength_from_motus = 75
 
     # run bwa
-    runBWAmapping( args.forwardReads,  args.reverseReads,  args.singleReads, args.reference, args.threads, args.output, args.bamOutput, msam_script, args.technology, args.verbose, profile_mode, args.lane,msamminLength_from_motus)
+    runBWAmapping( args.forwardReads, args.reverseReads, args.singleReads, args.reference, args.threads, args.output, args.bamOutput, msam_script, args.technology, args.verbose, profile_mode, args.lane, msamminLength_from_motus)
 
     return 0        # success
 

@@ -33,14 +33,11 @@
 import os
 import sys
 import argparse
-from collections import defaultdict
-import string
 import shlex
 import shutil
 import time
 import subprocess
 import glob
-import random
 import multiprocessing
 import tempfile
 
@@ -72,7 +69,7 @@ except:
     sys.exit(1)
 
 version_tool = versions["motus"]
-git_commit_id =  "# git tag version "+version_tool
+git_commit_id = "# git tag version "+version_tool
 
 
 # add /bin to the path ---------------------------------------------------------
@@ -297,8 +294,8 @@ def print_menu_append():
 
 # ------------------------------------------------------------------------------
 # function for multiple cores for bwa
-def run_bwa_multiple_cores(forward_reads,  reverse_reads,  single_reads, reference, threads, output, bamOutput, msam_script, technology, verbose, profile_mode, lane_id, result):
-    result1 = runbwa.runBWAmapping( forward_reads,  reverse_reads,  single_reads, reference, threads, output, bamOutput, msam_script, technology, verbose, profile_mode, lane_id,default_min_len_align_length_map_tax)
+def run_bwa_multiple_cores(forward_reads, reverse_reads, single_reads, reference, threads, output, bamOutput, msam_script, technology, verbose, profile_mode, lane_id, result):
+    result1 = runbwa.runBWAmapping( forward_reads, reverse_reads, single_reads, reference, threads, output, bamOutput, msam_script, technology, verbose, profile_mode, lane_id,default_min_len_align_length_map_tax)
     for i in result1:
         result.append(i)
 
@@ -321,7 +318,7 @@ def prepare_output_bwa(output,outPutIsBam,header_file,all_sam_lines,str_end_head
     # create the temp sam file with the result
     try:
         if output != "" or (output == "" and outPutIsBam):
-            sam_temp_file = tempfile.NamedTemporaryFile(delete=False, mode = "w")
+            sam_temp_file = tempfile.NamedTemporaryFile(delete=False, mode="w")
             os.chmod(sam_temp_file.name, 0o644)
         else:
             sam_temp_file = sys.stdout
@@ -375,7 +372,7 @@ def prepare_output_bwa(output,outPutIsBam,header_file,all_sam_lines,str_end_head
     #IF WE RETURN BAM
     try:
         if output != "":
-            bam_temp_file = tempfile.NamedTemporaryFile(delete=False, mode = "w")
+            bam_temp_file = tempfile.NamedTemporaryFile(delete=False, mode="w")
             os.chmod(bam_temp_file.name, 0o644)
         else:
             bam_temp_file = sys.stdout
@@ -454,21 +451,21 @@ def main(argv=None):
     parser.add_argument('-u', action='store_true', default=None, dest='print_long_names', help='print names of the species in long format')
     parser.add_argument('-q', action='store_true', default=None, dest='print_full_rank', help='print the full rank of the taxonomy')
     parser.add_argument('-p', action='store_true', default=None, dest='print_NCBI_id', help='print NCBI id')
-    parser.add_argument('-k', action="store", default = None, dest='taxonomic_level', help='Taxonomic level for the profiling',choices=['kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'mOTU'])
-    parser.add_argument('-I', action="store", default = None, dest='profile_bam_file', help='name of the bam file to save the intermediate bam file during profiling')
-    parser.add_argument('-M', action="store", default = None, dest='profile_mOTU_reads_file', help='name of the output file when profiling, relative to the mOTU read counts')
+    parser.add_argument('-k', action="store", default=None, dest='taxonomic_level', help='Taxonomic level for the profiling',choices=['kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'mOTU'])
+    parser.add_argument('-I', action="store", default=None, dest='profile_bam_file', help='name of the bam file to save the intermediate bam file during profiling')
+    parser.add_argument('-M', action="store", default=None, dest='profile_mOTU_reads_file', help='name of the output file when profiling, relative to the mOTU read counts')
     parser.add_argument('-g', type=int, action="store", dest='map_lgs_cutoff', default=None, help='cutoff when profiling for the number of genes')
     parser.add_argument('-l', type=int, action="store", dest='min_len_align_length', default=None, help='Minimum length of the alignment')
     #parser.add_argument('-L', type=float, action="store", dest='min_len_align_perc', default=None, help='Minimum length of the alignment, as percentage of the average read length')
     # develope, but to be checked
     parser.add_argument('-C', type=int, action="store", dest='number_of_cores', default=None, help='Number of cores to use for bwa')
     # db has to be deleted
-    #parser.add_argument('-db', action="store", default = None, dest='db', help='database of marker genes',choices=['nr', 'aug.cen', 'cen'])
+    #parser.add_argument('-db', action="store", default=None, dest='db', help='database of marker genes',choices=['nr', 'aug.cen', 'cen'])
     parser.add_argument('-save_sam_lines', action="store", dest='save_sam_lines', default=None, help='name of output file')
     parser.add_argument('-load_sam_lines', action="store", dest='load_sam_lines', default=None, help='name of output file')
-    parser.add_argument('-min_perc_id', action="store", default = None, dest='min_perc_id', help='minimum percentage of identity when filtering - choose between 97 and 100')
-    parser.add_argument('-min_clip_length', action="store", default = None, dest='min_clip_length', help='min. length of alignment when clipped')
-    parser.add_argument('-min_perc_align', action="store", default = None, dest='min_perc_align', help='min. percent of the query that must be aligned, between 0 and 100')
+    parser.add_argument('-min_perc_id', action="store", default=None, dest='min_perc_id', help='minimum percentage of identity when filtering - choose between 97 and 100')
+    parser.add_argument('-min_clip_length', action="store", default=None, dest='min_clip_length', help='min. length of alignment when clipped')
+    parser.add_argument('-min_perc_align', action="store", default=None, dest='min_perc_align', help='min. percent of the query that must be aligned, between 0 and 100')
     parser.add_argument('-fb', metavar='FLOAT', type=float, default=None,
                         help="Coverage breadth: minimal horizontal genome coverage percentage per sample per species")
     parser.add_argument('-fd', metavar='FLOAT', type=float, default=None,
@@ -486,195 +483,195 @@ def main(argv=None):
 
 
     # print menus ----------------------------------------------------------------
-    if (args.forwardReads == None) and (args.reverseReads == None) and (args.singleReads == None) and (args.output == None) and (args.threads == None) and (args.onlySpecI == None) and (args.outPutIsBam == None):
-        if (args.type_output == None) and (args.sampleName == None) and (args.listInputFiles == None) and (args.motu_read_counts_file == None) and (args.verbose == None) and (args.directory_append == None):
-             if (args.BIOM_output == None) and (args.taxonomic_level == None) and (args.profile_bam_file == None) and (args.profile_mOTU_reads_file == None) and (args.map_lgs_cutoff == None) and (args.number_of_cores == None):
-                 if (args.print_rel_ab == None) and (args.print_NCBI_id == None) and (args.print_long_names == None) and (args.fb == None) and (args.fd == None) and (args.fm == None) and (args.fc == None) and (args.fp == None):
-                     if args.command == 'profile': print_menu_profile()
-                     if args.command == 'map_snv': print_menu_map_snv()
-                     if args.command == 'map_tax': print_menu_bwa()
-                     if args.command == 'calc_mgc': print_menu_map_genes()
-                     if args.command == 'calc_motu': print_menu_map_lgs()
-                     if args.command == 'merge': print_menu_append()
-                     if args.command == 'snv_call': print_menu_snv_call()
-                     sys.exit(1)
+    if (args.forwardReads is None) and (args.reverseReads is None) and (args.singleReads is None) and (args.output is None) and (args.threads is None) and (args.onlySpecI is None) and (args.outPutIsBam is None):
+        if (args.type_output is None) and (args.sampleName is None) and (args.listInputFiles is None) and (args.motu_read_counts_file is None) and (args.verbose is None) and (args.directory_append is None):
+            if (args.BIOM_output is None) and (args.taxonomic_level is None) and (args.profile_bam_file is None) and (args.profile_mOTU_reads_file is None) and (args.map_lgs_cutoff is None) and (args.number_of_cores is None):
+                if (args.print_rel_ab is None) and (args.print_NCBI_id is None) and (args.print_long_names is None) and (args.fb is None) and (args.fd is None) and (args.fm is None) and (args.fc is None) and (args.fp is None):
+                    if args.command == 'profile': print_menu_profile()
+                    if args.command == 'map_snv': print_menu_map_snv()
+                    if args.command == 'map_tax': print_menu_bwa()
+                    if args.command == 'calc_mgc': print_menu_map_genes()
+                    if args.command == 'calc_motu': print_menu_map_lgs()
+                    if args.command == 'merge': print_menu_append()
+                    if args.command == 'snv_call': print_menu_snv_call()
+                    sys.exit(1)
     # set default for args.verbose
-    if (args.verbose == None): args.verbose = 3
+    if (args.verbose is None): args.verbose = 3
 
     # print parameters that are ignored -------------------------------------------
     if args.command == 'profile':
-        if ((args.outPutIsBam != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -b ignored\n")
-        if ((args.directory_append != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -d ignored\n")
-        if ((args.fb != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fb ignored\n")
-        if ((args.fd != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fd ignored\n")
-        if ((args.fm != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fm ignored\n")
-        if ((args.fp != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fp ignored\n")
-        if ((args.fc != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fc ignored\n")
+        if ((args.outPutIsBam is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -b ignored\n")
+        if ((args.directory_append is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -d ignored\n")
+        if ((args.fb is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fb ignored\n")
+        if ((args.fd is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fd ignored\n")
+        if ((args.fm is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fm ignored\n")
+        if ((args.fp is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fp ignored\n")
+        if ((args.fc is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fc ignored\n")
     if args.command == 'map_tax':
-        if ((args.directory_append != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -d ignored\n")
-        if ((args.onlySpecI != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -e ignored\n")
-        if ((args.type_output != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -y ignored\n")
-        if ((args.sampleName != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -n ignored\n")
-        if ((args.listInputFiles != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -i ignored\n")
-        if ((args.motu_read_counts_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -m ignored\n")
-        if ((args.BIOM_output != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -B ignored\n")
-        if ((args.print_rel_ab != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -c ignored\n")
-        if ((args.print_full_rank != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -q ignored\n")
-        if ((args.print_NCBI_id != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -p ignored\n")
-        if ((args.print_long_names != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -u ignored\n")
-        if ((args.taxonomic_level != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -k ignored\n")
-        if ((args.profile_bam_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -I ignored\n")
-        if ((args.profile_mOTU_reads_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -M ignored\n")
-        if ((args.map_lgs_cutoff != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -g ignored\n")
-        if ((args.fb != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fb ignored\n")
-        if ((args.fd != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fd ignored\n")
-        if ((args.fm != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fm ignored\n")
-        if ((args.fp != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fp ignored\n")
-        if ((args.fc != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fc ignored\n")
+        if ((args.directory_append is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -d ignored\n")
+        if ((args.onlySpecI is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -e ignored\n")
+        if ((args.type_output is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -y ignored\n")
+        if ((args.sampleName is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -n ignored\n")
+        if ((args.listInputFiles is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -i ignored\n")
+        if ((args.motu_read_counts_file is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -m ignored\n")
+        if ((args.BIOM_output is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -B ignored\n")
+        if ((args.print_rel_ab is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -c ignored\n")
+        if ((args.print_full_rank is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -q ignored\n")
+        if ((args.print_NCBI_id is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -p ignored\n")
+        if ((args.print_long_names is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -u ignored\n")
+        if ((args.taxonomic_level is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -k ignored\n")
+        if ((args.profile_bam_file is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -I ignored\n")
+        if ((args.profile_mOTU_reads_file is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -M ignored\n")
+        if ((args.map_lgs_cutoff is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -g ignored\n")
+        if ((args.fb is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fb ignored\n")
+        if ((args.fd is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fd ignored\n")
+        if ((args.fm is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fm ignored\n")
+        if ((args.fp is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fp ignored\n")
+        if ((args.fc is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fc ignored\n")
     if args.command == 'merge':
-        if ((args.onlySpecI != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -e ignored\n")
-        if ((args.type_output != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -y ignored\n")
-        if ((args.sampleName != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -n ignored\n")
-        if ((args.motu_read_counts_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -m ignored\n")
-        if ((args.print_rel_ab != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -c ignored\n")
-        if ((args.print_full_rank != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -q ignored\n")
-        if ((args.print_NCBI_id != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -p ignored\n")
-        if ((args.print_long_names != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -u ignored\n")
-        if ((args.taxonomic_level != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -k ignored\n")
-        if ((args.profile_bam_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -I ignored\n")
-        if ((args.profile_mOTU_reads_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -M ignored\n")
-        if ((args.map_lgs_cutoff != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -g ignored\n")
-        if ((args.forwardReads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -f ignored\n")
-        if ((args.reverseReads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -r ignored\n")
-        if ((args.singleReads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -s ignored\n")
-        if ((args.threads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -t ignored\n")
-        if ((args.outPutIsBam != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -b ignored\n")
-        if ((args.min_len_align_length != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -l ignored\n")
-        if ((args.fb != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fb ignored\n")
-        if ((args.fd != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fd ignored\n")
-        if ((args.fm != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fm ignored\n")
-        if ((args.fp != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fp ignored\n")
-        if ((args.fc != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fc ignored\n")
+        if ((args.onlySpecI is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -e ignored\n")
+        if ((args.type_output is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -y ignored\n")
+        if ((args.sampleName is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -n ignored\n")
+        if ((args.motu_read_counts_file is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -m ignored\n")
+        if ((args.print_rel_ab is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -c ignored\n")
+        if ((args.print_full_rank is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -q ignored\n")
+        if ((args.print_NCBI_id is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -p ignored\n")
+        if ((args.print_long_names is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -u ignored\n")
+        if ((args.taxonomic_level is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -k ignored\n")
+        if ((args.profile_bam_file is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -I ignored\n")
+        if ((args.profile_mOTU_reads_file is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -M ignored\n")
+        if ((args.map_lgs_cutoff is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -g ignored\n")
+        if ((args.forwardReads is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -f ignored\n")
+        if ((args.reverseReads is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -r ignored\n")
+        if ((args.singleReads is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -s ignored\n")
+        if ((args.threads is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -t ignored\n")
+        if ((args.outPutIsBam is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -b ignored\n")
+        if ((args.min_len_align_length is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -l ignored\n")
+        if ((args.fb is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fb ignored\n")
+        if ((args.fd is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fd ignored\n")
+        if ((args.fm is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fm ignored\n")
+        if ((args.fp is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fp ignored\n")
+        if ((args.fc is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fc ignored\n")
     if args.command == 'map_snv':
-        if ((args.directory_append != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -d ignored\n")
-        if ((args.onlySpecI != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -e ignored\n")
-        if ((args.type_output != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -y ignored\n")
-        if ((args.sampleName != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -n ignored\n")
-        if ((args.listInputFiles != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -i ignored\n")
-        if ((args.motu_read_counts_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -m ignored\n")
-        if ((args.BIOM_output != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -B ignored\n")
-        if ((args.print_rel_ab != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -c ignored\n")
-        if ((args.print_full_rank != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -q ignored\n")
-        if ((args.print_NCBI_id != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -p ignored\n")
-        if ((args.print_long_names != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -u ignored\n")
-        if ((args.taxonomic_level != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -k ignored\n")
-        if ((args.profile_bam_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -I ignored\n")
-        if ((args.profile_mOTU_reads_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -M ignored\n")
-        if ((args.map_lgs_cutoff != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -g ignored\n")
-        if ((args.outPutIsBam != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -b ignored\n")
-        if ((args.fb != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fb ignored\n")
-        if ((args.fd != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fd ignored\n")
-        if ((args.fm != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fm ignored\n")
-        if ((args.fp != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fp ignored\n")
-        if ((args.fc != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fc ignored\n")
+        if ((args.directory_append is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -d ignored\n")
+        if ((args.onlySpecI is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -e ignored\n")
+        if ((args.type_output is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -y ignored\n")
+        if ((args.sampleName is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -n ignored\n")
+        if ((args.listInputFiles is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -i ignored\n")
+        if ((args.motu_read_counts_file is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -m ignored\n")
+        if ((args.BIOM_output is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -B ignored\n")
+        if ((args.print_rel_ab is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -c ignored\n")
+        if ((args.print_full_rank is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -q ignored\n")
+        if ((args.print_NCBI_id is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -p ignored\n")
+        if ((args.print_long_names is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -u ignored\n")
+        if ((args.taxonomic_level is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -k ignored\n")
+        if ((args.profile_bam_file is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -I ignored\n")
+        if ((args.profile_mOTU_reads_file is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -M ignored\n")
+        if ((args.map_lgs_cutoff is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -g ignored\n")
+        if ((args.outPutIsBam is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -b ignored\n")
+        if ((args.fb is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fb ignored\n")
+        if ((args.fd is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fd ignored\n")
+        if ((args.fm is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fm ignored\n")
+        if ((args.fp is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fp ignored\n")
+        if ((args.fc is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fc ignored\n")
     if args.command == 'calc_mgc':
-        if ((args.outPutIsBam != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -b ignored\n")
-        if ((args.directory_append != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -d ignored\n")
-        if ((args.forwardReads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -f ignored\n")
-        if ((args.reverseReads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -r ignored\n")
-        if ((args.singleReads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -s ignored\n")
-        if ((args.threads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -t ignored\n")
-        if ((args.onlySpecI != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -e ignored\n")
-        if ((args.motu_read_counts_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -m ignored\n")
-        if ((args.BIOM_output != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -B ignored\n")
-        if ((args.print_rel_ab != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -c ignored\n")
-        if ((args.print_full_rank != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -q ignored\n")
-        if ((args.print_NCBI_id != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -p ignored\n")
-        if ((args.print_long_names != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -u ignored\n")
-        if ((args.taxonomic_level != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -k ignored\n")
-        if ((args.profile_bam_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -I ignored\n")
-        if ((args.profile_mOTU_reads_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -M ignored\n")
-        if ((args.map_lgs_cutoff != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -g ignored\n")
-        if ((args.fb != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fb ignored\n")
-        if ((args.fd != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fd ignored\n")
-        if ((args.fm != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fm ignored\n")
-        if ((args.fp != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fp ignored\n")
-        if ((args.fc != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fc ignored\n")
+        if ((args.outPutIsBam is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -b ignored\n")
+        if ((args.directory_append is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -d ignored\n")
+        if ((args.forwardReads is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -f ignored\n")
+        if ((args.reverseReads is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -r ignored\n")
+        if ((args.singleReads is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -s ignored\n")
+        if ((args.threads is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -t ignored\n")
+        if ((args.onlySpecI is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -e ignored\n")
+        if ((args.motu_read_counts_file is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -m ignored\n")
+        if ((args.BIOM_output is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -B ignored\n")
+        if ((args.print_rel_ab is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -c ignored\n")
+        if ((args.print_full_rank is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -q ignored\n")
+        if ((args.print_NCBI_id is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -p ignored\n")
+        if ((args.print_long_names is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -u ignored\n")
+        if ((args.taxonomic_level is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -k ignored\n")
+        if ((args.profile_bam_file is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -I ignored\n")
+        if ((args.profile_mOTU_reads_file is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -M ignored\n")
+        if ((args.map_lgs_cutoff is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -g ignored\n")
+        if ((args.fb is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fb ignored\n")
+        if ((args.fd is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fd ignored\n")
+        if ((args.fm is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fm ignored\n")
+        if ((args.fp is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fp ignored\n")
+        if ((args.fc is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fc ignored\n")
     if args.command == 'calc_motu':
-        if ((args.outPutIsBam != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -b ignored\n")
-        if ((args.directory_append != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -d ignored\n")
-        if ((args.profile_bam_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -I ignored\n")
-        if ((args.profile_mOTU_reads_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -M ignored\n")
-        if ((args.min_len_align_length != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -l ignored\n")
-        if ((args.forwardReads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -f ignored\n")
-        if ((args.reverseReads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -r ignored\n")
-        if ((args.singleReads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -s ignored\n")
-        if ((args.threads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -t ignored\n")
-        if ((args.type_output != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -y ignored\n")
-        if ((args.motu_read_counts_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -m ignored\n")
-        if ((args.fb != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fb ignored\n")
-        if ((args.fd != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fd ignored\n")
-        if ((args.fm != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fm ignored\n")
-        if ((args.fp != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fp ignored\n")
-        if ((args.fc != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fc ignored\n")
+        if ((args.outPutIsBam is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -b ignored\n")
+        if ((args.directory_append is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -d ignored\n")
+        if ((args.profile_bam_file is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -I ignored\n")
+        if ((args.profile_mOTU_reads_file is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -M ignored\n")
+        if ((args.min_len_align_length is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -l ignored\n")
+        if ((args.forwardReads is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -f ignored\n")
+        if ((args.reverseReads is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -r ignored\n")
+        if ((args.singleReads is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -s ignored\n")
+        if ((args.threads is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -t ignored\n")
+        if ((args.type_output is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -y ignored\n")
+        if ((args.motu_read_counts_file is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -m ignored\n")
+        if ((args.fb is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fb ignored\n")
+        if ((args.fd is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fd ignored\n")
+        if ((args.fm is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fm ignored\n")
+        if ((args.fp is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fp ignored\n")
+        if ((args.fc is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fc ignored\n")
     if args.command == 'snv_call':
-        if ((args.onlySpecI != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -e ignored\n")
-        if ((args.type_output != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -y ignored\n")
-        if ((args.sampleName != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -n ignored\n")
-        if ((args.motu_read_counts_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -m ignored\n")
-        if ((args.print_rel_ab != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -c ignored\n")
-        if ((args.print_full_rank != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -q ignored\n")
-        if ((args.print_NCBI_id != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -p ignored\n")
-        if ((args.print_long_names != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -u ignored\n")
-        if ((args.taxonomic_level != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -k ignored\n")
-        if ((args.profile_bam_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -I ignored\n")
-        if ((args.profile_mOTU_reads_file != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -M ignored\n")
-        if ((args.map_lgs_cutoff != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -g ignored\n")
-        if ((args.forwardReads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -f ignored\n")
-        if ((args.reverseReads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -r ignored\n")
-        if ((args.singleReads != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -s ignored\n")
-        if ((args.outPutIsBam != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -b ignored\n")
-        if ((args.min_len_align_length != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -l ignored\n")
-        if ((args.BIOM_output != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -B ignored\n")
-        if ((args.listInputFiles != None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -i ignored\n")
+        if ((args.onlySpecI is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -e ignored\n")
+        if ((args.type_output is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -y ignored\n")
+        if ((args.sampleName is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -n ignored\n")
+        if ((args.motu_read_counts_file is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -m ignored\n")
+        if ((args.print_rel_ab is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -c ignored\n")
+        if ((args.print_full_rank is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -q ignored\n")
+        if ((args.print_NCBI_id is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -p ignored\n")
+        if ((args.print_long_names is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -u ignored\n")
+        if ((args.taxonomic_level is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -k ignored\n")
+        if ((args.profile_bam_file is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -I ignored\n")
+        if ((args.profile_mOTU_reads_file is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -M ignored\n")
+        if ((args.map_lgs_cutoff is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -g ignored\n")
+        if ((args.forwardReads is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -f ignored\n")
+        if ((args.reverseReads is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -r ignored\n")
+        if ((args.singleReads is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -s ignored\n")
+        if ((args.outPutIsBam is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -b ignored\n")
+        if ((args.min_len_align_length is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -l ignored\n")
+        if ((args.BIOM_output is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -B ignored\n")
+        if ((args.listInputFiles is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -i ignored\n")
 
 
 
 
 
     # set the default
-    if (args.threads == None): args.threads = 1
-    if (args.verbose == None): args.verbose = 3
-    if (args.type_output == None): args.type_output = 'insert.scaled_counts'
-    if (args.map_lgs_cutoff == None): args.map_lgs_cutoff = 3
-    if (args.number_of_cores == None): args.number_of_cores = 1
-    if (args.taxonomic_level == None): args.taxonomic_level = "mOTU"
-    if (args.sampleName == None): args.sampleName = "unnamed sample"
-    if (args.outPutIsBam == None): args.outPutIsBam = False
-    if (args.onlySpecI == None): args.onlySpecI = False
-    if (args.print_full_rank == None): args.print_full_rank = False
-    if (args.BIOM_output == None): args.BIOM_output = False
-    if (args.print_rel_ab == None): args.print_rel_ab = False
-    if (args.print_NCBI_id == None): args.print_NCBI_id = False
-    if (args.print_long_names == None): args.print_long_names = False
-    if (args.output == None): args.output = ""
+    if (args.threads is None): args.threads = 1
+    if (args.verbose is None): args.verbose = 3
+    if (args.type_output is None): args.type_output = 'insert.scaled_counts'
+    if (args.map_lgs_cutoff is None): args.map_lgs_cutoff = 3
+    if (args.number_of_cores is None): args.number_of_cores = 1
+    if (args.taxonomic_level is None): args.taxonomic_level = "mOTU"
+    if (args.sampleName is None): args.sampleName = "unnamed sample"
+    if (args.outPutIsBam is None): args.outPutIsBam = False
+    if (args.onlySpecI is None): args.onlySpecI = False
+    if (args.print_full_rank is None): args.print_full_rank = False
+    if (args.BIOM_output is None): args.BIOM_output = False
+    if (args.print_rel_ab is None): args.print_rel_ab = False
+    if (args.print_NCBI_id is None): args.print_NCBI_id = False
+    if (args.print_long_names is None): args.print_long_names = False
+    if (args.output is None): args.output = ""
 
     # default for snv_call
-    if (args.fb == None): args.fb = 80.0
-    if (args.fd == None): args.fd = 5.0
-    if (args.fm == None): args.fm = 2
-    if (args.fc == None): args.fc = 5.0
-    if (args.fp == None): args.fp = 0.9
+    if (args.fb is None): args.fb = 80.0
+    if (args.fd is None): args.fd = 5.0
+    if (args.fm is None): args.fm = 2
+    if (args.fc is None): args.fc = 5.0
+    if (args.fp is None): args.fp = 0.9
 
 
     # check min length alignment
     default_min_len_align_length = 75 # min length align that we use to filter for profiling
     default_min_len_align_length_map_tax = 75 # min length align that we use in map_tax
 
-    if (args.command == 'map_tax') and (args.min_len_align_length != None): # map_tax default is 45, unless we set -l
+    if (args.command == 'map_tax') and (args.min_len_align_length is not None): # map_tax default is 45, unless we set -l
         default_min_len_align_length_map_tax = args.min_len_align_length
 
-    if (args.min_len_align_length == None): args.min_len_align_length = default_min_len_align_length
+    if (args.min_len_align_length is None): args.min_len_align_length = default_min_len_align_length
     if (args.min_len_align_length < 20):
         sys.stderr.write("[E::main] Error: -l should be greater than 20\n")
         sys.exit(1)
@@ -689,9 +686,9 @@ def main(argv=None):
 
 
     # set default for parameters that are not displayed
-    if (args.min_perc_id == None): args.min_perc_id = 97
-    if (args.min_perc_align == None): args.min_perc_align = 45
-    if (args.min_clip_length == None): args.min_clip_length = 60
+    if (args.min_perc_id is None): args.min_perc_id = 97
+    if (args.min_perc_align is None): args.min_perc_align = 45
+    if (args.min_clip_length is None): args.min_clip_length = 60
     args.min_perc_id = float(args.min_perc_id)
     args.min_perc_align = float(args.min_perc_align)
     args.min_clip_length = float(args.min_clip_length)
@@ -729,7 +726,7 @@ def main(argv=None):
     # I leave all settings here. They might need to be put to a different location later.
     # --------------------------------------------------------------------------
     if args.command == 'snv_call':
-        if args.directory_append == None:
+        if args.directory_append is None:
             sys.stderr.write("[E::main] Error: -d is missing\n")
             sys.exit(1)
         if args.output == "":
@@ -754,7 +751,7 @@ def main(argv=None):
         fp = args.fp
         fc = args.fc
         paramsdir = '-m{}-d{}-b{}-c{}-p{}'.format(int(args.fm), int(args.fd), int(args.fb), int(args.fc), float(args.fp))
-        threads = args.threads
+        # threads = args.threads
         sample_file = os.path.abspath(os.path.join(bamdir, 'sample_list'))
         outdir = os.path.abspath(args.output)
         if os.path.exists(outdir):
@@ -809,7 +806,7 @@ def main(argv=None):
     # --------------------------------------------------------------------------
         if args.verbose>=4:
             sys.stderr.write("[main] Executing metaSNV filter routine.\n")
-            params = '-m 5 -d 10 -b 80 -p 0.9'
+            # params = '-m 5 -d 10 -b 80 -p 0.9'
         metaSNVFilter_command = 'python '+relative_path+'bin/metaSNV_Filtering_2.0.py %s -m %d -d %f -b %f -p %f -c %f --n_threads %d' %(outdir, fm, fd, fb, fp, fc, args.threads)
         if args.verbose>=4:
             sys.stderr.write("[main] Command: %s\n" % metaSNVFilter_command)
@@ -927,48 +924,48 @@ def main(argv=None):
             initial_start_time = time.time()
             time_after_bwa = time.time() # for now we initialize it, so that if we skip bwa, then we use the initial time
             time_after_map_genes = time.time() # for now we initialize it, so that if we skip calc_mgc, then we use the initial time
-            if args.command == 'profile' and (args.listInputFiles == None and args.motu_read_counts_file==None):
+            if args.command == 'profile' and (args.listInputFiles is None and args.motu_read_counts_file is None):
                 sys.stderr.write("[main]  MAP_TAX -----------\n")
             if args.command == 'map_snv':
                 sys.stderr.write("[main]  MAP_SNV -----------\n")
 
         # check that there is at least one file with reads
-        if (args.forwardReads==None) and (args.reverseReads==None) and (args.singleReads==None) and (args.listInputFiles == None) and (args.motu_read_counts_file==None):
+        if (args.forwardReads is None) and (args.reverseReads is None) and (args.singleReads is None) and (args.listInputFiles is None) and (args.motu_read_counts_file is None):
             sys.stderr.write("[E::map_db] Error: input is missing. Please provide -f,-r or -s or -i or -m.\n")
             sys.exit(1)
         # check that for and rev reads are present togehter
-        if ((args.forwardReads!=None) and (args.reverseReads==None) and (args.listInputFiles == None) and (args.motu_read_counts_file==None)):
+        if ((args.forwardReads is not None) and (args.reverseReads is None) and (args.listInputFiles is None) and (args.motu_read_counts_file is None)):
             sys.stderr.write("[E::map_db] Error: reverse reads (-r) missing\n")
             sys.exit(1)
-        if ((args.forwardReads==None) and (args.reverseReads!=None) and (args.listInputFiles == None) and (args.motu_read_counts_file==None)):
+        if ((args.forwardReads is None) and (args.reverseReads is not None) and (args.listInputFiles is None) and (args.motu_read_counts_file is None)):
             sys.stderr.write("[E::map_db] Error: forward reads (-f) missing\n")
             sys.exit(1)
         # if we have -i bam/sam file, then we ignore the reads input
-        if (args.listInputFiles != None and (args.motu_read_counts_file==None)):
-            if (args.verbose >= 2) and (args.forwardReads!=None): sys.stderr.write("[W::main] Warning: -f FILE ignored since there is -i\n")
-            if (args.verbose >= 2) and (args.reverseReads!=None): sys.stderr.write("[W::main] Warning: -r FILE ignored since there is -i\n")
-            if (args.verbose >= 2) and (args.singleReads!=None): sys.stderr.write("[W::main] Warning: -s FILE ignored since there is -i\n")
+        if (args.listInputFiles is not None and (args.motu_read_counts_file is None)):
+            if (args.verbose >= 2) and (args.forwardReads is not None): sys.stderr.write("[W::main] Warning: -f FILE ignored since there is -i\n")
+            if (args.verbose >= 2) and (args.reverseReads is not None): sys.stderr.write("[W::main] Warning: -r FILE ignored since there is -i\n")
+            if (args.verbose >= 2) and (args.singleReads is not None): sys.stderr.write("[W::main] Warning: -s FILE ignored since there is -i\n")
         # if we have -m, then we ignore other inputs
-        if (args.motu_read_counts_file!=None):
-            if (args.verbose >= 2) and (args.forwardReads!=None): sys.stderr.write("[W::main] Warning: -f FILE ignored since there is -m\n")
-            if (args.verbose >= 2) and (args.reverseReads!=None): sys.stderr.write("[W::main] Warning: -r FILE ignored since there is -m\n")
-            if (args.verbose >= 2) and (args.singleReads!=None): sys.stderr.write("[W::main] Warning: -s FILE ignored since there is -m\n")
-            if (args.verbose >= 2) and (args.listInputFiles!=None): sys.stderr.write("[W::main] Warning: -i FILE ignored since there is -m\n")
+        if (args.motu_read_counts_file is not None):
+            if (args.verbose >= 2) and (args.forwardReads is not None): sys.stderr.write("[W::main] Warning: -f FILE ignored since there is -m\n")
+            if (args.verbose >= 2) and (args.reverseReads is not None): sys.stderr.write("[W::main] Warning: -r FILE ignored since there is -m\n")
+            if (args.verbose >= 2) and (args.singleReads is not None): sys.stderr.write("[W::main] Warning: -s FILE ignored since there is -m\n")
+            if (args.verbose >= 2) and (args.listInputFiles is not None): sys.stderr.write("[W::main] Warning: -i FILE ignored since there is -m\n")
 
-        if (args.listInputFiles == None and args.motu_read_counts_file==None): ## run BWA
+        if (args.listInputFiles is None and args.motu_read_counts_file is None): ## run BWA
             # ---------------------- divide the lanes ------------------------------
             singles = list()
             forw = list()
             reve = list()
-            if (args.singleReads!=None): singles = args.singleReads.split(",")
-            if (args.forwardReads!=None): forw = args.forwardReads.split(",")
-            if (args.reverseReads!=None): reve = args.reverseReads.split(",")
+            if (args.singleReads is not None): singles = args.singleReads.split(",")
+            if (args.forwardReads is not None): forw = args.forwardReads.split(",")
+            if (args.reverseReads is not None): reve = args.reverseReads.split(",")
 
             number_of_lanes = max(len(singles),len(forw),len(reve))
             if args.verbose > 2: sys.stderr.write("[main] Number of detected lanes: "+str(number_of_lanes)+"\n")
 
             # ----check input: check number of files for forw and rev --------------
-            if (args.forwardReads!=None):
+            if (args.forwardReads is not None):
                 if len(forw) != len(reve):
                     sys.stderr.write("[E::map_db] Error: number of files for forward reads ("+str(len(forw))+") is different from number of files for reverse reads ("+str(len(reve))+")\n")
                     sys.exit(1)
@@ -1000,11 +997,11 @@ def main(argv=None):
                 forward_reads = ""
                 reverse_reads = ""
                 single_reads = ""
-                if (args.reverseReads!=None):
+                if (args.reverseReads is not None):
                     if len(forw)> i:
                         forward_reads = forw[i]
                         reverse_reads = reve[i]
-                if (args.singleReads!=None):
+                if (args.singleReads is not None):
                     if len(singles)> i:
                         single_reads = singles[i]
 
@@ -1028,14 +1025,14 @@ def main(argv=None):
                 if multiple_cores:
                     manager = multiprocessing.Manager()
                     result = manager.list()
-                    processes.append(multiprocessing.Process(target=run_bwa_multiple_cores, args=(forward_reads,  reverse_reads,  single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id, result)) )
+                    processes.append(multiprocessing.Process(target=run_bwa_multiple_cores, args=(forward_reads, reverse_reads, single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id, result)) )
                     results_bwa.append(result)
                 else:
                     if args.command == 'profile':
-                        sam_lines_list = runbwa.runBWAmapping( forward_reads,  reverse_reads,  single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id,default_min_len_align_length_map_tax)
+                        sam_lines_list = runbwa.runBWAmapping( forward_reads, reverse_reads, single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id,default_min_len_align_length_map_tax)
                     else: # if it is map_snv
-                        if (args.load_sam_lines == None):
-                            sam_lines_list = runbwa_snv.runBWAmapping( forward_reads,  reverse_reads,  single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id,default_min_len_align_length_map_tax)
+                        if (args.load_sam_lines is None):
+                            sam_lines_list = runbwa_snv.runBWAmapping( forward_reads, reverse_reads, single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id,default_min_len_align_length_map_tax)
                         else:
                             sam_lines_list = list()
                     all_sam_lines = all_sam_lines + sam_lines_list
@@ -1054,12 +1051,12 @@ def main(argv=None):
             if args.command == 'map_snv':
 
                 # quick and dirty save and load all_sam_lines
-                if (args.load_sam_lines != None):
+                if (args.load_sam_lines is not None):
                     temp_f = open(args.load_sam_lines,"r")
                     for jj in temp_f:
                         all_sam_lines.append(jj)
                     temp_f.close()
-                if (args.save_sam_lines != None):
+                if (args.save_sam_lines is not None):
                     temp_f = open(args.save_sam_lines,"w")
                     for jj in all_sam_lines:
                         temp_f.write(jj)
@@ -1079,7 +1076,7 @@ def main(argv=None):
                 database_dir = relative_path+"db_mOTU"
 
                 # coordinates for the padding of the genes are different for centroids
-                dictReference2geneLocation = os.path.sep.join([database_dir,  database_prefix + ".padded.coords_for_centroids"])
+                dictReference2geneLocation = os.path.sep.join([database_dir, database_prefix + ".padded.coords_for_centroids"])
                 if args.verbose>3:
                     sys.stderr.write("[main] -- File with gene padding coordinates: "+dictReference2geneLocation+"\n")
 
@@ -1104,7 +1101,7 @@ def main(argv=None):
                 if args.verbose>2:
                     time_after_unique = time.time()
                     sys.stderr.write(" [map_snv] select only reads that map uniquely: ")
-                    sys.stderr.write(str("{0:.2f}".format(time_after_unique  - start_time_metaSNV))+" sec\n")
+                    sys.stderr.write(str("{0:.2f}".format(time_after_unique - start_time_metaSNV))+" sec\n")
 
                 if args.verbose>3:
                     sys.stderr.write("[main] -- After selecting reads that map uniquely there are "+str(len(all_sam_lines_pe_filtered))+" sam lines\n")
@@ -1114,7 +1111,7 @@ def main(argv=None):
                 # Third: samtool sort
                 # samtool sort needs a bam file as input
                 if args.verbose>4: sys.stderr.write("   [map_snv] saving temporary sam file\n")
-                temp_file = tempfile.NamedTemporaryFile(delete=False, mode = "w")
+                temp_file = tempfile.NamedTemporaryFile(delete=False, mode="w")
                 try:
                     h_file = open(header_file,'r')
                 except:
@@ -1140,7 +1137,7 @@ def main(argv=None):
                     outfile_bam = sys.stdout # if the output is not specified, then we choose stdout
                 else:
                     #outfile_bam = open(args.output, "w")
-                    outfile_bam = tempfile.NamedTemporaryFile(delete=False, mode = "w")
+                    outfile_bam = tempfile.NamedTemporaryFile(delete=False, mode="w")
                     os.chmod(outfile_bam.name, 0o644)
 
 
@@ -1179,7 +1176,7 @@ def main(argv=None):
                 time_final_SNV = time.time()
                 if args.verbose>2:
                     sys.stderr.write(" [map_snv] sort bam file: " + str("{0:.2f}".format(time_final_SNV - time_after_unique))+" sec\n")
-                    sys.stderr.write("[main] Total time: " + str("{0:.2f}".format(time_final_SNV  - initial_start_time))+" sec\n")
+                    sys.stderr.write("[main] Total time: " + str("{0:.2f}".format(time_final_SNV - initial_start_time))+" sec\n")
 
                 return 0 #map_snv is finished, so we can exit
 
@@ -1194,7 +1191,7 @@ def main(argv=None):
 
             first_script_header = "map_tax "+versions["runBWA"]+" | gene database: "+version_db+" | "+str(reads_avg_length)
 
-            if args.profile_bam_file != None: # save bam file -----------------------
+            if args.profile_bam_file is not None: # save bam file -----------------------
                 if is_tool("samtools"):
                     start_time_save_bam = time.time()
                     error_save_intermediate_bam_file = False
@@ -1208,7 +1205,7 @@ def main(argv=None):
 
                     # create the temp sam file with the result
                     try:
-                        sam_temp_file = tempfile.NamedTemporaryFile(delete=False, mode = "w")
+                        sam_temp_file = tempfile.NamedTemporaryFile(delete=False, mode="w")
 
                         if args.verbose>4: sys.stderr.write("  \n[map_db] saving intermediate sam file in "+sam_temp_file.name + "\n")
 
@@ -1245,7 +1242,7 @@ def main(argv=None):
 
                     # convert to bam
                     try:
-                        bam_temp_file = tempfile.NamedTemporaryFile(delete=False, mode = "w")
+                        bam_temp_file = tempfile.NamedTemporaryFile(delete=False, mode="w")
                         os.chmod(bam_temp_file.name, 0o644)
                         convertCMD = "samtools view -b -Sh "+ sam_temp_file.name
                         convert_popenCMD = shlex.split(convertCMD)
@@ -1288,11 +1285,11 @@ def main(argv=None):
 
 
 #-------# map genes ------------------------------------------------------------
-        if args.motu_read_counts_file==None:
+        if args.motu_read_counts_file is None:
 
             if args.verbose>2: sys.stderr.write("[main]  CALC_MGC -----------\n")
 
-            if (args.listInputFiles != None):
+            if (args.listInputFiles is not None):
                 if args.verbose>2:
                     sys.stderr.write("[main] Load sam/bam files and inizialize the parametrs for calc_mgc\n")
 
@@ -1302,7 +1299,7 @@ def main(argv=None):
             database_prefix = "mOTU.v2b"
             database_dir = relative_path+"db_mOTU"
             sample_name = "trial"
-            if (args.sampleName != None): sample_name = args.sampleName
+            if (args.sampleName is not None): sample_name = args.sampleName
             multThreshold = 3
             winnerThreshold = 0.95
             loserThreshold = 0.01
@@ -1312,15 +1309,15 @@ def main(argv=None):
             return_dictionary = True
             profile_mode = True
 
-            if (args.listInputFiles != None):
+            if (args.listInputFiles is not None):
                 listInputFiles = args.listInputFiles.split(",")
                 profile_mode = False
                 all_sam_lines_input_map_motu = ""
                 #check what was the filter (-l) used during map_tax
                 for kk in listInputFiles:
                     filter_l_temp = motu_utilities.read_filter_len_from_bam_file(kk)
-                    if args.verbose>5 and filter_l_temp == None: sys.stderr.write("filter from bwa not found\n")
-                    if filter_l_temp != None:
+                    if args.verbose>5 and filter_l_temp is None: sys.stderr.write("filter from bwa not found\n")
+                    if filter_l_temp is not None:
                         if args.verbose>5: sys.stderr.write("Map_tax used -l "+str(filter_l_temp)+"\n")
                         if args.min_len_align_length < filter_l_temp:
                             if args.verbose>1: sys.stderr.write("[W::main] Warning: The bam input file was filtered with -l "+str(filter_l_temp)+". If you want to set a lower value for -l, you have to run profile again from the fastq files\n")
@@ -1331,7 +1328,7 @@ def main(argv=None):
                 all_length_avg = list()
                 for kk in listInputFiles:
                     l_temp = motu_utilities.read_length_from_bam_file(kk)
-                    if l_temp == None:
+                    if l_temp is None:
                         if args.verbose>1: sys.stderr.write("[W::main] Warning: Cannot find the average read length for the file: "+kk+"\n")
                     else:
                         all_length_avg.append(l_temp)
@@ -1360,8 +1357,8 @@ def main(argv=None):
 
 
             # we have to filter the sam lines if they are not given as input -- note that the filtering (inside the second script) is done only for the one that are loaded, and not during bwa
-            if (args.listInputFiles == None):
-                all_sam_lines_input_map_motu = filter_sam.run_all_lines ((args.min_perc_id/100),min_len_align,args.min_perc_align,all_sam_lines)
+            if (args.listInputFiles is None):
+                all_sam_lines_input_map_motu = filter_sam.run_all_lines((args.min_perc_id/100),min_len_align,args.min_perc_align,all_sam_lines)
 
 
             version_information_map_read,mOTU_counts = map_motu.run_mOTUs_v2_mapping(listInputFiles, database_dir, database_prefix, sample_name, multThreshold, winnerThreshold, loserThreshold, minClippedAlignLength, output, msam_script, args.type_output,args.verbose,profile_mode,all_sam_lines_input_map_motu,return_dictionary, args.min_perc_id,min_len_align,args.min_perc_align)
@@ -1377,11 +1374,11 @@ def main(argv=None):
 
 
             #save the mOTU read count, actually the mgc table
-            if args.profile_mOTU_reads_file != None:
+            if args.profile_mOTU_reads_file is not None:
                 start_time_save_motu = time.time()
 
                 try:
-                    mgc_temp_file = tempfile.NamedTemporaryFile(delete=False, mode = "w")
+                    mgc_temp_file = tempfile.NamedTemporaryFile(delete=False, mode="w")
                     os.chmod(mgc_temp_file.name, 0o644)
                     mgc_temp_file.write(mgc_table_header+"\n")
                     mgc_temp_file.write(sample_name+"\n")
@@ -1414,7 +1411,7 @@ def main(argv=None):
 #-------# create LGs -----------------------------------------------------------
         if args.verbose>2:
             sys.stderr.write("[main]  CALC_MOTU -----------\n")
-        if args.motu_read_counts_file!=None:# we load the mOTU read count table
+        if args.motu_read_counts_file is not None:# we load the mOTU read count table
             if args.verbose>2:sys.stderr.write("[main] Load the mgc table and compute the profile\n")
 
         database_dir = relative_path+"db_mOTU/"
@@ -1425,11 +1422,11 @@ def main(argv=None):
         short_name_file = database_dir+"short_names.txt"
         infile=""
         sample_name = "trial"
-        if (args.sampleName != None): sample_name = args.sampleName
+        if (args.sampleName is not None): sample_name = args.sampleName
 
         profile_mode = True
 
-        if args.motu_read_counts_file!=None: # we load the mOTU read count table
+        if args.motu_read_counts_file is not None: # we load the mOTU read count table
             profile_mode = False
             mOTU_counts = ""
             mgc_table_header = ""
@@ -1443,8 +1440,8 @@ def main(argv=None):
         if args.verbose>2:
             sys.stderr.write(" [calc_motu] (Create taxonomy profile) " + str("{0:.2f}".format(time.time() - time_after_map_genes))+" sec\n")
             executed_steps = "map_tax+calc_mgc+calc_motu"
-            if (args.listInputFiles != None and args.motu_read_counts_file==None): executed_steps = "calc_mgc+calc_motu"
-            if (args.motu_read_counts_file!=None): executed_steps = "calc_motu"
+            if (args.listInputFiles is not None and args.motu_read_counts_file is None): executed_steps = "calc_mgc+calc_motu"
+            if (args.motu_read_counts_file is not None): executed_steps = "calc_motu"
             sys.stderr.write("[main]  TOTAL TIME ("+executed_steps+"): " + str("{0:.2f}".format(time.time() - initial_start_time))+" sec\n")
 
 
@@ -1469,14 +1466,14 @@ def main(argv=None):
             time_after_map_genes = time.time() # for now we initialize it, so that if we skip calc_mgc, then we use the initial time
 
         # check that there is at least one file with reads
-        if (args.forwardReads==None) and (args.reverseReads==None) and (args.singleReads==None):
+        if (args.forwardReads is None) and (args.reverseReads is None) and (args.singleReads is None):
             sys.stderr.write("[E::map_db] Error: input is missing. Please provide -f,-r or -s\n")
             sys.exit(1)
         # check that for and rev reads are present togehter
-        if ((args.forwardReads!=None) and (args.reverseReads==None) and (args.listInputFiles == None) and (args.motu_read_counts_file==None)):
+        if ((args.forwardReads is not None) and (args.reverseReads is None) and (args.listInputFiles is None) and (args.motu_read_counts_file is None)):
             sys.stderr.write("[E::map_db] Error: reverse reads (-r) missing\n")
             sys.exit(1)
-        if ((args.forwardReads==None) and (args.reverseReads!=None) and (args.listInputFiles == None) and (args.motu_read_counts_file==None)):
+        if ((args.forwardReads is None) and (args.reverseReads is not None) and (args.listInputFiles is None) and (args.motu_read_counts_file is None)):
             sys.stderr.write("[E::map_db] Error: forward reads (-f) missing\n")
             sys.exit(1)
 
@@ -1484,15 +1481,15 @@ def main(argv=None):
         singles = list()
         forw = list()
         reve = list()
-        if (args.singleReads!=None): singles = args.singleReads.split(",")
-        if (args.forwardReads!=None): forw = args.forwardReads.split(",")
-        if (args.reverseReads!=None): reve = args.reverseReads.split(",")
+        if (args.singleReads is not None): singles = args.singleReads.split(",")
+        if (args.forwardReads is not None): forw = args.forwardReads.split(",")
+        if (args.reverseReads is not None): reve = args.reverseReads.split(",")
 
         number_of_lanes = max(len(singles),len(forw),len(reve))
         if args.verbose > 2: sys.stderr.write("[main] Number of detected lanes: "+str(number_of_lanes)+"\n")
 
         # ----check input: check number of files for forw and rev --------------
-        if (args.forwardReads!=None):
+        if (args.forwardReads is not None):
             if len(forw) != len(reve):
                 sys.stderr.write("[E::map_db] Error: number of files for forward reads ("+str(len(forw))+") is different from number of files for reverse reads ("+str(len(reve))+")\n")
                 sys.exit(1)
@@ -1524,11 +1521,11 @@ def main(argv=None):
             forward_reads = ""
             reverse_reads = ""
             single_reads = ""
-            if (args.reverseReads!=None):
+            if (args.reverseReads is not None):
                 if len(forw)> i:
                     forward_reads = forw[i]
                     reverse_reads = reve[i]
-            if (args.singleReads!=None):
+            if (args.singleReads is not None):
                 if len(singles)> i:
                     single_reads = singles[i]
 
@@ -1551,10 +1548,10 @@ def main(argv=None):
             if multiple_cores:
                 manager = multiprocessing.Manager()
                 result = manager.list()
-                processes.append(multiprocessing.Process(target=run_bwa_multiple_cores, args=(forward_reads,  reverse_reads,  single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id, result)) )
+                processes.append(multiprocessing.Process(target=run_bwa_multiple_cores, args=(forward_reads, reverse_reads, single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id, result)) )
                 results_bwa.append(result)
             else:
-                sam_lines_list = runbwa.runBWAmapping( forward_reads,  reverse_reads,  single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id,default_min_len_align_length_map_tax)
+                sam_lines_list = runbwa.runBWAmapping( forward_reads, reverse_reads, single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id,default_min_len_align_length_map_tax)
                 all_sam_lines = all_sam_lines + sam_lines_list
 
         if multiple_cores:
@@ -1610,7 +1607,7 @@ def main(argv=None):
         if args.verbose>2:
             initial_start_time = time.time()
 
-        if (args.listInputFiles == None):
+        if (args.listInputFiles is None):
             sys.stderr.write("[calc_mgc] Please provide at least one input file.\n")
             sys.exit(1)
 
@@ -1618,7 +1615,7 @@ def main(argv=None):
         database_prefix = "mOTU.v2b"
         database_dir = relative_path+"db_mOTU"
         sample_name = "trial"
-        if (args.sampleName != None): sample_name = args.sampleName
+        if (args.sampleName is not None): sample_name = args.sampleName
         multThreshold = 3
         winnerThreshold = 0.95
         loserThreshold = 0.01
@@ -1631,8 +1628,8 @@ def main(argv=None):
         #check what was the filter (-l) used during map_tax
         for kk in listInputFiles:
             filter_l_temp = motu_utilities.read_filter_len_from_bam_file(kk)
-            if args.verbose>5 and filter_l_temp == None: sys.stderr.write("filter from bwa not found\n")
-            if filter_l_temp != None:
+            if args.verbose>5 and filter_l_temp is None: sys.stderr.write("filter from bwa not found\n")
+            if filter_l_temp is not None:
                 if args.verbose>5: sys.stderr.write("Map_tax used -l "+str(filter_l_temp)+"\n")
                 if args.min_len_align_length < filter_l_temp:
                     if args.verbose>1: sys.stderr.write("[W::main] Warning: The bam input file was filtered with -l "+str(filter_l_temp)+". If you want to set a lower value for -l, you have to run profile again from the fastq files\n")
@@ -1642,7 +1639,7 @@ def main(argv=None):
         all_length_avg = list()
         for kk in listInputFiles:
             l_temp = motu_utilities.read_length_from_bam_file(kk)
-            if l_temp == None:
+            if l_temp is None:
                 if args.verbose>1: sys.stderr.write("[W::main] Warning: Cannot find the average read length for the file: "+kk+"\n")
             else:
                 all_length_avg.append(l_temp)
@@ -1681,7 +1678,7 @@ def main(argv=None):
 
         #save the mOTU read count, actually the mgc table
         if args.output != "":
-            outfile = tempfile.NamedTemporaryFile(delete=False, mode = "w")
+            outfile = tempfile.NamedTemporaryFile(delete=False, mode="w")
             os.chmod(outfile.name, 0o644)
             #outfile = open(args.output, "w")
             if args.verbose>2: sys.stderr.write("[main] Saving mgc abundance table\n")
@@ -1732,7 +1729,7 @@ def main(argv=None):
         if args.verbose>2:
             sys.stderr.write("[main]  CALC_MOTU -----------\n")
             initial_start_time = time.time()
-        if (args.listInputFiles == None):
+        if (args.listInputFiles is None):
             sys.stderr.write("[calc_motu] Please provide at least one input file.\n")
             sys.exit(1)
 
@@ -1743,7 +1740,7 @@ def main(argv=None):
         mOTULG_taxonomy = database_dir+"mOTULG.taxonomy"
         short_name_file = database_dir+"short_names.txt"
         sample_name = "trial"
-        if (args.sampleName != None): sample_name = args.sampleName
+        if (args.sampleName is not None): sample_name = args.sampleName
 
         profile_mode = False
         mOTU_counts = ""
@@ -1768,22 +1765,22 @@ def main(argv=None):
         initial_start_time = time.time()
         if args.verbose>2: sys.stderr.write("[main]  MERGE -----------\n")
         # check that there is at least one input
-        if (args.directory_append == None) and (args.listInputFiles==None):
-            sys.stderr.write ("[E::merge] Error: input option missing\n")
+        if (args.directory_append is None) and (args.listInputFiles is None):
+            sys.stderr.write("[E::merge] Error: input option missing\n")
             sys.exit(1)
 
         # check that we dont have both inputs
-        if (args.directory_append != None) and (args.listInputFiles!=None):
-            sys.stderr.write ("[E::merge] Error: too many inputs (-i and -d)\n")
+        if (args.directory_append is not None) and (args.listInputFiles is not None):
+            sys.stderr.write("[E::merge] Error: too many inputs (-i and -d)\n")
             sys.exit(1)
 
-        if (args.listInputFiles!=None):
+        if (args.listInputFiles is not None):
             if args.verbose>2: sys.stderr.write(" [merge] Merge all the files in the list of input\n")
 
-        if args.directory_append  != None:
+        if args.directory_append is not None:
             if args.verbose>2: sys.stderr.write(" [merge] Merge all the files in the directory\n")
-            if (args.directory_append [-1]!="/"):
-                args.directory_append  = args.directory_append  + "/"
+            if (args.directory_append[-1]!="/"):
+                args.directory_append = args.directory_append + "/"
 
 
         append.append_profilings(args.directory_append, args.listInputFiles, args.output, args.verbose, args.BIOM_output,version_append,motu_call,version_tool)

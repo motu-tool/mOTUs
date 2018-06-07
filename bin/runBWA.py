@@ -83,9 +83,9 @@ def runBWA_singleEnd(strFilteredReadFile, reference, msamPercID, msamminLength, 
     # run bwa
     try:
         if (zippedInput):
-            bwaCMD = "bwa mem -v 1 -a" + techFlag + threadsFlag + " " + reference  + " -"
+            bwaCMD = "bwa mem -v 1 -a" + techFlag + threadsFlag + " " + reference + " -"
         else:
-            bwaCMD = "bwa mem -v 1 -a" + techFlag + threadsFlag + " " + reference  + " " + strFilteredReadFile
+            bwaCMD = "bwa mem -v 1 -a" + techFlag + threadsFlag + " " + reference + " " + strFilteredReadFile
 
         if verbose >= 5: sys.stderr.write("bwa call:\n"+bwaCMD+"\n")
 
@@ -158,7 +158,7 @@ def runBWA_singleEnd(strFilteredReadFile, reference, msamPercID, msamminLength, 
 # ------------------------------------------------------------------------------
 # run the bwa mapping considering all files as single end
 # ------------------------------------------------------------------------------
-def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, output, bamOutput, msam_script,technology, verbose, profile_mode ,lane_id,msamminLength_from_motus):
+def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, output, bamOutput, msam_script,technology, verbose, profile_mode, lane_id, msamminLength_from_motus):
     # parameters for msamtools are fixed
     msamPercID = 0.97
     msamminLength = msamminLength_from_motus
@@ -316,7 +316,7 @@ def main(argv=None):
     msamminLength_from_motus = 75
 
     # run bwa
-    runBWAmapping( args.forwardReads,  args.reverseReads,  args.singleReads, args.reference, args.threads, args.output, args.bamOutput, msam_script, args.technology, args.verbose, profile_mode, args.lane,msamminLength_from_motus)
+    runBWAmapping( args.forwardReads, args.reverseReads, args.singleReads, args.reference, args.threads, args.output, args.bamOutput, msam_script, args.technology, args.verbose, profile_mode, args.lane, msamminLength_from_motus)
 
     return 0        # success
 

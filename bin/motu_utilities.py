@@ -194,7 +194,7 @@ def read_length_from_bam_file(SAM_BAM_file):
 # ------------------------------------------------------------------------------
 # find the -l filter that was used to filter in map_tax (default is 45) from a bam/sam file
 # ------------------------------------------------------------------------------
-def read_filter_len_from_bam_file (SAM_BAM_file):
+def read_filter_len_from_bam_file(SAM_BAM_file):
     samLines = readSAMfile(SAM_BAM_file)
     try:
         for strSamline in samLines:
