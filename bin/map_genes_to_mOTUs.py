@@ -90,7 +90,7 @@ def getReferenceDict(geneLocationFileName):
             arrLine = strLine.split('\t')
 
             strGeneName = arrLine[0]
-            strContigName = arrLine[1]
+            strContigName = arrLine[1]  # not used
             strGeneStart = int(arrLine[2])
             strGeneEnd = int(arrLine[3])
 
@@ -408,7 +408,7 @@ def filterAlignment(dictSAMline, minClippedAlignLength, minAlignLength, minPercI
 
     (listCigarTypes, listNumbers, seqLength, alignLength, alignCigarMismatches, alignLengthOnRef) = parseCigar(dictSAMline["cigar"])
     alignStart = int(dictSAMline["alignstart"])
-    alignEnd = alignStart + int(alignLengthOnRef) - 1
+    alignEnd = alignStart + int(alignLengthOnRef) - 1  # not used
 
     intMissmatches = getMismatchesSamInfo(dictSAMline["saminfo"])
     if (intMissmatches == -1):
@@ -458,7 +458,7 @@ def calculateOverlap(dictSAMline, dictReference2geneLocation):
 
 
 # start of filterInsert helper functions
-def filterInsert_getBestAlignmentPer_mOTU(listInsertSAMdicts , dictGene2mOTUs, verbose):
+def filterInsert_getBestAlignmentPer_mOTU(listInsertSAMdicts, dictGene2mOTUs, verbose):
     #first read
     dictBestClusterHit_score = defaultdict(int)
     dictBestClusterHit_overlap = defaultdict(int)
