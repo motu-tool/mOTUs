@@ -109,7 +109,7 @@ def computeDist(filt_file):
 
     dist = [[alleledist(data.iloc[i], data.iloc[j]) for i in range(len(data))] for j in range(len(data))]
     dist = pd.DataFrame(dist, index=data.index, columns=data.index)
-    dist.to_csv(outdir + '/' + '%s.allele.dist' %species , sep='\t')
+    dist.to_csv(outdir + '/' + '%s.allele.dist' %species, sep='\t')
 
 def computeAllDist(args):
 

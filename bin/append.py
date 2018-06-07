@@ -88,7 +88,7 @@ def append_profilings(directory, list_files, output, verbose, BIOM_output,versio
     cont_files = 0
     all_info_version = dict()
     for i in list_files:
-        if directory != None:
+        if directory is not None:
             file_name = directory+i
         else:
             file_name = i
@@ -298,7 +298,7 @@ def main(argv=None):
         sys.stderr.write("[E::merge] Error: insert the directory value.\n")
         sys.exit(1)
 
-    if args.directory != None:
+    if args.directory is not None:
         if (args.directory[-1]!="/"):
             args.directory = args.directory + "/"
 
