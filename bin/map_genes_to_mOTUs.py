@@ -834,7 +834,7 @@ def parseBWA_SAMoutput(samLines, dictGene2counts, dictGene2basecount, dictRefere
     #print("SAMlines filtered: " + str(count6))
 
 
-def get_mOTU_abundances(dictUniqueInsertCounts, dictUniqueBaseCounts, listMultipleMappers, dictGene2mOTUs, dictGene2Lengths, nonUniqueMultThreshold, winnerThreshold, loserThreshold, sampleName, output, type_output,profile_mode,return_dictionary):
+def get_mOTU_abundances(dictUniqueInsertCounts, dictUniqueBaseCounts, listMultipleMappers, dictGene2mOTUs, dictGene2Lengths, nonUniqueMultThreshold, winnerThreshold, loserThreshold, sampleName, output, type_output,profile_mode,return_dictionary,verbose):
 
     uniqueInsertCount = 0
     totalInsertCount = 0
@@ -1246,9 +1246,9 @@ def run_mOTUs_v2_mapping(listInputFiles, databaseDir, databasePrefix, sampleName
 
     if verbose>2: start_time = time.time()
     if not(return_dictionary):
-        get_mOTU_abundances(dictGene2counts, dictGene2basecount, listMultipleMappers, dictGene2mOTUs, dictGene2Lengths, nonUniqueMultThreshold, winnerThreshold, loserThreshold, sampleName, output, type_output, profile_mode, return_dictionary)
+        get_mOTU_abundances(dictGene2counts, dictGene2basecount, listMultipleMappers, dictGene2mOTUs, dictGene2Lengths, nonUniqueMultThreshold, winnerThreshold, loserThreshold, sampleName, output, type_output, profile_mode, return_dictionary,verbose)
     else:
-        dict_temp = get_mOTU_abundances(dictGene2counts, dictGene2basecount, listMultipleMappers, dictGene2mOTUs, dictGene2Lengths, nonUniqueMultThreshold, winnerThreshold, loserThreshold, sampleName, output, type_output, profile_mode, return_dictionary)
+        dict_temp = get_mOTU_abundances(dictGene2counts, dictGene2basecount, listMultipleMappers, dictGene2mOTUs, dictGene2Lengths, nonUniqueMultThreshold, winnerThreshold, loserThreshold, sampleName, output, type_output, profile_mode, return_dictionary,verbose)
     if verbose>2: sys.stderr.write(" [calc_mgc](get mgc abundances) " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
 
     if (return_dictionary): return version_information_map_read[0],dict_temp
