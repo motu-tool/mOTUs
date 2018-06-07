@@ -294,7 +294,7 @@ def print_menu_append():
 
 # ------------------------------------------------------------------------------
 # function for multiple cores for bwa
-def run_bwa_multiple_cores(forward_reads, reverse_reads, single_reads, reference, threads, output, bamOutput, msam_script, technology, verbose, profile_mode, lane_id, result):
+def run_bwa_multiple_cores(forward_reads, reverse_reads, single_reads, reference, threads, output, bamOutput, msam_script, technology, verbose, profile_mode, lane_id, result,default_min_len_align_length_map_tax):
     result1 = runbwa.runBWAmapping( forward_reads, reverse_reads, single_reads, reference, threads, output, bamOutput, msam_script, technology, verbose, profile_mode, lane_id,default_min_len_align_length_map_tax)
     for i in result1:
         result.append(i)
@@ -1025,7 +1025,7 @@ def main(argv=None):
                 if multiple_cores:
                     manager = multiprocessing.Manager()
                     result = manager.list()
-                    processes.append(multiprocessing.Process(target=run_bwa_multiple_cores, args=(forward_reads, reverse_reads, single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id, result)) )
+                    processes.append(multiprocessing.Process(target=run_bwa_multiple_cores, args=(forward_reads, reverse_reads, single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id, result,default_min_len_align_length_map_tax)) )
                     results_bwa.append(result)
                 else:
                     if args.command == 'profile':
@@ -1548,7 +1548,7 @@ def main(argv=None):
             if multiple_cores:
                 manager = multiprocessing.Manager()
                 result = manager.list()
-                processes.append(multiprocessing.Process(target=run_bwa_multiple_cores, args=(forward_reads, reverse_reads, single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id, result)) )
+                processes.append(multiprocessing.Process(target=run_bwa_multiple_cores, args=(forward_reads, reverse_reads, single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id, result,default_min_len_align_length_map_tax)) )
                 results_bwa.append(result)
             else:
                 sam_lines_list = runbwa.runBWAmapping( forward_reads, reverse_reads, single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id,default_min_len_align_length_map_tax)
