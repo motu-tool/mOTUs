@@ -874,6 +874,11 @@ def main(argv=None):
         shutil.rmtree(os.path.abspath(os.path.join(outdir, 'filtered')))
         shutil.rmtree(os.path.abspath(os.path.join(outdir, 'snpCaller')))
 
+        # check if the 'distances' dir is empty
+        dist_files = [os.path.abspath(p) for p in glob.glob(os.path.join(outdir, 'dist*/*dist'))]
+        if len(dist_files) == 0 and args.verbose >= 2:
+            sys.stderr.write("[W::main] The result is empty\n")
+
 
         if (args.verbose>=2): sys.stderr.write("[main] End metaSNV\n")
         mlf.close()
