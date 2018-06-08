@@ -12,8 +12,8 @@ Pre-requisites
 
 The mOTU profiler requires:
 * Python 3 or Python 2.7 (or higher)
-* the Burrow-Wheeler Aligner ([bwa](https://github.com/lh3/bwa))
-* SAMtools ([link](http://www.htslib.org/download/))
+* the Burrow-Wheeler Aligner v0.7.15 or higher ([bwa](https://github.com/lh3/bwa))
+* SAMtools v1.5 or higher ([link](http://www.htslib.org/download/))
 
 In order to use the command ```snv_call``` you need:
 * [metaSNV v1.0.3](https://git.embl.de/costea/metaSNV), available also on [bioconda](https://anaconda.org/bioconda/metasnv) (we assume metaSNV.py to be in the system path)
