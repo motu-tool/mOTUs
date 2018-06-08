@@ -207,7 +207,7 @@ def append_profilings(directory, list_files, output, verbose, BIOM_output,versio
         for taxa in taxa_id[0:-1]:
             tt = taxa.split("\t")
             if n_col_header == 1:
-                name = "\"None\""
+                name = "null"
             if n_col_header == 2:
                 name = "{\"NCBI_id\":\""+tt[1]+"\"}"
             if n_col_header == 3:
@@ -217,7 +217,7 @@ def append_profilings(directory, list_files, output, verbose, BIOM_output,versio
             outfile.write("            {\"id\":\""+tt[0]+"\", \"metadata\":"+name+"},\n")
         tt = taxa_id[-1].split("\t")
         if n_col_header == 1:
-            name = "\"None\""
+            name = "null"
         if n_col_header == 2:
             name = "{\"NCBI_id\":\""+tt[1]+"\"}"
         if n_col_header == 3:
