@@ -379,22 +379,22 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
                     name = j+"\t" # mOTU id
                     name = name + all_val[1]# consensus_name
                     if print_NCBI_id: name = name + "\t"+all_val[0] # NCBI_tax_id
-                    name = name + "\t" + str(rel_ab_LGs_rel[j]) +"\n" # value
+                    name = "{0}\t{1:.10f}\n".format(name, rel_ab_LGs_rel[j]) # value
                     outfile.write(name)
                 else:
                     name = "{\"name\":\""+all_val[1]+"\",\n"
                     name = name + "                                       \"NCBI_id\":\""+all_val[0]+"\"}"
                     list_rows.append("            {\"id\":\""+j+"\", \"metadata\":"+name+"},\n")
-                    list_vals.append("["+str(rel_ab_LGs_rel[j])+"],\n")
+                    list_vals.append("[{0:.10f}],\n".format(rel_ab_LGs_rel[j]))
             elif j == "-1": # -1
                 name = "-1\t-1"
                 if print_NCBI_id: name = name + "\tNA"
-                name = name + "\t" +str(rel_ab_LGs_rel[j])+"\n"
+                name = "{0}\t{1:.10f}\n".format(name, rel_ab_LGs_rel[j]) # value
                 if not BIOM_output:
                     outfile.write(name)
                 else:
                     list_rows.append("            {\"id\":\"-1\", \"metadata\":{\"name\":\"unknown\",\n                                    \"NCBI_id\":\"NA\"}}\n")
-                    list_vals.append("["+str(rel_ab_LGs_rel[j])+"]]\n")
+                    list_vals.append("[{0:.10f}]]\n".format(rel_ab_LGs_rel[j]))
 
             else: # if it not in anyone (it should not happen)
                 if verbose>1: sys.stderr.write(" [W::calc_motu] Warning: find mOTU "+j+" that is not present in the taxonomy\n")
@@ -423,12 +423,12 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
                 # line to print
                 name = name + " ["+j+"]"
                 if print_NCBI_id: name = name + "\t"+all_val[0] # NCBI_tax_id
-                name = name + "\t" + str(rel_ab_LGs_rel[j]) +"\n" # value
+                name = "{0}\t{1:.10f}\n".format(name, rel_ab_LGs_rel[j]) # value
                 outfile.write(name)
             elif j == "-1": # -1
                 name = "-1"
                 if print_NCBI_id: name = name + "\tNA"
-                name = name + "\t" +str(rel_ab_LGs_rel[j])+"\n"
+                name = "{0}\t{1:.10f}\n".format(name, rel_ab_LGs_rel[j]) # value
                 outfile.write(name)
             else: # if it not in anyone (it should not happen)
                 if verbose>1: sys.stderr.write(" [W::calc_motu] Warning: find mOTU "+j+" that is not present in the taxonomy\n")
@@ -476,24 +476,24 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
                 # prepare line to print
                 name = all_val[1] # consensus_name
                 if print_NCBI_id: name = name + "\t"+all_val[0] # NCBI_tax_id
-                name = name + "\t" + str(rel_abundance_taxon[i]) +"\n" # value
+                name = "{0}\t{1:.10f}\n".format(name, rel_abundance_taxon[i]) # value
                 if not BIOM_output:
                     outfile.write(name)
                 else:
                     name = "{\"NCBI_id\":\""+all_val[0]+"\"}"
                     list_rows.append("            {\"id\":\""+all_val[1]+"\", \"metadata\":"+name+"},\n")
-                    list_vals.append("["+str(rel_abundance_taxon[i])+"],\n")
+                    list_vals.append("[{0:.10f}],\n".format(rel_abundance_taxon[i]))
 
             else:
                 if not BIOM_output:
                     if print_NCBI_id:
-                        name = "-1\tNA\t"+str(rel_abundance_taxon[i])+"\n"
+                        name = "-1\tNA\t{0:.10f}\n".format(rel_abundance_taxon[i])
                     else:
-                        name = "-1\t"+str(rel_abundance_taxon[i])+"\n"
+                        name = "-1\t{0:.10f}\n".format(rel_abundance_taxon[i])
                     outfile.write(name)
                 else:
                     list_rows.append("            {\"id\":\"-1\", \"metadata\":{\"NCBI_id\":\"NA\"}}\n")
-                    list_vals.append("["+str(rel_abundance_taxon[i])+"]]\n")
+                    list_vals.append("[{0:.10f}]]\n".format(rel_abundance_taxon[i]))
 
     ####### PRINT BIOM FORMAT ##################################################
     if BIOM_output:

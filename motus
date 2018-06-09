@@ -1389,8 +1389,8 @@ def main(argv=None):
                     os.chmod(mgc_temp_file.name, 0o644)
                     mgc_temp_file.write(mgc_table_header+"\n")
                     mgc_temp_file.write(sample_name+"\n")
-                    for i in sorted(mOTU_counts):
-                        mgc_temp_file.write(i+"\t"+str(mOTU_counts[i])+"\n")
+                    for m, value in sorted(mOTU_counts.items()):
+                        mgc_temp_file.write("{0}\t{1:.10f}\n".format(m, value))
                 except:
                     sys.stderr.write("[W::main] Warning: failed to save the intermediate mgc table\n")
 
