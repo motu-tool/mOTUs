@@ -1,0 +1,3 @@
+[submodule "tests/sample_data"]
+	path = tests/sample_data
+	url = git://github.com/unode/mOTUs_v2_testdata.git
