@@ -1,0 +1,32 @@
+image: ubuntu
+
+# on_finish:
+#  - sh: export APPVEYOR_SSH_BLOCK=true
+#  - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
+
+environment:
+  # APPVEYOR_SSH_KEY: ssh-rsa <insert hash here>
+  matrix:
+    - PYTHON_VERSION: 2.7
+    - PYTHON_VERSION: 3.4
+    - PYTHON_VERSION: 3.5
+    - PYTHON_VERSION: 3.6
+    - PYTHON_VERSION: 3.7
+
+install:
+  - sudo apt-get install -y -q biom-format-tools
+  - sh: export PATH=$APPVEYOR_BUILD_FOLDER/deps:$PATH
+  - git submodule init
+  - git submodule update
+  - sh: source ~/venv$PYTHON_VERSION*/bin/activate
+
+cache:
+  - db_mOTU -> setup.py  # Cache db_mOTU but expire it if setup.py (which contains database version information) changes
+
+build: off
+
+test_script:
+  - python --version
+  - python setup.py --no-download-progress
+  - python test.py
+  - cd tests && python run_all -v
