@@ -1,0 +1,3 @@
+[submodule "deps"]
+	path = deps
+	url = git://github.com/unode/mOTUs_v2_deps
