@@ -85,6 +85,12 @@ def main(argv=None):
     sys.stderr.write("|                              SETUP MOTUS TOOL                                |\n")
     sys.stderr.write(" ------------------------------------------------------------------------------\n")
     # download the files -------------------------------------------------------
+    path_versions = relative_path + "db_mOTU/versions"
+    if os.path.isfile(path_versions) and "--force-redownload" not in sys.argv:
+        sys.stderr.write("Database already downloaded. Not doing anything.\n"
+                         "Use --force-redownload to download again.\n")
+        sys.exit(0)
+
     sys.stderr.write("Download the compressed motus database (~1Gb)\n")
     db_name = relative_path+"db_mOTU.tar.gz"
 
@@ -152,7 +158,6 @@ def main(argv=None):
 
     # --------------- add file with version informations -----------------------
     sys.stderr.write("Add version file...")
-    path_versions = relative_path + "db_mOTU/versions"
     try:
         outfile = tempfile.NamedTemporaryFile(delete=False, mode = "w")
         outfile.write("motus\t"+motus_version+"\n")
