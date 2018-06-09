@@ -15,6 +15,18 @@ def as_lines(data1, data2):
     return data1.split('\n'), data1.split('\n')
 
 
+def as_sam(file1, file2):
+    "Convert BAM to SAM to make them comparable"
+    def samview(data):
+        cmd = ("samtools", "view", data)
+        p = Popen(cmd, stdout=PIPE, stderr=PIPE, cwd=ROOT)
+        stdout, stderr = p.communicate()
+
+        return stdout.decode()
+
+    return samview(file1), samview(file2)
+
+
 def prefilter_biom_format(biom1, biom2):
     "Remove timestamp information from BIOM files in order to make them comparable"
     def remove_date(data):
@@ -76,6 +88,12 @@ class MotusTestCase(TestCase):
         cmd_prefix = ("../motus",)
 
         return self.run_cmd(cmd, allow_error=allow_error, cmd_prefix=cmd_prefix)
+
+    def validate_bam(self, profile_file, expected_file):
+        "Validate that the produced bam matches expectation"
+
+        profile, expected = as_sam(profile_file, expected_file)
+        self.assertEquals(profile, expected)
 
     def validate_result(self, profile, expected_file):
         "Validate that the produced profile matches expectation"
