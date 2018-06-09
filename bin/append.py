@@ -284,7 +284,7 @@ def append_profilings(directory, list_files, output, verbose, BIOM_output,versio
 def main(argv=None):
 
     #----------------------------- input parameters ----------------------------
-    parser = argparse.ArgumentParser(description='This program calculates mOTU abundances for one sample', add_help = True)
+    parser = argparse.ArgumentParser(description='This program calculates mOTU abundances for one sample', add_help=True)
     parser.add_argument('--directory', '-d', action="store", default=None,dest='directory', help='append all the files in the directory')
     parser.add_argument('--output', '-o', action="store", dest='output', default="", help='name of the output file, if not specified is stdout')
     parser.add_argument('-v', action='store', type=int, default=3, dest='verbose', help='Verbose levels')

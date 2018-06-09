@@ -55,7 +55,10 @@ def reporthook(count, block_size, total_size):
     sys.stdout.flush()
 
 def save_f(url, filename):
-    urllib.request.urlretrieve(url, filename, reporthook)
+    if "--no-download-progress" in sys.argv:
+        urllib.request.urlretrieve(url, filename)
+    else:
+        urllib.request.urlretrieve(url, filename, reporthook)
 
 
 # function to check md5
@@ -82,6 +85,12 @@ def main(argv=None):
     sys.stderr.write("|                              SETUP MOTUS TOOL                                |\n")
     sys.stderr.write(" ------------------------------------------------------------------------------\n")
     # download the files -------------------------------------------------------
+    path_versions = relative_path + "db_mOTU/versions"
+    if os.path.isfile(path_versions) and "--force-redownload" not in sys.argv:
+        sys.stderr.write("Database already downloaded. Not doing anything.\n"
+                         "Use --force-redownload to download again.\n")
+        sys.exit(0)
+
     sys.stderr.write("Download the compressed motus database (~1Gb)\n")
     db_name = relative_path+"db_mOTU.tar.gz"
 
@@ -102,7 +111,8 @@ def main(argv=None):
             f.write(buffer)
             status = r"%10d  [%3.2f%%]" % (file_size_dl, file_size_dl * 100. / file_size)
             status = status + chr(8)*(len(status)+1)
-            sys.stderr.write(status)
+            if "--no-download-progress" not in sys.argv:
+                sys.stderr.write(status)
 
         f.close()
         sys.stderr.write("\n")
@@ -148,7 +158,6 @@ def main(argv=None):
 
     # --------------- add file with version informations -----------------------
     sys.stderr.write("Add version file...")
-    path_versions = relative_path + "db_mOTU/versions"
     try:
         outfile = tempfile.NamedTemporaryFile(delete=False, mode = "w")
         outfile.write("motus\t"+motus_version+"\n")
