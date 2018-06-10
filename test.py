@@ -43,6 +43,8 @@ def main(argv=None):
     sys.stderr.write("|                               TEST MOTUS TOOL                                |\n")
     sys.stderr.write(" ------------------------------------------------------------------------------\n")
 
+    error_found = False
+
     # check if setup.py has been ran already -----------------------------------
     sys.stderr.write("\n1-- ran setup.py: ")
     if "--skip-setup-check" in sys.argv:
@@ -63,6 +65,7 @@ def main(argv=None):
         sys.stderr.write(" correct\n")
     else:
         sys.stderr.write(" ERROR: found v "+str(python_version[0])+"."+str(python_version[1])+"."+str(python_version[2])+". Required version 2.7 or 3.0 (or higher)\n")
+        error_found = True
 
 
     # check bwa ----------------------------------------------------------------
@@ -147,7 +150,11 @@ def main(argv=None):
         # remove temp file
         os.remove(temp_file_profile.name)
 
-    return 0        # success
+
+    if (error_found or error_flag):
+        return 1
+    else:
+        return 0        # success
 
 #-------------------------------- run main -------------------------------------
 if __name__ == '__main__':
