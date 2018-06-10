@@ -5,6 +5,7 @@
 #
 # ============================================================================ #
 
+from __future__ import division
 from itertools import islice
 from gzip import GzipFile
 from bz2 import BZ2File

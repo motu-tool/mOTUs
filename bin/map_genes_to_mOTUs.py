@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import division
 import os
 import sys
 import argparse
@@ -49,7 +50,7 @@ def printDictToFile(dictData, header, outfileName, return_dictionary):
 
         for key in dictData:
             value = dictData[key]
-            outfile.write(str(key) + "\t" + str(value) + "\n")
+            outfile.write("{0}\t{1:.10f}\n".format(key, value))
 
         # flush,sync and close
         try:
@@ -74,7 +75,7 @@ def printDictToFile(dictData, header, outfileName, return_dictionary):
 
         for key in dictData:
             value = dictData[key]
-            print(str(key) + "\t" + str(value))
+            print("{0}\t{1:.10f}".format(key, value))
 
 
 #parse gene location from a file formatted: GeneName \t ContigName \t GeneStart \t GeneEnd
@@ -200,7 +201,7 @@ def readSAMfile(strSAMfilename, msamPercID, msamminLength, msam_script, msamOver
         sys.exit(1)
 
 
-    msamtoolsCMD = "python "+msam_script+" "+str(msamPercID/100)+" "+str(msamminLength)+" "+str(msamOverlap) + " None"
+    msamtoolsCMD = "python {0} {1:.10f} {2} {3} None".format(msam_script, msamPercID/100, msamminLength, msamOverlap)
 
     #sys.stderr.write(msamtoolsCMD+"\n")
     msamtools_popenCMD = shlex.split(msamtoolsCMD)
@@ -1172,7 +1173,7 @@ def run_mOTUs_v2_mapping(listInputFiles, databaseDir, databasePrefix, sampleName
 
 
     ## check that the input files exists
-    if profile_mode == False:
+    if profile_mode is False:
         cont = 0
         for inputFile in listInputFiles:
             cont = cont + 1
@@ -1185,7 +1186,7 @@ def run_mOTUs_v2_mapping(listInputFiles, databaseDir, databasePrefix, sampleName
                     if verbose>=2: sys.stderr.write("[W::calc_mgc] Warning. File "+inputFile+" does not have extension \".bam\" or \".sam\" \n")
 
 
-    geneLocationFileName = os.path.sep.join([databaseDir,  databasePrefix + ".padded.coords"])
+    geneLocationFileName = os.path.sep.join([databaseDir, databasePrefix + ".padded.coords"])
     dictReference2geneLocation = getReferenceDict(geneLocationFileName)
 
     geneLengthFileName = os.path.sep.join([databaseDir, databasePrefix + ".genes.len"])
@@ -1256,7 +1257,7 @@ def run_mOTUs_v2_mapping(listInputFiles, databaseDir, databasePrefix, sampleName
 
 def main(argv=None):
 
-    parser = argparse.ArgumentParser(description='This program calculates mOTU abundances for one sample', add_help = True)
+    parser = argparse.ArgumentParser(description='This program calculates mOTU abundances for one sample', add_help=True)
     parser.add_argument('--inputFile', '-i', action="store", dest='listInputFiles', default="", help='name of input file(s); sam or bam formatted files. If it is a list: insert all files separated by a comma')
     parser.add_argument('--databaseDir', '-d', action="store", dest='databaseDir', default=".", help='name of database directory')
     parser.add_argument('--databasePrefix', '-p', action="store", dest='databasePrefix', default="mOTU.v2b", help='name of database (prefix)')
