@@ -107,7 +107,7 @@ def main(argv=None):
 
         sys.stderr.write("\n- Run motus (-v 1, only error messages):\n")
 
-        motus_command = "python "+relative_path+"motus profile -s "+test_file+" -g 1 -o "+temp_file_profile.name+" -v 1"
+        motus_command = "python "+relative_path+"motus profile -s "+test_file+" -g 1 -o "+temp_file_profile.name+" -v 1 -c"
         process = subprocess.Popen(motus_command.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
 
