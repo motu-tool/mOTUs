@@ -275,6 +275,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
 
 
     # divide by sum
+    rel_ab_is_rounded = False
     rel_ab_LGs_rel = dict()
     s = sum(rel_ab_LGs.values())
     if not print_rel_ab:
@@ -295,6 +296,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
                 rel_ab_LGs_rel[j] = float(rel_ab_LGs[j])
             else:# if we are using insert_* then we round the counts
                 rel_ab_LGs_rel[j] = round(rel_ab_LGs[j])
+                rel_ab_is_rounded = True
 
     # keep only specI
     if onlySpecI:
@@ -379,22 +381,26 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
                     name = j+"\t" # mOTU id
                     name = name + all_val[1]# consensus_name
                     if print_NCBI_id: name = name + "\t"+all_val[0] # NCBI_tax_id
-                    name = "{0}\t{1:.10f}\n".format(name, rel_ab_LGs_rel[j]) # value
+                    if rel_ab_is_rounded: name = name + "\t" + str(rel_ab_LGs_rel[j]) +"\n" # value - INT
+                    else: name = "{0}\t{1:.10f}\n".format(name, rel_ab_LGs_rel[j]) # value - FLOAT (10digits)
                     outfile.write(name)
                 else:
                     name = "{\"name\":\""+all_val[1]+"\",\n"
                     name = name + "                                       \"NCBI_id\":\""+all_val[0]+"\"}"
                     list_rows.append("            {\"id\":\""+j+"\", \"metadata\":"+name+"},\n")
-                    list_vals.append("[{0:.10f}],\n".format(rel_ab_LGs_rel[j]))
+                    if rel_ab_is_rounded: list_vals.append("["+str(rel_ab_LGs_rel[j])+"],\n") # BIOMvals - INT
+                    else: list_vals.append("[{0:.10f}],\n".format(rel_ab_LGs_rel[j])) # BIOMvals - FLOAT
             elif j == "-1": # -1
                 name = "-1\t-1"
                 if print_NCBI_id: name = name + "\tNA"
-                name = "{0}\t{1:.10f}\n".format(name, rel_ab_LGs_rel[j]) # value
+                if rel_ab_is_rounded: name = name + "\t" +str(rel_ab_LGs_rel[j])+"\n" # value - INT
+                else: name = "{0}\t{1:.10f}\n".format(name, rel_ab_LGs_rel[j]) # value - FLOAT (10digits)
                 if not BIOM_output:
                     outfile.write(name)
                 else:
                     list_rows.append("            {\"id\":\"-1\", \"metadata\":{\"name\":\"unknown\",\n                                    \"NCBI_id\":\"NA\"}}\n")
-                    list_vals.append("[{0:.10f}]]\n".format(rel_ab_LGs_rel[j]))
+                    if rel_ab_is_rounded: list_vals.append("["+str(rel_ab_LGs_rel[j])+"]]\n") # BIOMvals - INT
+                    else: list_vals.append("[{0:.10f}]]\n".format(rel_ab_LGs_rel[j])) #BIOMvals - FLOAT
 
             else: # if it not in anyone (it should not happen)
                 if verbose>1: sys.stderr.write(" [W::calc_motu] Warning: find mOTU "+j+" that is not present in the taxonomy\n")
@@ -423,12 +429,14 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
                 # line to print
                 name = name + " ["+j+"]"
                 if print_NCBI_id: name = name + "\t"+all_val[0] # NCBI_tax_id
-                name = "{0}\t{1:.10f}\n".format(name, rel_ab_LGs_rel[j]) # value
+                if rel_ab_is_rounded: name = name + "\t" + str(rel_ab_LGs_rel[j]) +"\n" # value - INT
+                else: name = "{0}\t{1:.10f}\n".format(name, rel_ab_LGs_rel[j]) # value - FLOAT (10digits)
                 outfile.write(name)
             elif j == "-1": # -1
                 name = "-1"
                 if print_NCBI_id: name = name + "\tNA"
-                name = "{0}\t{1:.10f}\n".format(name, rel_ab_LGs_rel[j]) # value
+                if rel_ab_is_rounded: name = name + "\t" +str(rel_ab_LGs_rel[j])+"\n" # value - INT
+                else: name = "{0}\t{1:.10f}\n".format(name, rel_ab_LGs_rel[j]) # value - FLOAT (10digits)
                 outfile.write(name)
             else: # if it not in anyone (it should not happen)
                 if verbose>1: sys.stderr.write(" [W::calc_motu] Warning: find mOTU "+j+" that is not present in the taxonomy\n")
@@ -476,24 +484,29 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
                 # prepare line to print
                 name = all_val[1] # consensus_name
                 if print_NCBI_id: name = name + "\t"+all_val[0] # NCBI_tax_id
-                name = "{0}\t{1:.10f}\n".format(name, rel_abundance_taxon[i]) # value
+                if rel_ab_is_rounded: name = name + "\t" + str(rel_abundance_taxon[i]) +"\n" # value - INT
+                else: name = "{0}\t{1:.10f}\n".format(name, rel_abundance_taxon[i]) # value - FLOAT (10digits)
                 if not BIOM_output:
                     outfile.write(name)
                 else:
                     name = "{\"NCBI_id\":\""+all_val[0]+"\"}"
                     list_rows.append("            {\"id\":\""+all_val[1]+"\", \"metadata\":"+name+"},\n")
-                    list_vals.append("[{0:.10f}],\n".format(rel_abundance_taxon[i]))
+                    if rel_ab_is_rounded: list_vals.append("["+str(rel_abundance_taxon[i])+"],\n") # BIOMvals - INT
+                    else: list_vals.append("[{0:.10f}],\n".format(rel_abundance_taxon[i])) # BIOMvals - FLOAT
 
             else:
                 if not BIOM_output:
                     if print_NCBI_id:
-                        name = "-1\tNA\t{0:.10f}\n".format(rel_abundance_taxon[i])
+                        if rel_ab_is_rounded: name = "-1\tNA\t"+str(rel_abundance_taxon[i])+"\n" # value - INT
+                        else: name = "-1\tNA\t{0:.10f}\n".format(rel_abundance_taxon[i]) # value - FLOAT (10digits)
                     else:
-                        name = "-1\t{0:.10f}\n".format(rel_abundance_taxon[i])
+                        if rel_ab_is_rounded: name = "-1\t"+str(rel_abundance_taxon[i])+"\n" # value - INT
+                        else: name = "-1\t{0:.10f}\n".format(rel_abundance_taxon[i]) # value - FLOAT (10digits)
                     outfile.write(name)
                 else:
                     list_rows.append("            {\"id\":\"-1\", \"metadata\":{\"NCBI_id\":\"NA\"}}\n")
-                    list_vals.append("[{0:.10f}]]\n".format(rel_abundance_taxon[i]))
+                    if rel_ab_is_rounded: list_vals.append("["+str(rel_abundance_taxon[i])+"]]\n") #BIOMvals - INT
+                    else: list_vals.append("[{0:.10f}]]\n".format(rel_abundance_taxon[i])) # BIOMvals - FLOAT
 
     ####### PRINT BIOM FORMAT ##################################################
     if BIOM_output:
