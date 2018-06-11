@@ -149,6 +149,15 @@ def main(argv=None):
     else:
         sys.stderr.write("done\n")
 
+    # move the test dir outside db dir -----------------------------------------
+    sys.stderr.write("Move test directory...")
+    try:
+        shutil.move(relative_path+"db_mOTU/test", relative_path)
+    except shutil.Error as e:
+        print('test directory not copied. Error: %s' % e)
+        sys.exit(1)
+    sys.stderr.write("done\n")
+
     # --- remove db file
     sys.stderr.write("Remove zipped file...")
     os.remove(db_name)
