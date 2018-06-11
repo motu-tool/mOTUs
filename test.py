@@ -106,6 +106,8 @@ def main(argv=None):
     # Run motus on a test file
     sys.stderr.write("\n3-- Taxonomy profiling test:")
 
+    error_flag = False
+
     if "--skip-setup-check" in sys.argv:
         sys.stderr.write("SKIPPED. Due to --skip-setup-check\n\n")
     else:
@@ -134,7 +136,6 @@ def main(argv=None):
         ground_truth.close()
 
         # check values
-        error_flag = False
         if len(pr) != len(gt):
             error_flag = True
             sys.stderr.write("ERROR. profiled sample is not correct\n\n")

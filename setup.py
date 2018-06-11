@@ -153,12 +153,10 @@ def main(argv=None):
     sys.stderr.write("Move test directory...")
     try:
         shutil.move(relative_path+"db_mOTU/test", relative_path)
-    except shutil.Error as e:
+    except (shutil.Error, OSError) as e:
         print('test directory not copied. Error: %s' % e)
         sys.exit(1)
-    except OSError as e:
-        print('test directory not copied. Error: %s' % e)
-        sys.exit(1)
+
     sys.stderr.write("done\n")
 
     # --- remove db file
