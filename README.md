@@ -11,7 +11,7 @@ Pre-requisites
 --------------
 
 The mOTU profiler requires:
-* Python 3 or Python 2.7 (or higher)
+* Python 3 (or higher)
 * the Burrow-Wheeler Aligner v0.7.15 or higher ([bwa](https://github.com/lh3/bwa))
 * SAMtools v1.5 or higher ([link](http://www.htslib.org/download/))
 
