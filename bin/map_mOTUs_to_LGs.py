@@ -9,6 +9,16 @@ import tempfile
 import shutil
 import datetime
 
+# function for rounding as python 3 does:
+#  - return an integer
+#  - py3round(0.5) = 0
+def my_round(f):
+    round_f = round(f)
+    if abs(round_f-f) == 0.5: # f is x.5 and it should be floor to x
+        if round_f-f > 0: # note that f cannot be negative, hence here we test if x.5 is rounded to x+1
+            round_f = round_f - 1
+    return int(round_f)
+
 def save_file_to_dict(file_r,col_key,col_value,header,divide_with_tab,skip_not_profilable):
     # skip_not_profilable, if it's True, we dont save in the dictionary if col_key = "not_profilable"
     try:
@@ -295,7 +305,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
             if base_coverage_flag:
                 rel_ab_LGs_rel[j] = float(rel_ab_LGs[j])
             else:# if we are using insert_* then we round the counts
-                rel_ab_LGs_rel[j] = round(rel_ab_LGs[j])
+                rel_ab_LGs_rel[j] = my_round(rel_ab_LGs[j])
                 rel_ab_is_rounded = True
 
     # keep only specI
