@@ -70,7 +70,10 @@ def main(argv=None):
     sys.stderr.write("- python:   ")
     python_version = sys.version_info
     if(python_version >= (2,7,0)):
-        sys.stderr.write(" correct\n")
+        if(python_version >= (3,0,0)):
+            sys.stderr.write(" correct\n")
+        else:
+            sys.stderr.write(" WARNING: python2 is not supported\n")
     else:
         sys.stderr.write(" ERROR: found v "+str(python_version[0])+"."+str(python_version[1])+"."+str(python_version[2])+". Required version 2.7 or 3.0 (or higher)\n")
         error_found = True
