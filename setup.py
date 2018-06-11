@@ -156,6 +156,9 @@ def main(argv=None):
     except shutil.Error as e:
         print('test directory not copied. Error: %s' % e)
         sys.exit(1)
+    except OSError as e:
+        print('test directory not copied. Error: %s' % e)
+        sys.exit(1)
     sys.stderr.write("done\n")
 
     # --- remove db file
