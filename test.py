@@ -101,13 +101,13 @@ def main(argv=None):
     if "--skip-setup-check" in sys.argv:
         sys.stderr.write("SKIPPED. Due to --skip-setup-check\n\n")
     else:
-        test_file = relative_path+'db_mOTU/test0001.fastq'
-        ground_truth_file = relative_path+'db_mOTU/test0001.motus'
+        test_file = relative_path+'db_mOTU/test/test1_single.fastq'
+        ground_truth_file = relative_path+'db_mOTU/test/test1.motus'
         temp_file_profile = tempfile.NamedTemporaryFile(delete=False, mode="w")
 
         sys.stderr.write("\n- Run motus (-v 1, only error messages):\n")
 
-        motus_command = "python "+relative_path+"motus profile -s "+test_file+" -g 1 -o "+temp_file_profile.name+" -v 1 -c"
+        motus_command = "python "+relative_path+"motus profile -s "+test_file+" -g 1 -o "+temp_file_profile.name+" -v 1 -c -y insert.raw_counts"
         process = subprocess.Popen(motus_command.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
 
