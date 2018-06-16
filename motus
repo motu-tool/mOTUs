@@ -479,7 +479,7 @@ def main(argv=None):
                         help="FILTERING STEP II:"
                              "required proportion of informative samples (coverage non-zero) per position",
                         default=None)
-    parser.add_argument('--version', action='version', version='%(prog)s '+version_tool)
+    parser.add_argument('--version', action='version', version='%(prog)s {0} on python {1}'.format(version_tool, sys.version.split()[0]))
 
     args = parser.parse_args()
 

@@ -151,6 +151,10 @@ def main(argv=None):
 
     # move the test dir outside db dir -----------------------------------------
     sys.stderr.write("Move test directory...")
+    testdir = relative_path+"test"
+    if os.path.isdir(testdir):
+        shutil.rmtree(testdir, ignore_errors=True)
+
     try:
         shutil.move(relative_path+"db_mOTU/test", relative_path)
     except (shutil.Error, OSError) as e:
