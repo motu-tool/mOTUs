@@ -123,6 +123,11 @@ try:
 except:
     sys.stderr.write("[E::main] Error: fail to load the script: "+relative_path+"bin/PEfiltering.py\n[E::main] Download the motus profiler again\n\n")
     sys.exit(1)
+try:
+    import print_CAMI as print_CAMI
+except:
+    sys.stderr.write("[E::main] Error: fail to load the script: "+relative_path+"bin/print_CAMI.py\n[E::main] Download the motus profiler again\n\n")
+    sys.exit(1)
 
 # ------------------------------------------------------------------------------
 #       print the help informations
@@ -168,7 +173,7 @@ def print_menu_profile():
     sys.stderr.write("   -r FILE[,FILE]  input file(s) for reads in reverse orientation, fastq formatted\n")
     sys.stderr.write("   -s FILE[,FILE]  input file(s) for reads without mate, fastq formatted\n")
     sys.stderr.write("   -n STR          sample name\n")
-    sys.stderr.write("   -i FILE[,FILE]  provide a sam or bam input file\n")
+    sys.stderr.write("   -i FILE[,FILE]  provide sam or bam input file(s)\n")
     sys.stderr.write("   -m FILE         provide a mgc reads count file\n\n")
     sys.stderr.write("Output options:\n")
     sys.stderr.write("   -o FILE         output file name [stdout]\n")
@@ -181,13 +186,15 @@ def print_menu_profile():
     sys.stderr.write("   -u              print the full name of the species\n")
     sys.stderr.write("   -q              print the full rank taxonomy\n")
     sys.stderr.write("   -B              print result in BIOM format\n")
+    sys.stderr.write("   -C STR          print result in CAMI format (BioBoxes format 0.9.1)\n")
+    sys.stderr.write("                   Values: [precision, recall, parenthesis]\n")
     sys.stderr.write("   -k STR          taxonomic level [mOTU]\n")
     sys.stderr.write("                   Values: [kingdom, phylum, class, order, family, genus, mOTU]\n\n")
     sys.stderr.write("Algorithm options:\n")
     sys.stderr.write("   -g INT          number of marker genes cutoff: 1=higher recall, 6=higher precision [3]\n")
     sys.stderr.write("   -l INT          min. length of alignment for the reads (number of nucleotides) [75]\n")
     #sys.stderr.write("   -L FLOAT        min. length of alignment for the reads (percentage of the average read length) [None]\n")
-    #sys.stderr.write("   -C INT          number of cores for bwa (max one per lane) [1]\n")
+    #sys.stderr.write("   -CC INT          number of cores for bwa (max one per lane) [1]\n")
     sys.stderr.write("   -t INT          number of threads [1]\n")
     sys.stderr.write("   -v INT          verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n")
     sys.stderr.write("   -y STR          type of read counts [insert.scaled_counts]\n")
@@ -205,7 +212,7 @@ def print_menu_map_snv():
     sys.stderr.write("   -o FILE         output bam file name [stdout]\n\n")
     sys.stderr.write("Algorithm options:\n")
     sys.stderr.write("   -l INT          min. length of alignment for the reads (number of nucleotides) [75]\n")
-    #sys.stderr.write("   -C INT          number of cores for bwa (max one per lane) [1]\n")
+    #sys.stderr.write("   -CC INT          number of cores for bwa (max one per lane) [1]\n")
     sys.stderr.write("   -t INT          number of threads [1]\n")
     sys.stderr.write("   -v INT          verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n\n")
 
@@ -239,7 +246,7 @@ def print_menu_bwa():
     sys.stderr.write("   -b              save the result of bwa in bam format\n\n")
     sys.stderr.write("Algorithm options:\n")
     sys.stderr.write("   -l INT          min. length of alignment for the reads (number of nucleotides) [75]\n")
-    #sys.stderr.write("   -C INT          number of cores for bwa (max one per lane) [1]\n")
+    #sys.stderr.write("   -CC INT          number of cores for bwa (max one per lane) [1]\n")
     sys.stderr.write("   -t INT          number of threads [1]\n")
     sys.stderr.write("   -v INT          verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n\n")
 
@@ -270,6 +277,8 @@ def print_menu_map_lgs():
     sys.stderr.write("   -o FILE  output file name [stdout]\n")
     sys.stderr.write("   -e       profile only reference species (ref_mOTUs)\n")
     sys.stderr.write("   -B       print result in BIOM format\n")
+    sys.stderr.write("   -C STR   print result in CAMI format (BioBoxes format 0.9.1)\n")
+    sys.stderr.write("            Values: [precision, recall, parenthesis]\n")
     sys.stderr.write("   -c       print result as counts instead of relative abundances\n")
     sys.stderr.write("   -p       print NCBI id\n")
     sys.stderr.write("   -u       print the full name of the species\n")
@@ -448,6 +457,7 @@ def main(argv=None):
     parser.add_argument('-v', action='store', type=int, default=None, dest='verbose', help='Verbose levels')
     parser.add_argument('-d', action="store", default=None, dest='directory_append', help='directory from where to take the files to append')
     parser.add_argument('-B', action='store_true', default=None, dest='BIOM_output', help='print output in BIOM format')
+    parser.add_argument('-C', action='store', default=None, dest='CAMI_output', help='print output in CAMI format',choices=["precision", "recall", "parenthesis"])
     parser.add_argument('-c', action='store_true', default=None, dest='print_rel_ab', help='print result as count instead of relative abundance')
     parser.add_argument('-u', action='store_true', default=None, dest='print_long_names', help='print names of the species in long format')
     parser.add_argument('-q', action='store_true', default=None, dest='print_full_rank', help='print the full rank of the taxonomy')
@@ -459,7 +469,7 @@ def main(argv=None):
     parser.add_argument('-l', type=int, action="store", dest='min_len_align_length', default=None, help='Minimum length of the alignment')
     #parser.add_argument('-L', type=float, action="store", dest='min_len_align_perc', default=None, help='Minimum length of the alignment, as percentage of the average read length')
     # develope, but to be checked
-    parser.add_argument('-C', type=int, action="store", dest='number_of_cores', default=None, help='Number of cores to use for bwa')
+    parser.add_argument('-CC', type=int, action="store", dest='number_of_cores', default=None, help='Number of cores to use for bwa')
     # db has to be deleted
     #parser.add_argument('-db', action="store", default=None, dest='db', help='database of marker genes',choices=['nr', 'aug.cen', 'cen'])
     parser.add_argument('-save_sam_lines', action="store", dest='save_sam_lines', default=None, help='name of output file')
@@ -486,7 +496,7 @@ def main(argv=None):
 
     # print menus ----------------------------------------------------------------
     if (args.forwardReads is None) and (args.reverseReads is None) and (args.singleReads is None) and (args.output is None) and (args.threads is None) and (args.onlySpecI is None) and (args.outPutIsBam is None):
-        if (args.type_output is None) and (args.sampleName is None) and (args.listInputFiles is None) and (args.motu_read_counts_file is None) and (args.verbose is None) and (args.directory_append is None):
+        if (args.type_output is None) and (args.sampleName is None) and (args.listInputFiles is None) and (args.motu_read_counts_file is None) and (args.verbose is None) and (args.directory_append is None) and (args.CAMI_output is None):
             if (args.BIOM_output is None) and (args.taxonomic_level is None) and (args.profile_bam_file is None) and (args.profile_mOTU_reads_file is None) and (args.map_lgs_cutoff is None) and (args.number_of_cores is None):
                 if (args.print_rel_ab is None) and (args.print_NCBI_id is None) and (args.print_long_names is None) and (args.fb is None) and (args.fd is None) and (args.fm is None) and (args.fc is None) and (args.fp is None):
                     if args.command == 'profile': print_menu_profile()
@@ -517,6 +527,7 @@ def main(argv=None):
         if ((args.listInputFiles is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -i ignored\n")
         if ((args.motu_read_counts_file is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -m ignored\n")
         if ((args.BIOM_output is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -B ignored\n")
+        if ((args.CAMI_output is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -C ignored\n")
         if ((args.print_rel_ab is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -c ignored\n")
         if ((args.print_full_rank is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -q ignored\n")
         if ((args.print_NCBI_id is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -p ignored\n")
@@ -531,6 +542,7 @@ def main(argv=None):
         if ((args.fp is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fp ignored\n")
         if ((args.fc is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fc ignored\n")
     if args.command == 'merge':
+        if ((args.CAMI_output is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -C ignored\n")
         if ((args.onlySpecI is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -e ignored\n")
         if ((args.type_output is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -y ignored\n")
         if ((args.sampleName is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -n ignored\n")
@@ -562,6 +574,7 @@ def main(argv=None):
         if ((args.listInputFiles is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -i ignored\n")
         if ((args.motu_read_counts_file is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -m ignored\n")
         if ((args.BIOM_output is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -B ignored\n")
+        if ((args.CAMI_output is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -C ignored\n")
         if ((args.print_rel_ab is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -c ignored\n")
         if ((args.print_full_rank is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -q ignored\n")
         if ((args.print_NCBI_id is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -p ignored\n")
@@ -586,6 +599,7 @@ def main(argv=None):
         if ((args.onlySpecI is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -e ignored\n")
         if ((args.motu_read_counts_file is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -m ignored\n")
         if ((args.BIOM_output is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -B ignored\n")
+        if ((args.CAMI_output is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -C ignored\n")
         if ((args.print_rel_ab is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -c ignored\n")
         if ((args.print_full_rank is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -q ignored\n")
         if ((args.print_NCBI_id is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -p ignored\n")
@@ -635,9 +649,8 @@ def main(argv=None):
         if ((args.outPutIsBam is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -b ignored\n")
         if ((args.min_len_align_length is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -l ignored\n")
         if ((args.BIOM_output is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -B ignored\n")
+        if ((args.CAMI_output is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -C ignored\n")
         if ((args.listInputFiles is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -i ignored\n")
-
-
 
 
 
@@ -653,6 +666,7 @@ def main(argv=None):
     if (args.onlySpecI is None): args.onlySpecI = False
     if (args.print_full_rank is None): args.print_full_rank = False
     if (args.BIOM_output is None): args.BIOM_output = False
+    if (args.CAMI_output is None): args.CAMI_output = "no_CAMI"
     if (args.print_rel_ab is None): args.print_rel_ab = False
     if (args.print_NCBI_id is None): args.print_NCBI_id = False
     if (args.print_long_names is None): args.print_long_names = False
@@ -713,10 +727,15 @@ def main(argv=None):
         sys.stderr.write("[E::main] Error: number of threads (-t) is less than 1\n")
         sys.exit(1)
     if args.number_of_cores < 1:
-        sys.stderr.write("[E::main] Error: number of cores (-C) is less than 1\n")
+        sys.stderr.write("[E::main] Error: number of cores (-CC) is less than 1\n")
         sys.exit(1)
     if args.map_lgs_cutoff<1 or args.map_lgs_cutoff>6:
         sys.stderr.write("[E::main] Error: invalid number of marker genes cutoff (-g): "+str(args.map_lgs_cutoff)+" (possible values: from 1 to 6)\n")
+        sys.exit(1)
+
+    # check if CAMI output interfer with other parameters ----------------------
+    if (args.CAMI_output != "no_CAMI") and args.BIOM_output:
+        sys.stderr.write("[E::main] Error: cannot print result with both -B and -C.\n")
         sys.exit(1)
 
 
@@ -988,7 +1007,7 @@ def main(argv=None):
             if args.number_of_cores > number_of_lanes:
                 if args.verbose >= 2: sys.stderr.write(" [W::map_db] Warning: We use only "+str(number_of_lanes)+" out of "+str(args.number_of_cores)+" cores\n")
             if args.number_of_cores < number_of_lanes and args.number_of_cores != 1:
-                if args.verbose >= 2: sys.stderr.write(" [W::map_db] Warning: multiple cores computation is implemented only if the number of cores is equal to the number of lanes ("+str(number_of_lanes)+"). Set -C "+str(number_of_lanes)+"\n")
+                if args.verbose >= 2: sys.stderr.write(" [W::map_db] Warning: multiple cores computation is implemented only if the number of cores is equal to the number of lanes ("+str(number_of_lanes)+"). Set -CC "+str(number_of_lanes)+"\n")
                 multiple_cores = False
             #prepare data
             if multiple_cores:
@@ -1427,6 +1446,7 @@ def main(argv=None):
         specI_taxonomy = database_dir+"prok-refdb-v11.0.0_specI-v2_taxonomy_v1.map"
         mOTULG_taxonomy = database_dir+"mOTULG.taxonomy"
         short_name_file = database_dir+"short_names.txt"
+        CAMI_file = database_dir+"CAMI_Sep_2015_mOTUs_2.0.0.tsv"
         infile=""
         sample_name = "trial"
         if (args.sampleName is not None): sample_name = args.sampleName
@@ -1442,7 +1462,10 @@ def main(argv=None):
                 sys.stderr.write("[E::main] Error: "+infile+': No such file.\n')
                 sys.exit(1)
 
-        map_lgs.calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxonomy, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, args.taxonomic_level, args.BIOM_output, profile_mode,mOTU_counts, args.print_NCBI_id, args.print_rel_ab,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,args.print_full_rank,args.print_long_names,short_name_file,version_tool)
+        if args.CAMI_output != "no_CAMI":
+            print_CAMI.calculate_abundance(infile, LGs_map, LGs_map_l, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, profile_mode,mOTU_counts,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,version_tool,CAMI_file,args.CAMI_output)
+        else:
+            map_lgs.calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxonomy, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, args.taxonomic_level, args.BIOM_output, profile_mode,mOTU_counts, args.print_NCBI_id, args.print_rel_ab,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,args.print_full_rank,args.print_long_names,short_name_file,version_tool)
 
         if args.verbose>2:
             sys.stderr.write(" [calc_motu] (Create taxonomy profile) " + str("{0:.2f}".format(time.time() - time_after_map_genes))+" sec\n")
@@ -1512,7 +1535,7 @@ def main(argv=None):
         if args.number_of_cores > number_of_lanes:
             if args.verbose >= 2: sys.stderr.write(" [W::map_db] Warning: We use only "+str(number_of_lanes)+" out of "+str(args.number_of_cores)+" cores\n")
         if args.number_of_cores < number_of_lanes and args.number_of_cores != 1:
-            if args.verbose >= 2: sys.stderr.write(" [W::map_db] Warning: multiple cores computation is implemented only if the number of cores is equal to the number of lanes ("+str(number_of_lanes)+"). Set -C "+str(number_of_lanes)+"\n")
+            if args.verbose >= 2: sys.stderr.write(" [W::map_db] Warning: multiple cores computation is implemented only if the number of cores is equal to the number of lanes ("+str(number_of_lanes)+"). Set -CC "+str(number_of_lanes)+"\n")
             multiple_cores = False
         #prepare data
         if multiple_cores:
@@ -1746,6 +1769,7 @@ def main(argv=None):
         specI_taxonomy = database_dir+"prok-refdb-v11.0.0_specI-v2_taxonomy_v1.map"
         mOTULG_taxonomy = database_dir+"mOTULG.taxonomy"
         short_name_file = database_dir+"short_names.txt"
+        CAMI_file = database_dir+"CAMI_Sep_2015_mOTUs_2.0.0.tsv"
         sample_name = "trial"
         if (args.sampleName is not None): sample_name = args.sampleName
 
@@ -1759,7 +1783,11 @@ def main(argv=None):
 
         if args.verbose>2: sys.stderr.write(" [calc_motu] (Create taxonomy profile)\n")
 
-        map_lgs.calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy,mOTULG_taxonomy, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, args.taxonomic_level, args.BIOM_output, profile_mode,mOTU_counts, args.print_NCBI_id, args.print_rel_ab,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,args.print_full_rank,args.print_long_names,short_name_file,version_tool)
+        if args.CAMI_output != "no_CAMI":
+            print_CAMI.calculate_abundance(infile, LGs_map, LGs_map_l, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, profile_mode,mOTU_counts,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,version_tool,CAMI_file,args.CAMI_output)
+        else:
+            map_lgs.calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy,mOTULG_taxonomy, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, args.taxonomic_level, args.BIOM_output, profile_mode,mOTU_counts, args.print_NCBI_id, args.print_rel_ab,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,args.print_full_rank,args.print_long_names,short_name_file,version_tool)
+
 
         if args.verbose>2:
             sys.stderr.write("[main] Total time calc_motu: " + str("{0:.2f}".format(time.time() - initial_start_time))+" sec\n")
