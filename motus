@@ -229,7 +229,8 @@ def print_menu_snv_call():
     sys.stderr.write("   -fc FLOAT   FILTERING STEP II: Minimum coverage per position per sample per species. Default=5.0\n")
     sys.stderr.write("   -t  INT     Number of threads. Default=1\n\n")
     sys.stderr.write("Output options:\n")
-    sys.stderr.write("   -o  DIR     Output directory. Will fail if already exists. [Mandatory]\n\n")
+    sys.stderr.write("   -o  DIR     Output directory. Will fail if already exists. [Mandatory]\n")
+    sys.stderr.write("   -K          Keep all the directories produced by metaSNV. Default is to remove cov, distances, filtered, snpCaller\n\n")
     sys.stderr.write("Algorithm options:\n")
     sys.stderr.write("   -v INT      Verbose level: 1=error, 2=warning, 3=message, 4+=debugging. Default=3\n\n")
 
@@ -462,6 +463,7 @@ def main(argv=None):
     parser.add_argument('-u', action='store_true', default=None, dest='print_long_names', help='print names of the species in long format')
     parser.add_argument('-q', action='store_true', default=None, dest='print_full_rank', help='print the full rank of the taxonomy')
     parser.add_argument('-p', action='store_true', default=None, dest='print_NCBI_id', help='print NCBI id')
+    parser.add_argument('-K', action='store_true', default=None, dest='keep_metaSNV_dirs', help='keep all the dir produced from metaSNV')
     parser.add_argument('-k', action="store", default=None, dest='taxonomic_level', help='Taxonomic level for the profiling',choices=['kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'mOTU'])
     parser.add_argument('-I', action="store", default=None, dest='profile_bam_file', help='name of the bam file to save the intermediate bam file during profiling')
     parser.add_argument('-M', action="store", default=None, dest='profile_mOTU_reads_file', help='name of the output file when profiling, relative to the mOTU read counts')
@@ -495,7 +497,7 @@ def main(argv=None):
 
 
     # print menus ----------------------------------------------------------------
-    if (args.forwardReads is None) and (args.reverseReads is None) and (args.singleReads is None) and (args.output is None) and (args.threads is None) and (args.onlySpecI is None) and (args.outPutIsBam is None):
+    if (args.forwardReads is None) and (args.reverseReads is None) and (args.singleReads is None) and (args.output is None) and (args.threads is None) and (args.onlySpecI is None) and (args.outPutIsBam is None) and (args.keep_metaSNV_dirs is None):
         if (args.type_output is None) and (args.sampleName is None) and (args.listInputFiles is None) and (args.motu_read_counts_file is None) and (args.verbose is None) and (args.directory_append is None) and (args.CAMI_output is None):
             if (args.BIOM_output is None) and (args.taxonomic_level is None) and (args.profile_bam_file is None) and (args.profile_mOTU_reads_file is None) and (args.map_lgs_cutoff is None) and (args.number_of_cores is None):
                 if (args.print_rel_ab is None) and (args.print_NCBI_id is None) and (args.print_long_names is None) and (args.fb is None) and (args.fd is None) and (args.fm is None) and (args.fc is None) and (args.fp is None):
@@ -519,7 +521,9 @@ def main(argv=None):
         if ((args.fm is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fm ignored\n")
         if ((args.fp is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fp ignored\n")
         if ((args.fc is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fc ignored\n")
+        if ((args.keep_metaSNV_dirs is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -K ignored\n")
     if args.command == 'map_tax':
+        if ((args.keep_metaSNV_dirs is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -K ignored\n")
         if ((args.directory_append is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -d ignored\n")
         if ((args.onlySpecI is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -e ignored\n")
         if ((args.type_output is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -y ignored\n")
@@ -542,6 +546,7 @@ def main(argv=None):
         if ((args.fp is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fp ignored\n")
         if ((args.fc is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fc ignored\n")
     if args.command == 'merge':
+        if ((args.keep_metaSNV_dirs is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -K ignored\n")
         if ((args.CAMI_output is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -C ignored\n")
         if ((args.onlySpecI is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -e ignored\n")
         if ((args.type_output is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -y ignored\n")
@@ -567,6 +572,7 @@ def main(argv=None):
         if ((args.fp is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fp ignored\n")
         if ((args.fc is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fc ignored\n")
     if args.command == 'map_snv':
+        if ((args.keep_metaSNV_dirs is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -K ignored\n")
         if ((args.directory_append is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -d ignored\n")
         if ((args.onlySpecI is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -e ignored\n")
         if ((args.type_output is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -y ignored\n")
@@ -590,6 +596,7 @@ def main(argv=None):
         if ((args.fp is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fp ignored\n")
         if ((args.fc is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fc ignored\n")
     if args.command == 'calc_mgc':
+        if ((args.keep_metaSNV_dirs is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -K ignored\n")
         if ((args.outPutIsBam is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -b ignored\n")
         if ((args.directory_append is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -d ignored\n")
         if ((args.forwardReads is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -f ignored\n")
@@ -614,6 +621,7 @@ def main(argv=None):
         if ((args.fp is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fp ignored\n")
         if ((args.fc is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -fc ignored\n")
     if args.command == 'calc_motu':
+        if ((args.keep_metaSNV_dirs is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -K ignored\n")
         if ((args.outPutIsBam is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -b ignored\n")
         if ((args.directory_append is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -d ignored\n")
         if ((args.profile_bam_file is not None) and (args.verbose>=2)): sys.stderr.write("[main] Warning: -I ignored\n")
@@ -671,6 +679,7 @@ def main(argv=None):
     if (args.print_NCBI_id is None): args.print_NCBI_id = False
     if (args.print_long_names is None): args.print_long_names = False
     if (args.output is None): args.output = ""
+    if (args.keep_metaSNV_dirs is None): args.keep_metaSNV_dirs = False
 
     # default for snv_call
     if (args.fb is None): args.fb = 80.0
@@ -887,13 +896,15 @@ def main(argv=None):
     #                          KEEP ONLY INTERESTING FILES
     # --------------------------------------------------------------------------
         # remove files
-        os.remove(os.path.abspath(os.path.join(outdir, 'all_samples')))
-        os.remove(os.path.abspath(os.path.join(outdir, 'bed_header')))
-        shutil.rmtree(os.path.abspath(os.path.join(outdir, 'bestsplits')))
-        shutil.rmtree(os.path.abspath(os.path.join(outdir, 'cov')))
-        shutil.rmtree(os.path.abspath(os.path.join(outdir, 'distances')))
-        shutil.rmtree(os.path.abspath(os.path.join(outdir, 'filtered')))
-        shutil.rmtree(os.path.abspath(os.path.join(outdir, 'snpCaller')))
+        if not(args.keep_metaSNV_dirs):
+            os.remove(os.path.abspath(os.path.join(outdir, 'all_samples')))
+            os.remove(os.path.abspath(os.path.join(outdir, 'bed_header')))
+            shutil.rmtree(os.path.abspath(os.path.join(outdir, 'bestsplits')))
+            shutil.rmtree(os.path.abspath(os.path.join(outdir, 'cov')))
+            shutil.rmtree(os.path.abspath(os.path.join(outdir, 'distances')))
+            shutil.rmtree(os.path.abspath(os.path.join(outdir, 'filtered')))
+            shutil.rmtree(os.path.abspath(os.path.join(outdir, 'snpCaller')))
+
 
         # check if the 'distances' dir is empty
         dist_files = [os.path.abspath(p) for p in glob.glob(os.path.join(outdir, 'dist*/*dist'))]
@@ -930,6 +941,7 @@ def main(argv=None):
     # scripts
     version_map_lgs = "calc_motu "+str(versions["map_mOTUs_to_LGs"])
     version_map_lgs = version_map_lgs + " -k "+args.taxonomic_level
+    version_map_lgs = version_map_lgs + " -C "+args.CAMI_output
     version_map_lgs = version_map_lgs + " -g "+str(args.map_lgs_cutoff)
     if args.onlySpecI: version_map_lgs = version_map_lgs + " -e"
     if args.print_rel_ab: version_map_lgs = version_map_lgs + " -c"
