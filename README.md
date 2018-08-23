@@ -84,6 +84,7 @@ ChangeLog
 
 **Version 2.0.0 2018-06-12 by AlessioMilanese**
 * Set relative abundances as default (instead of counts)
+* Add -B to print the result in BIOM format
 * Add test directory
 * Python2 is not supported anymore
 * Minor bug fix
