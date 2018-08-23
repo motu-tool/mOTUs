@@ -79,14 +79,14 @@ motus profile -f sample1_run1_for.fastq,sample1_run2_for.fastq -r sample1_run1_r
 ChangeLog
 --------------
 Version 2.0.1 2018-08-23 by AlessioMilanese
-      * Add -C to print the result in CAMI format (BioBoxes format 0.9.1)
-      * Add -K to snv_call command to keep all the directories produced by metaSNV
+* Add -C to print the result in CAMI format (BioBoxes format 0.9.1)
+* Add -K to snv_call command to keep all the directories produced by metaSNV
 
 Version 2.0.0 2018-06-12 by AlessioMilanese
-      * Set relative abundances as default (instead of counts)
-      * Add test directory
-      * Python2 is not supported anymore
-      * Minor bug fix
+* Set relative abundances as default (instead of counts)
+* Add test directory
+* Python2 is not supported anymore
+* Minor bug fix
 
 Version 2.0.0-rc1 2018-05-10 by AlessioMilanese
-      * First release supporting all basic functionality.
+* First release supporting all basic functionality.
