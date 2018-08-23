@@ -1,8 +1,0 @@
-Version 2.0.0 2018-06-12 by AlessioMilanese
-      * Set relative abundances as default (instead of counts)
-      * Add test directory 
-      * Python2 is not supported anymore
-      * Minor bug fix
-
-Version 2.0.0-rc1 2018-05-10 by AlessioMilanese
-      * First release supporting all basic functionality.
