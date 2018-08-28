@@ -321,7 +321,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, output, cutoff, onlySpecI, s
                         all_taxa = line_values[0][1:-1].split("/")
                         splitted_perc = percentage_to_print[taxa]/len(all_taxa)
                         for t in all_taxa:
-                            outfile.write(t+"\t"+("\t".join(line_values[1:]))+"\t"+str(splitted_perc)+"\n")
+                            outfile.write(t+"\t"+("\t".join(line_values[1:]))+str(splitted_perc)+"\n")
 
 
     # move the temp file to the final destination ------------------------------
