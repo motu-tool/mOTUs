@@ -191,7 +191,7 @@ def print_menu_profile():
     sys.stderr.write("   -k STR          taxonomic level [mOTU]\n")
     sys.stderr.write("                   Values: [kingdom, phylum, class, order, family, genus, mOTU]\n\n")
     sys.stderr.write("Algorithm options:\n")
-    sys.stderr.write("   -g INT          number of marker genes cutoff: 1=higher recall, 6=higher precision [3]\n")
+    sys.stderr.write("   -g INT          number of marker genes cutoff: 1=higher recall, 10=higher precision [3]\n")
     sys.stderr.write("   -l INT          min. length of alignment for the reads (number of nucleotides) [75]\n")
     #sys.stderr.write("   -L FLOAT        min. length of alignment for the reads (percentage of the average read length) [None]\n")
     #sys.stderr.write("   -CC INT          number of cores for bwa (max one per lane) [1]\n")
@@ -287,7 +287,7 @@ def print_menu_map_lgs():
     sys.stderr.write("   -k STR   taxonomic level [mOTU]\n")
     sys.stderr.write("            Values: [kingdom, phylum, class, order, family, genus, mOTU]\n\n")
     sys.stderr.write("Algorithm options:\n")
-    sys.stderr.write("   -g INT   number of marker genes cutoff: 1=higher recall, 6=higher precision [3]\n")
+    sys.stderr.write("   -g INT   number of marker genes cutoff: 1=higher recall, 10=higher precision [3]\n")
     sys.stderr.write("   -v INT   verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n\n")
 
 # ------------------------------------------------------------------------------
@@ -738,8 +738,8 @@ def main(argv=None):
     if args.number_of_cores < 1:
         sys.stderr.write("[E::main] Error: number of cores (-CC) is less than 1\n")
         sys.exit(1)
-    if args.map_lgs_cutoff<1 or args.map_lgs_cutoff>6:
-        sys.stderr.write("[E::main] Error: invalid number of marker genes cutoff (-g): "+str(args.map_lgs_cutoff)+" (possible values: from 1 to 6)\n")
+    if args.map_lgs_cutoff<1 or args.map_lgs_cutoff>10:
+        sys.stderr.write("[E::main] Error: invalid number of marker genes cutoff (-g): "+str(args.map_lgs_cutoff)+" (possible values: from 1 to 10)\n")
         sys.exit(1)
 
     # check if CAMI output interfer with other parameters ----------------------
