@@ -1,3 +1,4 @@
+name: mOTUs_v2
 channels:
   - bioconda
   - defaults
