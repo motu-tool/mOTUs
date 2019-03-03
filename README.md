@@ -1,5 +1,12 @@
 ![alt text](motu_logo.png)
 
+[![Build status](https://ci.appveyor.com/api/projects/status/0x4veuuoabm6018v/branch/master?svg=true)](https://ci.appveyor.com/project/AlessioMilanese/motus-v2/branch/master)
+[![Install with Bioconda](https://anaconda.org/bioconda/motus/badges/installer/conda.svg)](https://anaconda.org/bioconda/motus)
+[![container ready](https://quay.io/repository/biocontainers/motus/status)](https://quay.io/repository/biocontainers/motus)
+[![license](https://anaconda.org/bioconda/motus/badges/license.svg)](https://github.com/motu-tool/mOTUs_v2/blob/master/LICENSE)
+[![Install with Bioconda](https://img.shields.io/conda/dn/bioconda/motus.svg?style=flat)](https://anaconda.org/bioconda/motus)
+
+
 mOTUs profiler
 ========
 
@@ -7,12 +14,15 @@ The mOTUs profiler is a computational tool that estimates relative abundance of 
 
 Check the [wiki](https://github.com/motu-tool/mOTUs_v2/wiki) for more information.
 
+If you are using mOTUs2, please cite:
 
-[![Build status](https://ci.appveyor.com/api/projects/status/0x4veuuoabm6018v/branch/master?svg=true)](https://ci.appveyor.com/project/AlessioMilanese/motus-v2/branch/master)
-[![Install with Bioconda](https://anaconda.org/bioconda/motus/badges/installer/conda.svg)](https://anaconda.org/bioconda/motus)
-[![container ready](https://quay.io/repository/biocontainers/motus/status)](https://quay.io/repository/biocontainers/motus)
-[![license](https://anaconda.org/bioconda/motus/badges/license.svg)](https://github.com/motu-tool/mOTUs_v2/blob/master/LICENSE)
-[![Install with Bioconda](https://anaconda.org/bioconda/motus/badges/downloads.svg)](https://anaconda.org/bioconda/motus)
+> Alessio Milanese, Daniel R Mende, Lucas Paoli, Guillem Salazar, Hans-Joachim Ruscheweyh, Miguelangel Cuenca,
+> Pascal Hingamp, Renato Alves, Paul I Costea, Luis Pedro Coelho, Thomas S B Schmidt,
+> Alexandre Almeida, Alex L Mitchell, Robert D Finn, Jaime Huerta-Cepas,
+> Peer Bork, Georg Zeller, Shinichi Sunagawa.
+> **Microbial abundance, activity and population genomic profiling with mOTUs2**; _Nature Communications_ (2019).
+> doi: [10.1038/s41467-019-08844-4](https://doi.org/10.1038/s41467-019-08844-4)
+
 
 Pre-requisites
 --------------
@@ -78,6 +88,11 @@ motus profile -f sample1_run1_for.fastq,sample1_run2_for.fastq -r sample1_run1_r
 
 ChangeLog
 --------------
+**Version 2.1.0 2019-03-04 by AlessioMilanese**
+* Correct error \'\t\t\' when printing -C recall
+* Update bioconda environment .yaml file
+* Update database (gene coordinates)
+
 **Version 2.0.1 2018-08-23 by AlessioMilanese**
 * Add -C to print the result in CAMI format (BioBoxes format 0.9.1)
 * Add -K to snv_call command to keep all the directories produced by metaSNV
@@ -87,7 +102,7 @@ ChangeLog
 * Add -B to print the result in BIOM format
 * Add test directory
 * Python2 is not supported anymore
-* Minor bug fix
+* Minor bug fixes
 
 **Version 2.0.0-rc1 2018-05-10 by AlessioMilanese**
 * First release supporting all basic functionality.
