@@ -144,6 +144,7 @@ def msg(name=None):
 \00
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 Version: '''+version_tool+'''
+Reference: Milanese et al. Microbial abundance, activity and population genomic profiling with mOTUs2. Nature Communications (2019). doi: 10.1038/s41467-019-08844-4
 
 Usage: motus <command> [options]
 
