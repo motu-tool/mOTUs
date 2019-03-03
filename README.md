@@ -88,7 +88,7 @@ motus profile -f sample1_run1_for.fastq,sample1_run2_for.fastq -r sample1_run1_r
 
 ChangeLog
 --------------
-**Version 2.1.0 2019-03-04 by AlessioMilanese**
+**Version 2.1.0 2019-03-03 by AlessioMilanese**
 * Correct error \'\t\t\' when printing -C recall
 * Update bioconda environment .yaml file
 * Update database (gene coordinates)
