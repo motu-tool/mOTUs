@@ -97,12 +97,13 @@ def main(argv=None):
 
 
     # check bwa ----------------------------------------------------------------
-    sys.stderr.write("- bwa:      ")
+    sys.stderr.write("- bwa:      ") # with bwa we don't check the return code, because the normal bwa return 1 if you dont add anything
     if is_tool("bwa"):
         sys.stderr.write(" correct\n")
         #TODO: maybe check version? at least 0.7.15-r1140
     else:
         sys.stderr.write(" WARNING. BWA is not in the path\n\n")
+        error_found = True
 
     # check samtools -----------------------------------------------------------
     sys.stderr.write("- samtools: ")
@@ -111,8 +112,10 @@ def main(argv=None):
             sys.stderr.write(" correct\n")
         else:
             sys.stderr.write(" WARNING. Samtools is not correctly installed\n")
+            error_found = True
     else:
         sys.stderr.write(" WARNING. Samtools is not in the path\n\n")
+        error_found = True
 
     # check metaSNV ------------------------------------------------------------
     sys.stderr.write("- metaSNV:  ")
@@ -121,6 +124,7 @@ def main(argv=None):
         #TODO: maybe check version? at least metaSNV v1.0.3
     else:
         sys.stderr.write(" WARNING. metaSNV is not in the path\n\n")
+        error_found = True
 
 
     #===========================================================================
