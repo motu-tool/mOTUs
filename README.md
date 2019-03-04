@@ -88,9 +88,11 @@ motus profile -f sample1_run1_for.fastq,sample1_run2_for.fastq -r sample1_run1_r
 
 ChangeLog
 --------------
+**Version 2.1.1 2019-03-04 by AlessioMilanese**
+* Correct problem with samtools when installing with conda
+
 **Version 2.1.0 2019-03-03 by AlessioMilanese**
 * Correct error \'\t\t\' when printing -C recall
-* Update bioconda environment .yaml file
 * Update database (gene coordinates)
 
 **Version 2.0.1 2018-08-23 by AlessioMilanese**
