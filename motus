@@ -493,8 +493,17 @@ def main(argv=None):
                              "required proportion of informative samples (coverage non-zero) per position",
                         default=None)
     parser.add_argument('--version', action='version', version='%(prog)s {0} on python {1}'.format(version_tool, sys.version.split()[0]))
+    parser.add_argument('--test', action='store_true', default=None, dest='test_motu', help='test that motus has all the dependencies and is working correctly')
 
     args = parser.parse_args()
+
+    # run test.py --------------------------------------------------------------
+    if args.test_motu:
+        popenCMD = shlex.split("python "+relative_path+"test.py")
+        child = subprocess.Popen(popenCMD)
+        child.communicate()
+        rc = child.wait()
+        return(rc)
 
 
     # print menus ----------------------------------------------------------------
