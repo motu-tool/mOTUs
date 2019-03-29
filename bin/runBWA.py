@@ -62,13 +62,14 @@ def runBWA_singleEnd(strFilteredReadFile, reference, msamPercID, msamminLength, 
         threadsFlag = " -t 1"
 
     zippedInput = False
-    if (strFilteredReadFile.endswith(".gz")):
-        unzipCMD = "gunzip -c " + strFilteredReadFile
-        zippedInput = True
-        if not(is_tool("gunzip")):
-            sys.stderr.write("[E::map_db] Error: gunzip is not installed. Cannot unzip the files\n")
-            sys.exit(1)
-    elif (strFilteredReadFile.endswith(".bz2")):
+    # bwa can handle .gz files
+    #if (strFilteredReadFile.endswith(".gz")):
+    #    unzipCMD = "gunzip -c " + strFilteredReadFile
+    #    zippedInput = True
+    #    if not(is_tool("gunzip")):
+    #        sys.stderr.write("[E::map_db] Error: gunzip is not installed. Cannot unzip the files\n")
+    #        sys.exit(1)
+    if (strFilteredReadFile.endswith(".bz2")):
         unzipCMD = "bunzip2 -c " + strFilteredReadFile
         zippedInput = True
         if not(is_tool("bunzip2")):
@@ -144,6 +145,16 @@ def runBWA_singleEnd(strFilteredReadFile, reference, msamPercID, msamminLength, 
                     if flag1 and flag2 and flag3:
                         yield line
 
+        #check that bzip finished correctly
+        if (zippedInput):
+            unzip_cmd.stdout.close()
+            return_code = unzip_cmd.wait()
+            if return_code:
+                sys.stderr.write("[E::map_db] Error. bunzip2 failed\n")
+                sys.exit(1)
+
+
+        # chack that bwa finished correctly
         bwa_cmd.stdout.close()
         return_code = bwa_cmd.wait()
         if return_code:
