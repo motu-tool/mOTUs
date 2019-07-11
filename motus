@@ -49,14 +49,51 @@ path_array = path_mOTUs.split("/")
 relative_path = "/".join(path_array[0:-1])
 relative_path = relative_path + "/"
 
+# check if another database is specified ---------------------------------------
+# it will be -db argument
+count_db = 0
+pos_db_info = 0
+DATABASE = ""
+for i in range(len(sys.argv)):
+    a = sys.argv[i]
+    if a == "-db":
+        count_db = count_db + 1
+        pos_db_info = i+1
+# error if the -db appers too many times
+if count_db > 1:
+    sys.stderr.write("motus error: argument -db repeated multiple times\n")
+    sys.exit(1)
+# check which DB to use
+if count_db == 1:
+    if len(sys.argv) > pos_db_info:
+        DATABASE = sys.argv[pos_db_info]
+        # check if setup.py has been ran already ---------------------------------------
+        if not(os.path.isdir(DATABASE)):
+            sys.stderr.write("[E::main] Error: Cannot find '-db' directory "+DATABASE+"\n\n")
+            sys.exit(1)
+    else:
+        sys.stderr.write("motus error: argument -db: expected one argument\n")
+        sys.exit(1)
+else: # default DB
+    DATABASE = relative_path+'db_mOTU'
+
+# remove "/" from the end of the database string
+def strip_end(text, suffix):
+    if not text.endswith(suffix):
+        return text
+    return strip_end(text[:-1], suffix)
+DATABASE = strip_end(DATABASE, "/")
+
+
+
 # check if setup.py has been ran already ---------------------------------------
-if not(os.path.isdir(relative_path+'db_mOTU')):
+if not(os.path.isdir(relative_path+'db_mOTU')): # here we check db_mOTU exactly, because want to see if it was installed
     sys.stderr.write("[E::main] Error: database has not been downloaded. Run setup.py before using the motus profiler\n\n")
     sys.exit(1)
 
 #-------------------------------------------------------------------------------
 # tool version
-path_info_version = relative_path + "db_mOTU/versions"
+path_info_version = DATABASE + "/versions"
 try:
     location = open(path_info_version,'r')
     versions = dict()
@@ -170,52 +207,51 @@ def print_menu_profile():
     sys.stderr.write("\n")
     sys.stderr.write("Usage: motus profile [options]\n\n")
     sys.stderr.write("Input options:\n")
-    sys.stderr.write("   -f FILE[,FILE]  input file(s) for reads in forward orientation, fastq formatted\n")
-    sys.stderr.write("   -r FILE[,FILE]  input file(s) for reads in reverse orientation, fastq formatted\n")
-    sys.stderr.write("   -s FILE[,FILE]  input file(s) for reads without mate, fastq formatted\n")
-    sys.stderr.write("   -n STR          sample name\n")
-    sys.stderr.write("   -i FILE[,FILE]  provide sam or bam input file(s)\n")
-    sys.stderr.write("   -m FILE         provide a mgc reads count file\n\n")
+    sys.stderr.write("   -f  FILE[,FILE]  input file(s) for reads in forward orientation, fastq formatted\n")
+    sys.stderr.write("   -r  FILE[,FILE]  input file(s) for reads in reverse orientation, fastq formatted\n")
+    sys.stderr.write("   -s  FILE[,FILE]  input file(s) for reads without mate, fastq formatted\n")
+    sys.stderr.write("   -n  STR          sample name\n")
+    sys.stderr.write("   -i  FILE[,FILE]  provide sam or bam input file(s)\n")
+    sys.stderr.write("   -m  FILE         provide a mgc reads count file\n")
+    sys.stderr.write("   -db DIR          provide a database directory\n\n")
     sys.stderr.write("Output options:\n")
-    sys.stderr.write("   -o FILE         output file name [stdout]\n")
-    sys.stderr.write("   -I FILE         save the result of bwa in bam format (intermediate step) [None]\n")
-    sys.stderr.write("   -M FILE         save the mgc reads count (intermediate step) [None]\n")
-    sys.stderr.write("   -e              profile only reference species (ref_mOTUs)\n")
-    #sys.stderr.write("   -p       visualize the specI ID instead of the species name\n") # alway visualize
-    sys.stderr.write("   -c              print result as counts instead of relative abundances\n")
-    sys.stderr.write("   -p              print NCBI id\n")
-    sys.stderr.write("   -u              print the full name of the species\n")
-    sys.stderr.write("   -q              print the full rank taxonomy\n")
-    sys.stderr.write("   -B              print result in BIOM format\n")
-    sys.stderr.write("   -C STR          print result in CAMI format (BioBoxes format 0.9.1)\n")
-    sys.stderr.write("                   Values: [precision, recall, parenthesis]\n")
-    sys.stderr.write("   -k STR          taxonomic level [mOTU]\n")
-    sys.stderr.write("                   Values: [kingdom, phylum, class, order, family, genus, mOTU]\n\n")
+    sys.stderr.write("   -o  FILE         output file name [stdout]\n")
+    sys.stderr.write("   -I  FILE         save the result of bwa in bam format (intermediate step) [None]\n")
+    sys.stderr.write("   -M  FILE         save the mgc reads count (intermediate step) [None]\n")
+    sys.stderr.write("   -e               profile only reference species (ref_mOTUs)\n")
+    sys.stderr.write("   -c               print result as counts instead of relative abundances\n")
+    sys.stderr.write("   -p               print NCBI id\n")
+    sys.stderr.write("   -u               print the full name of the species\n")
+    sys.stderr.write("   -q               print the full rank taxonomy\n")
+    sys.stderr.write("   -B               print result in BIOM format\n")
+    sys.stderr.write("   -C  STR          print result in CAMI format (BioBoxes format 0.9.1)\n")
+    sys.stderr.write("                    Values: [precision, recall, parenthesis]\n")
+    sys.stderr.write("   -k  STR          taxonomic level [mOTU]\n")
+    sys.stderr.write("                    Values: [kingdom, phylum, class, order, family, genus, mOTU]\n\n")
     sys.stderr.write("Algorithm options:\n")
-    sys.stderr.write("   -g INT          number of marker genes cutoff: 1=higher recall, 10=higher precision [3]\n")
-    sys.stderr.write("   -l INT          min. length of alignment for the reads (number of nucleotides) [75]\n")
-    #sys.stderr.write("   -L FLOAT        min. length of alignment for the reads (percentage of the average read length) [None]\n")
-    #sys.stderr.write("   -CC INT          number of cores for bwa (max one per lane) [1]\n")
-    sys.stderr.write("   -t INT          number of threads [1]\n")
-    sys.stderr.write("   -v INT          verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n")
-    sys.stderr.write("   -y STR          type of read counts [insert.scaled_counts]\n")
-    sys.stderr.write("                   Values: [base.coverage, insert.raw_counts, insert.scaled_counts]\n\n")
+    sys.stderr.write("   -g  INT          number of marker genes cutoff: 1=higher recall, 10=higher precision [3]\n")
+    sys.stderr.write("   -l  INT          min. length of alignment for the reads (number of nucleotides) [75]\n")
+    sys.stderr.write("   -t  INT          number of threads [1]\n")
+    sys.stderr.write("   -v  INT          verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n")
+    sys.stderr.write("   -y  STR          type of read counts [insert.scaled_counts]\n")
+    sys.stderr.write("                    Values: [base.coverage, insert.raw_counts, insert.scaled_counts]\n\n")
 
 # ------------------------------------------------------------------------------
 def print_menu_map_snv():
     sys.stderr.write("\n")
     sys.stderr.write("Usage: motus map_snv [options]\n\n")
     sys.stderr.write("Input options:\n")
-    sys.stderr.write("   -f FILE[,FILE]  input file(s) for reads in forward orientation, fastq formatted\n")
-    sys.stderr.write("   -r FILE[,FILE]  input file(s) for reads in reverse orientation, fastq formatted\n")
-    sys.stderr.write("   -s FILE[,FILE]  input file(s) for reads without mate, fastq formatted\n\n")
+    sys.stderr.write("   -f  FILE[,FILE]  input file(s) for reads in forward orientation, fastq formatted\n")
+    sys.stderr.write("   -r  FILE[,FILE]  input file(s) for reads in reverse orientation, fastq formatted\n")
+    sys.stderr.write("   -s  FILE[,FILE]  input file(s) for reads without mate, fastq formatted\n")
+    sys.stderr.write("   -db DIR          provide a database directory\n\n")
     sys.stderr.write("Output options:\n")
-    sys.stderr.write("   -o FILE         output bam file name [stdout]\n\n")
+    sys.stderr.write("   -o  FILE         output bam file name [stdout]\n\n")
     sys.stderr.write("Algorithm options:\n")
-    sys.stderr.write("   -l INT          min. length of alignment for the reads (number of nucleotides) [75]\n")
+    sys.stderr.write("   -l  INT          min. length of alignment for the reads (number of nucleotides) [75]\n")
     #sys.stderr.write("   -CC INT          number of cores for bwa (max one per lane) [1]\n")
-    sys.stderr.write("   -t INT          number of threads [1]\n")
-    sys.stderr.write("   -v INT          verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n\n")
+    sys.stderr.write("   -t  INT          number of threads [1]\n")
+    sys.stderr.write("   -v  INT          verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n\n")
 
 # ------------------------------------------------------------------------------
 def print_menu_snv_call():
@@ -228,7 +264,8 @@ def print_menu_snv_call():
     sys.stderr.write("   -fm INT     Minimum number of samples per species. Default=2\n")
     sys.stderr.write("   -fp FLOAT   FILTERING STEP II: Required proportion of informative samples (coverage non-zero) per position. Default=0.50\n")
     sys.stderr.write("   -fc FLOAT   FILTERING STEP II: Minimum coverage per position per sample per species. Default=5.0\n")
-    sys.stderr.write("   -t  INT     Number of threads. Default=1\n\n")
+    sys.stderr.write("   -t  INT     Number of threads. Default=1\n")
+    sys.stderr.write("   -db DIR     Provide a database directory\n\n")
     sys.stderr.write("Output options:\n")
     sys.stderr.write("   -o  DIR     Output directory. Will fail if already exists. [Mandatory]\n")
     sys.stderr.write("   -K          Keep all the directories produced by metaSNV. Default is to remove cov, distances, filtered, snpCaller\n\n")
@@ -240,56 +277,59 @@ def print_menu_bwa():
     sys.stderr.write("\n")
     sys.stderr.write("Usage: motus map_tax [options]\n\n")
     sys.stderr.write("Input options:\n")
-    sys.stderr.write("   -f FILE[,FILE]  input file(s) for reads in forward orientation, fastq formatted\n")
-    sys.stderr.write("   -r FILE[,FILE]  input file(s) for reads in reverse orientation, fastq formatted\n")
-    sys.stderr.write("   -s FILE[,FILE]  input file(s) for reads without mate, fastq formatted\n\n")
+    sys.stderr.write("   -f  FILE[,FILE]  input file(s) for reads in forward orientation, fastq formatted\n")
+    sys.stderr.write("   -r  FILE[,FILE]  input file(s) for reads in reverse orientation, fastq formatted\n")
+    sys.stderr.write("   -s  FILE[,FILE]  input file(s) for reads without mate, fastq formatted\n")
+    sys.stderr.write("   -db DIR          provide a database directory\n\n")
     sys.stderr.write("Output options:\n")
-    sys.stderr.write("   -o FILE         output file name [stdout]\n")
-    sys.stderr.write("   -b              save the result of bwa in bam format\n\n")
+    sys.stderr.write("   -o  FILE         output file name [stdout]\n")
+    sys.stderr.write("   -b               save the result of bwa in bam format\n\n")
     sys.stderr.write("Algorithm options:\n")
-    sys.stderr.write("   -l INT          min. length of alignment for the reads (number of nucleotides) [75]\n")
+    sys.stderr.write("   -l  INT          min. length of alignment for the reads (number of nucleotides) [75]\n")
     #sys.stderr.write("   -CC INT          number of cores for bwa (max one per lane) [1]\n")
-    sys.stderr.write("   -t INT          number of threads [1]\n")
-    sys.stderr.write("   -v INT          verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n\n")
+    sys.stderr.write("   -t  INT          number of threads [1]\n")
+    sys.stderr.write("   -v  INT          verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n\n")
 
 # ------------------------------------------------------------------------------
 def print_menu_map_genes():
     sys.stderr.write("\n")
     sys.stderr.write("Usage: motus calc_mgc [options]\n\n")
     sys.stderr.write("Input options:\n")
-    sys.stderr.write("   -n STR          sample name\n")
-    sys.stderr.write("   -i FILE[,FILE]  provide a sam or bam input file (or list of files)\n\n")
+    sys.stderr.write("   -n  STR          sample name\n")
+    sys.stderr.write("   -i  FILE[,FILE]  provide a sam or bam input file (or list of files)\n")
+    sys.stderr.write("   -db DIR          provide a database directory\n\n")
     sys.stderr.write("Output options:\n")
-    sys.stderr.write("   -o FILE         output file name [stdout]\n\n")
+    sys.stderr.write("   -o  FILE         output file name [stdout]\n\n")
     sys.stderr.write("Algorithm options:\n")
-    sys.stderr.write("   -l INT          min. length of alignment for the reads (number of nucleotides) [75]\n")
+    sys.stderr.write("   -l  INT          min. length of alignment for the reads (number of nucleotides) [75]\n")
     #sys.stderr.write("   -L FLOAT        min. length of alignment for the reads (percentage of the average read length) [None]\n")
-    sys.stderr.write("   -v INT          verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n")
-    sys.stderr.write("   -y STR          type of read counts [insert.scaled_counts]\n")
-    sys.stderr.write("                   Values: [base.coverage, insert.raw_counts, insert.scaled_counts]\n\n")
+    sys.stderr.write("   -v  INT          verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n")
+    sys.stderr.write("   -y  STR          type of read counts [insert.scaled_counts]\n")
+    sys.stderr.write("                    Values: [base.coverage, insert.raw_counts, insert.scaled_counts]\n\n")
 
 # ------------------------------------------------------------------------------
 def print_menu_map_lgs():
     sys.stderr.write("\n")
     sys.stderr.write("Usage: motus calc_motu [options]\n\n")
     sys.stderr.write("Input options:\n")
-    sys.stderr.write("   -n STR   sample name\n")
-    sys.stderr.write("   -i FILE  provide the mgc abundance table\n\n")
+    sys.stderr.write("   -n  STR   sample name\n")
+    sys.stderr.write("   -i  FILE  provide the mgc abundance table\n")
+    sys.stderr.write("   -db DIR   provide a database directory\n\n")
     sys.stderr.write("Output options:\n")
-    sys.stderr.write("   -o FILE  output file name [stdout]\n")
-    sys.stderr.write("   -e       profile only reference species (ref_mOTUs)\n")
-    sys.stderr.write("   -B       print result in BIOM format\n")
-    sys.stderr.write("   -C STR   print result in CAMI format (BioBoxes format 0.9.1)\n")
-    sys.stderr.write("            Values: [precision, recall, parenthesis]\n")
-    sys.stderr.write("   -c       print result as counts instead of relative abundances\n")
-    sys.stderr.write("   -p       print NCBI id\n")
-    sys.stderr.write("   -u       print the full name of the species\n")
-    sys.stderr.write("   -q       print the full rank taxonomy\n")
-    sys.stderr.write("   -k STR   taxonomic level [mOTU]\n")
-    sys.stderr.write("            Values: [kingdom, phylum, class, order, family, genus, mOTU]\n\n")
+    sys.stderr.write("   -o  FILE  output file name [stdout]\n")
+    sys.stderr.write("   -e        profile only reference species (ref_mOTUs)\n")
+    sys.stderr.write("   -B        print result in BIOM format\n")
+    sys.stderr.write("   -C  STR   print result in CAMI format (BioBoxes format 0.9.1)\n")
+    sys.stderr.write("             Values: [precision, recall, parenthesis]\n")
+    sys.stderr.write("   -c        print result as counts instead of relative abundances\n")
+    sys.stderr.write("   -p        print NCBI id\n")
+    sys.stderr.write("   -u        print the full name of the species\n")
+    sys.stderr.write("   -q        print the full rank taxonomy\n")
+    sys.stderr.write("   -k  STR   taxonomic level [mOTU]\n")
+    sys.stderr.write("             Values: [kingdom, phylum, class, order, family, genus, mOTU]\n\n")
     sys.stderr.write("Algorithm options:\n")
-    sys.stderr.write("   -g INT   number of marker genes cutoff: 1=higher recall, 10=higher precision [3]\n")
-    sys.stderr.write("   -v INT   verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n\n")
+    sys.stderr.write("   -g  INT   number of marker genes cutoff: 1=higher recall, 10=higher precision [3]\n")
+    sys.stderr.write("   -v  INT   verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n\n")
 
 # ------------------------------------------------------------------------------
 def print_menu_append():
@@ -475,6 +515,7 @@ def main(argv=None):
     parser.add_argument('-CC', type=int, action="store", dest='number_of_cores', default=None, help='Number of cores to use for bwa')
     # db has to be deleted
     #parser.add_argument('-db', action="store", default=None, dest='db', help='database of marker genes',choices=['nr', 'aug.cen', 'cen'])
+    parser.add_argument('-db', action="store", default=None, dest='db', help='database of marker genes')
     parser.add_argument('-save_sam_lines', action="store", dest='save_sam_lines', default=None, help='name of output file')
     parser.add_argument('-load_sam_lines', action="store", dest='load_sam_lines', default=None, help='name of output file')
     parser.add_argument('-min_perc_id', action="store", default=None, dest='min_perc_id', help='minimum percentage of identity when filtering - choose between 97 and 100')
@@ -779,8 +820,8 @@ def main(argv=None):
     # --------------------------------------------------------------------------
 
 
-        reference = relative_path+"db_mOTU/mOTU.v2b.centroids.reformatted.padded"
-        annotation = relative_path+"db_mOTU/mOTU.v2b.centroids.reformatted.padded.annotations"
+        reference = DATABASE+"/mOTU.v2b.centroids.reformatted.padded"
+        annotation = DATABASE+"/mOTU.v2b.centroids.reformatted.padded.annotations"
         if not os.path.isfile(annotation):
             sys.stderr.write("[E::main] The annotation file %s does not exist. Create annotation file with the get.annotations.py command from the metaSNV package\n" % (annotation))
             sys.exit(1)
@@ -931,14 +972,14 @@ def main(argv=None):
 
 
     #set database of sequences
-    reference = relative_path+"db_mOTU/mOTU.v2b.nr.padded" # must keep this
-    header_file = relative_path+"db_mOTU/bam_header_nr" # must keep this
+    reference = DATABASE+"/mOTU.v2b.nr.padded" # must keep this
+    header_file = DATABASE+"/bam_header_nr" # must keep this
     args_db = 'nr' # must keep this
 
     # if we use snv, then we use centroids
     if args.command == 'map_snv':
-        reference = relative_path+"db_mOTU/mOTU.v2b.centroids.reformatted.padded"
-        header_file = relative_path+"db_mOTU/bam_header_cen"
+        reference = DATABASE+"/mOTU.v2b.centroids.reformatted.padded"
+        header_file = DATABASE+"/bam_header_cen"
         args_db == 'cen'
 
     # --------------------------------------------------------------------------
@@ -1121,7 +1162,7 @@ def main(argv=None):
 
                 # First: PE filtering
                 database_prefix = "mOTU.v2b"
-                database_dir = relative_path+"db_mOTU"
+                database_dir = DATABASE
 
                 # coordinates for the padding of the genes are different for centroids
                 dictReference2geneLocation = os.path.sep.join([database_dir, database_prefix + ".padded.coords_for_centroids"])
@@ -1345,7 +1386,7 @@ def main(argv=None):
             # prepare inputs
             listInputFiles = ['unused list']
             database_prefix = "mOTU.v2b"
-            database_dir = relative_path+"db_mOTU"
+            database_dir = DATABASE
             sample_name = "trial"
             if (args.sampleName is not None): sample_name = args.sampleName
             multThreshold = 3
@@ -1462,7 +1503,7 @@ def main(argv=None):
         if args.motu_read_counts_file is not None:# we load the mOTU read count table
             if args.verbose>2:sys.stderr.write("[main] Load the mgc table and compute the profile\n")
 
-        database_dir = relative_path+"db_mOTU/"
+        database_dir = DATABASE+"/"
         LGs_map = database_dir+"mOTU-LG.map.tsv"
         LGs_map_l = database_dir+"mOTU-LG.map.line.tsv"
         specI_taxonomy = database_dir+"prok-refdb-v11.0.0_specI-v2_taxonomy_v1.map"
@@ -1665,7 +1706,7 @@ def main(argv=None):
 
         listInputFiles = args.listInputFiles.split(",")
         database_prefix = "mOTU.v2b"
-        database_dir = relative_path+"db_mOTU"
+        database_dir = DATABASE
         sample_name = "trial"
         if (args.sampleName is not None): sample_name = args.sampleName
         multThreshold = 3
@@ -1785,7 +1826,7 @@ def main(argv=None):
             sys.stderr.write("[calc_motu] Please provide at least one input file.\n")
             sys.exit(1)
 
-        database_dir = relative_path+"db_mOTU/"
+        database_dir = DATABASE+"/"
         LGs_map = database_dir+"mOTU-LG.map.tsv"
         LGs_map_l = database_dir+"mOTU-LG.map.line.tsv"
         specI_taxonomy = database_dir+"prok-refdb-v11.0.0_specI-v2_taxonomy_v1.map"
