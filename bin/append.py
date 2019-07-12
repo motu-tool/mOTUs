@@ -26,6 +26,110 @@ def cArray(size1,size2):
     return c
 
 # ------------------------------------------------------------------------------
+# merge function for metaphlan like output
+def append_A_option(list_files, output, verbose, BIOM_output):
+    if BIOM_output:
+        if verbose>=2: sys.stderr.write("[W::merge] Warning: -B not supported when the profiles were created with -A\n")
+    # read all files to find the sample names
+    sample_names = "clade"
+    samples_clades = dict()
+    for f in list_files:
+        # open file --
+        try:
+            location = open(f,'r')
+        except:
+            sys.stderr.write("[E::merge] Error: failed to read "+f+"\n")
+            sys.exit(1)
+        # check header --
+        try:
+            header = location.readline().rstrip()
+            header_vals = header.split("\t")
+            if len(header_vals) != 2 or header_vals[0] != "clade":
+                sys.stderr.write("[E::merge] Error: Header not correct in : "+f+"\n")
+                sys.exit(1)
+            sample_names = sample_names + "\t" + header_vals[1]
+        except:
+            sys.stderr.write("[E::merge] Error: failed to check header in : "+f+"\n")
+            sys.exit(1)
+
+        # go through all the lines --
+        all_clades = dict()
+        for l in location:
+            # I could check that it starts with "k__", but to make it more general,
+            # we will not check
+            vals = l.rstrip().split("\t")
+            if len(vals) != 2:
+                if verbose>4: sys.stderr.write("Error with: "+l+"\n")
+                sys.stderr.write("[E::merge] Error with file: "+f+"\n")
+                sys.exit(1)
+            # add vals to the dictionary
+            all_clades[vals[0]] = vals[1]
+
+        # add created dict for this file to the general dict of clades
+        samples_clades[f] = all_clades
+        location.close()
+
+    # if we arrive here we have a list of samples name and clades per file in
+    # samples_clades
+    # WE MERGE THEM
+
+    # find all possible clades/rows
+    all_clades = set()
+    for f in list_files:
+        for c in samples_clades[f]:
+            all_clades.add(c)
+    all_clades = list(sorted(all_clades))
+
+    # create lines to print ----------
+    # initialisation
+    lines_print = dict()
+    for c in all_clades:
+        lines_print[c] = c
+        # go through the files
+        for f in list_files:
+            if c in samples_clades[f]:
+                lines_print[c] = lines_print[c] + "\t" + samples_clades[f][c]
+            else:
+                lines_print[c] = lines_print[c] + "\t0"
+
+    # print result -------------------------------------------------------------
+    if output != "":
+        outfile = tempfile.NamedTemporaryFile(delete=False, mode="w")
+        os.chmod(outfile.name, 0o644)
+        #outfile = open(output, "w")
+    else:
+        outfile = sys.stdout
+
+    # write header
+    outfile.write(sample_names + "\n")
+
+    # write all lines
+    for c in lines_print:
+        outfile.write(lines_print[c] + "\n")
+
+    if output != "":
+        if verbose>2: sys.stderr.write(" [merge] (Saving the the merged profiles)\n")
+        try:
+            outfile.flush()
+            os.fsync(outfile.fileno())
+            outfile.close()
+        except:
+            sys.stderr.write("[E::main] Error: failed to save the merged profiles\n")
+            sys.exit(1)
+        try:
+            #os.rename(outfile.name,output) # atomic operation
+            shutil.move(outfile.name,output) #It is not atomic if the files are on different filsystems.
+        except:
+            sys.stderr.write("[E::merge] Error: failed to save the merged profiles\n")
+            sys.stderr.write("[E::merge] you can find the file here:\n"+outfile.name+"\n")
+            sys.exit(1)
+
+
+
+
+
+# ------------------------------------------------------------------------------
+# MAIN MERGE FUNCTION
 def append_profilings(directory, list_files, output, verbose, BIOM_output,version_append,motu_call,version_tool):
     #--------------------------- save files ------------------------------------
     if directory is None and list_files is None:
@@ -56,6 +160,20 @@ def append_profilings(directory, list_files, output, verbose, BIOM_output,versio
 
     try:
         header_execution = location.readline()
+    except:
+        sys.stderr.write("[E::merge] Error: failed to parse "+first_file+"\n")
+        location.close()
+        sys.exit(1)
+    # check if the samples are from the -A option --------------------------
+    if header_execution[0:5] == "clade":
+        location.close()
+        append_A_option(list_files, output, verbose, BIOM_output)
+        sys.exit(0)
+
+
+    # proced with the normal merging -------
+    try:
+        # check if there are errors in the header ------------------------------
         if header_execution[0:5] != "# git":
             if verbose > 5: sys.stderr.write("[E::merge] Error reading the first file - first line\n")
             sys.stderr.write("[E::merge] Error. truncated file: "+first_file+"\n")
