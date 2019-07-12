@@ -558,6 +558,351 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
 
 
 
+
+
+
+
+
+
+
+
+def calculate_abundance_one_level (infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxonomy, output, cutoff, onlySpecI, sampleName, taxonomic_level, BIOM_output, profile_mode,input_for_profile, print_NCBI_id, print_rel_ab,mgc_table_header,version_map_lgs,motu_version_tool,verbose,motu_call,git_commit_id,print_full_rank,print_full_name,short_names_file,version_tool):
+
+    # load data ----------------------------------------------------------------
+    # load the taxonomy for the specI - first always map at the species level
+    taxonomy_header_s, taxonomy_s = save_file_to_dict_full_rank(specI_taxonomy,1,8,True,True)
+    # load the taxonomy for the mOTU_LGs
+    taxonomy_header_m, taxonomy_m = save_file_to_dict_full_rank(mOTULG_taxonomy,0,7,True,False)
+
+    # laod short names
+    shortNames_header, shortNames = save_file_to_dict(short_names_file,0,1,True,True,True)
+    # we have to change short names to taxonomy_s and change the end with the short name
+    for i in shortNames:
+        if i in taxonomy_s:
+            base_str_taxonomy_s = taxonomy_s[i].split("|s__")[0]
+            shor_name_vals = shortNames[i].split("\t")
+            shortNames[i] = base_str_taxonomy_s + "|s__" + shor_name_vals[1]   
+
+    # load the mOTU read counts (output from map_genes_to_mOTUs.py)
+    if profile_mode:
+        mOTUs_ab = input_for_profile
+        sample_id_header = sampleName
+    else:
+        info_computation_so_far,sample_id_header, mOTUs_ab = save_file_to_dict_two_headers(infile,0,1,True,False)
+        if sampleName != "":
+            sample_id_header = sampleName
+        mgc_table_header = info_computation_so_far
+
+    # open the map from mOTU to LGs
+    mOTUs_LGs = save_file_to_dict(LGs_map,0,1,False,False,False)
+
+    # open the map from mOTU to LGs that are in a line
+    try:
+        location = open(LGs_map_l,'r')
+        mOTUs_LGs_l = dict()
+
+        list_LGs = list() # we want to preserve the order. Hence, we create the list here
+
+        for line in location:
+            l = line.rstrip().split('\t')
+            mOTUs_LGs_l[l[0]] = l[1]
+            list_LGs.append(l[0])
+        location.close()
+    except:
+        sys.stderr.write("[E::calc_motu] Error loading file: "+LGs_map_l+"\n[E::calc_motu] Try to download again the motus profiler\n\n")
+        sys.exit(1)
+
+    # check that the mgc_table is correct --------------------------------------
+    error_flag_mgc_table = False
+    all_wrong = True
+    for k in mOTUs_ab:
+        if k in mOTUs_LGs:
+            all_wrong = False
+        else:
+            error_flag_mgc_table = True
+
+
+    if len(mOTUs_ab) == 0:
+        all_wrong = False
+        if verbose>1: sys.stderr.write(" [W::calc_motu] Warning: The mgc table is empty\n")
+
+
+    if all_wrong:
+        if profile_mode:
+            sys.stderr.write("[E::calc_motu] Error: the mgc table does not contain information of the mgc\n")
+        else:
+            sys.stderr.write("[E::calc_motu] Error in file "+infile+":\n[E::calc_motu] the mgc table does not contain information of the mgc\n")
+        sys.exit(1)
+
+    if (not all_wrong) and (error_flag_mgc_table):
+        for k in mOTUs_ab:
+            if not (k in mOTUs_LGs):
+                sys.stderr.write(" [W::calc_motu] Warning: \'"+k+"\' not a mgc. Ignore the line\n")
+
+
+
+    # create some useful variables ---------------------------------------------
+    list_mOTUs = list(set(mOTUs_LGs.keys()))
+    counts_mOTUs = dict()
+    rel_ab_LGs = dict()
+
+    #calculate -----------------------------------------------------------------
+    for i in list_mOTUs:
+        counts_mOTUs[i] = 0
+    for i in mOTUs_ab:
+        counts_mOTUs[i] = mOTUs_ab[i]
+
+    for j in list_LGs: # for every LG
+        genes_l = mOTUs_LGs_l[j] # we find the mOTUs that compose the LG
+        genes_list = genes_l.split(';')
+        counts_mOTUs_j = [counts_mOTUs[x] for x in genes_list] # vector that represents the read counts of the mOTUs of the LGs
+        counts_mOTUs_j = [float(numeric_string) for numeric_string in counts_mOTUs_j] # transform from string to float
+
+        list_diff_zero = list()
+        cog_type = list()
+        for i in range(len(counts_mOTUs_j)):
+            if counts_mOTUs_j[i]>0:
+                list_diff_zero.append(counts_mOTUs_j[i]) # find the one that are different from zero
+                cog_type.append(genes_list[i].split('.')[0]) # and save the COG type
+
+        rel_ab_LGs[j] = 0
+        if j != '-1':
+            if len(list_diff_zero) >= cutoff:
+                if len(list_diff_zero) == 1:
+                    rel_ab_LGs[j] = float(sum(list_diff_zero))
+                else:
+                    list_diff_zero.sort()
+                    if (len(list_diff_zero) % 2) == 1:
+                        #take median
+                        pos_median = int(len(list_diff_zero)/2 - 0.5)
+                        rel_ab_LGs[j] = float(list_diff_zero[pos_median])
+                    else:
+                        #take average of two medians
+                        pos_median1 = int(len(list_diff_zero)/2)
+                        pos_median2 = int(len(list_diff_zero)/2 - 1)
+                        rel_ab_LGs[j] = float(list_diff_zero[pos_median1] + list_diff_zero[pos_median2]) / 2
+        else: # what to do with -1: take the average of the different COGs values
+            all_cog_type = list(set(cog_type))
+            count_cogs_m_1 = dict()
+            # set to zero to start
+            for ll in all_cog_type:
+                count_cogs_m_1[ll] = 0
+            # add values to the dicrionary
+            for ll in range(len(cog_type)):
+                count_cogs_m_1[cog_type[ll]] = count_cogs_m_1[cog_type[ll]] + list_diff_zero[ll]
+            # calculate average for every COG
+            mean_vals_cogs = list()
+            for ll in all_cog_type:
+                if count_cogs_m_1[ll] != 0:
+                    mean_vals_cogs.append(count_cogs_m_1[ll])
+
+            if sum(mean_vals_cogs) != 0:
+                mean_vals_cogs.sort()
+                if (len(mean_vals_cogs) % 2) == 1:
+                    pos_median = int(len(mean_vals_cogs)/2 - 0.5)
+                else:
+                    pos_median = int(len(mean_vals_cogs)/2 - 1)
+                rel_ab_LGs[j] = mean_vals_cogs[pos_median]
+            else:
+                rel_ab_LGs[j] = 0
+
+
+    # divide by sum
+    rel_ab_is_rounded = False
+    rel_ab_LGs_rel = dict()
+    s = sum(rel_ab_LGs.values())
+    if not print_rel_ab:
+        if s != 0:
+            for j in list_LGs:
+                rel_ab_LGs_rel[j] = float(rel_ab_LGs[j])/s
+        else:
+            for j in list_LGs:
+                rel_ab_LGs_rel[j] = 0
+            if verbose>1: sys.stderr.write(" [W::calc_motu] Warning: The relative abundance is 0 for all the mOTUs\n")
+    else: # if we dont print the rel. ab.
+        base_coverage_flag = False
+        if re.search("base.coverage", mgc_table_header):
+            base_coverage_flag = True
+
+        for j in list_LGs:
+            if base_coverage_flag:
+                rel_ab_LGs_rel[j] = float(rel_ab_LGs[j])
+            else:# if we are using insert_* then we round the counts
+                rel_ab_LGs_rel[j] = my_round(rel_ab_LGs[j])
+                rel_ab_is_rounded = True
+
+    # keep only specI
+    if onlySpecI:
+        rel_ab_LGs_rel_temp = dict(rel_ab_LGs_rel)
+        rel_ab_LGs_rel = dict()
+        value_minus1 = 0
+        for j in list_LGs:
+            if j == '-1':
+                value_minus1 = value_minus1 + rel_ab_LGs_rel_temp[j]
+            else:
+                type_c = j.split("_")[0]
+                if (type_c == 'meta'):
+                    value_minus1 = value_minus1 + rel_ab_LGs_rel_temp[j]
+                else:
+                    rel_ab_LGs_rel[j] = rel_ab_LGs_rel_temp[j]
+        rel_ab_LGs_rel['-1'] = value_minus1
+
+    LIST_ALL = list()
+
+    # print result FOR SPECIES LEVEL ===========================================
+    # print full name------------------------
+    if taxonomic_level == "mOTU" and print_full_name:
+        # preapre data
+        list_LGs_print = list(list_LGs)
+        if onlySpecI:
+            list_LGs_print = list()
+            for j in list_LGs:
+                if j != '-1':
+                    type_c = j.split("_")[0]
+                    if (type_c != 'meta'):
+                        list_LGs_print.append(j)
+            list_LGs_print.append("-1")
+
+        for j in list_LGs_print:
+            if ((j in taxonomy_s) or (j in taxonomy_m)):
+                if j in taxonomy_s: all_val = taxonomy_s[j].split("\t")
+                if j in taxonomy_m: all_val = taxonomy_m[j].split("\t")
+                # line to print
+                name = j+"\t" # mOTU id
+                name = name + all_val[1]# consensus_name
+                if rel_ab_is_rounded: name = name + "\t" + str(rel_ab_LGs_rel[j]) +"\n" # value - INT
+                else: name = "{0}\t{1:.10f}\n".format(name, rel_ab_LGs_rel[j]) # value - FLOAT (10digits)
+                if rel_ab_LGs_rel[j] != 0:
+                    LIST_ALL.append(name)
+
+            elif j == "-1": # -1
+                dummy = "dummy"
+            else: # if it not in anyone (it should not happen)
+                if verbose>1: sys.stderr.write(" [W::calc_motu] Warning: find mOTU "+j+" that is not present in the taxonomy\n")
+
+    # print short name - deafult ----------------
+    if taxonomic_level == "mOTU" and (not (print_full_name)):
+        # preapre data
+        list_LGs_print = list(list_LGs)
+        if onlySpecI:
+            list_LGs_print = list()
+            for j in list_LGs:
+                if j != '-1':
+                    type_c = j.split("_")[0]
+                    if (type_c != 'meta'):
+                        list_LGs_print.append(j)
+            list_LGs_print.append("-1")
+
+        for j in list_LGs_print:
+            if ((j in taxonomy_s) or (j in taxonomy_m)):
+                if j in taxonomy_s:
+                    all_val = taxonomy_s[j].split("\t")
+                    name = shortNames[j].split("\t")[1]
+                if j in taxonomy_m:
+                    all_val = taxonomy_m[j].split("\t")
+                    name = all_val[1] # the short name for meta-mOTUs is the normal name
+                # line to print
+                name = name + " ["+j+"]"
+                if rel_ab_is_rounded: name = name + "\t" + str(rel_ab_LGs_rel[j]) +"\n" # value - INT
+                else: name = "{0}\t{1:.10f}\n".format(name, rel_ab_LGs_rel[j]) # value - FLOAT (10digits)
+                if rel_ab_LGs_rel[j] != 0:
+                    LIST_ALL.append(name)
+
+            elif j == "-1": # -1
+                dummy = "dummy"
+            else: # if it not in anyone (it should not happen)
+                if verbose>1: sys.stderr.write(" [W::calc_motu] Warning: find mOTU "+j+" that is not present in the taxonomy\n")
+
+
+    # print result FOR NOT SPECIES LEVEL =======================================
+    if taxonomic_level != "mOTU":
+        # choose the right taxonomy level
+        taxonomic_levels = ["mOTULG_cluster","kingdom","phylum","class","order","family","genus","species"]
+        pos = taxonomic_levels.index(taxonomic_level)
+
+        # load the taxonomy for specific taxonomic level
+        taxonomy_header_s, taxonomy_s_2 = save_file_to_dict_full_rank(specI_taxonomy,1,pos+1,True,True)
+        taxonomy_header_m, taxonomy_m_2 = save_file_to_dict_full_rank(mOTULG_taxonomy,0,pos,True,False)
+
+        # create list of unique values ---> it is based on the string: NCBI_id + consensus_name
+        if onlySpecI:
+            list_taxon = list(set(taxonomy_s_2.values()))
+        else:
+            list_taxon = list(set(list(taxonomy_s_2.values())+list(taxonomy_m_2.values())))
+
+        list_taxon.sort()
+        list_taxon.append("-1")
+        rel_abundance_taxon = dict()
+        for i in list_taxon:
+            rel_abundance_taxon[i] = 0
+        for i in rel_ab_LGs_rel:
+            if i != "-1":
+                if i in taxonomy_s_2:
+                    rel_abundance_taxon[taxonomy_s_2[i]] = rel_abundance_taxon[taxonomy_s_2[i]] + rel_ab_LGs_rel[i]
+                if i in taxonomy_m_2:
+                    rel_abundance_taxon[taxonomy_m_2[i]] = rel_abundance_taxon[taxonomy_m_2[i]] + rel_ab_LGs_rel[i]
+
+        # print
+        for i in list_taxon:
+            if i != "-1":
+                all_val = i.split("\t")
+                # prepare line to print
+                name = all_val[1] # consensus_name
+                if print_NCBI_id: name = name + "\t"+all_val[0] # NCBI_tax_id
+                if rel_ab_is_rounded: name = name + "\t" + str(rel_abundance_taxon[i]) +"\n" # value - INT
+                else: name = "{0}\t{1:.10f}\n".format(name, rel_abundance_taxon[i]) # value - FLOAT (10digits)
+                if rel_abundance_taxon[i] != 0:
+                    LIST_ALL.append(name)
+
+    # return the list
+    return(LIST_ALL)
+
+
+def calculate_abundance_all (infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxonomy, output, cutoff, onlySpecI, sampleName, taxonomic_level, BIOM_output, profile_mode,input_for_profile, print_NCBI_id, print_rel_ab,mgc_table_header,version_map_lgs,motu_version_tool,verbose,motu_call,git_commit_id,print_full_rank,print_full_name,short_names_file,version_tool):
+    print_full_rank = True
+    BIOM_output = False
+    print_NCBI_id = False
+    all_print = list()
+    for lt in ['kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'mOTU']:
+        all_print = all_print + calculate_abundance_one_level (infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxonomy, output, cutoff, onlySpecI, sampleName, lt, BIOM_output, profile_mode,input_for_profile, print_NCBI_id, print_rel_ab,mgc_table_header,version_map_lgs,motu_version_tool,verbose,motu_call,git_commit_id,print_full_rank,print_full_name,short_names_file,version_tool)
+
+    # general print
+    if output != "":
+        #outfile = open(output, "w")
+        outfile = tempfile.NamedTemporaryFile(delete=False, mode="w")
+        os.chmod(outfile.name, 0o644)
+    else:
+        outfile = sys.stdout
+
+    outfile.write("clade\t"+sampleName+"\n")
+    for i in all_print:
+        outfile.write(i)
+
+
+    # move the temp file to the final destination ------------------------------
+    if output != "":
+        try:
+            outfile.flush()
+            os.fsync(outfile.fileno())
+            outfile.close()
+        except:
+            sys.stderr.write("[E::main] Error: failed to save the profile\n")
+            sys.exit(1)
+        try:
+            #os.rename(outfile.name,output) # atomic operation
+            shutil.move(outfile.name,output) #It is not atomic if the files are on different filsystems.
+        except:
+            sys.stderr.write("[E::main] Error: failed to save the profile\n")
+            sys.stderr.write("[E::main] you can find the file here:\n"+outfile.name+"\n")
+            sys.exit(1)
+
+
+
+
+
+
+
+
 ########################
 def main(argv=None):
     if(not argv):
