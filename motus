@@ -226,6 +226,7 @@ def print_menu_profile():
     sys.stderr.write("   -B               print result in BIOM format\n")
     sys.stderr.write("   -C  STR          print result in CAMI format (BioBoxes format 0.9.1)\n")
     sys.stderr.write("                    Values: [precision, recall, parenthesis]\n")
+    sys.stderr.write("   -A               print all taxonomy levels together\n")
     sys.stderr.write("   -k  STR          taxonomic level [mOTU]\n")
     sys.stderr.write("                    Values: [kingdom, phylum, class, order, family, genus, mOTU]\n\n")
     sys.stderr.write("Algorithm options:\n")
@@ -321,6 +322,7 @@ def print_menu_map_lgs():
     sys.stderr.write("   -B        print result in BIOM format\n")
     sys.stderr.write("   -C  STR   print result in CAMI format (BioBoxes format 0.9.1)\n")
     sys.stderr.write("             Values: [precision, recall, parenthesis]\n")
+    sys.stderr.write("   -A        print all taxonomy levels together\n")
     sys.stderr.write("   -c        print result as counts instead of relative abundances\n")
     sys.stderr.write("   -p        print NCBI id\n")
     sys.stderr.write("   -u        print the full name of the species\n")
@@ -501,6 +503,7 @@ def main(argv=None):
     parser.add_argument('-B', action='store_true', default=None, dest='BIOM_output', help='print output in BIOM format')
     parser.add_argument('-C', action='store', default=None, dest='CAMI_output', help='print output in CAMI format',choices=["precision", "recall", "parenthesis"])
     parser.add_argument('-c', action='store_true', default=None, dest='print_rel_ab', help='print result as count instead of relative abundance')
+    parser.add_argument('-A', action='store_true', default=None, dest='print_all_taxa', help='print all taxa together')
     parser.add_argument('-u', action='store_true', default=None, dest='print_long_names', help='print names of the species in long format')
     parser.add_argument('-q', action='store_true', default=None, dest='print_full_rank', help='print the full rank of the taxonomy')
     parser.add_argument('-p', action='store_true', default=None, dest='print_NCBI_id', help='print NCBI id')
@@ -551,7 +554,7 @@ def main(argv=None):
     if (args.forwardReads is None) and (args.reverseReads is None) and (args.singleReads is None) and (args.output is None) and (args.threads is None) and (args.onlySpecI is None) and (args.outPutIsBam is None) and (args.keep_metaSNV_dirs is None):
         if (args.type_output is None) and (args.sampleName is None) and (args.listInputFiles is None) and (args.motu_read_counts_file is None) and (args.verbose is None) and (args.directory_append is None) and (args.CAMI_output is None):
             if (args.BIOM_output is None) and (args.taxonomic_level is None) and (args.profile_bam_file is None) and (args.profile_mOTU_reads_file is None) and (args.map_lgs_cutoff is None) and (args.number_of_cores is None):
-                if (args.print_rel_ab is None) and (args.print_NCBI_id is None) and (args.print_long_names is None) and (args.fb is None) and (args.fd is None) and (args.fm is None) and (args.fc is None) and (args.fp is None):
+                if (args.print_rel_ab is None) and (args.print_NCBI_id is None) and (args.print_long_names is None) and (args.fb is None) and (args.fd is None) and (args.fm is None) and (args.fc is None) and (args.fp is None) and (args.print_all_taxa is None):
                     if args.command == 'profile': print_menu_profile()
                     if args.command == 'map_snv': print_menu_map_snv()
                     if args.command == 'map_tax': print_menu_bwa()
@@ -727,6 +730,7 @@ def main(argv=None):
     if (args.BIOM_output is None): args.BIOM_output = False
     if (args.CAMI_output is None): args.CAMI_output = "no_CAMI"
     if (args.print_rel_ab is None): args.print_rel_ab = False
+    if (args.print_all_taxa is None): args.print_all_taxa = False
     if (args.print_NCBI_id is None): args.print_NCBI_id = False
     if (args.print_long_names is None): args.print_long_names = False
     if (args.output is None): args.output = ""
@@ -796,6 +800,13 @@ def main(argv=None):
     # check if CAMI output interfer with other parameters ----------------------
     if (args.CAMI_output != "no_CAMI") and args.BIOM_output:
         sys.stderr.write("[E::main] Error: cannot print result with both -B and -C.\n")
+        sys.exit(1)
+    # check other output options
+    if (args.CAMI_output != "no_CAMI") and args.print_all_taxa:
+        sys.stderr.write("[E::main] Error: cannot print result with both -A and -C.\n")
+        sys.exit(1)
+    if args.BIOM_output and args.print_all_taxa:
+        sys.stderr.write("[E::main] Error: cannot print result with both -A and -B.\n")
         sys.exit(1)
 
 
@@ -1528,7 +1539,10 @@ def main(argv=None):
         if args.CAMI_output != "no_CAMI":
             print_CAMI.calculate_abundance(infile, LGs_map, LGs_map_l, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, profile_mode,mOTU_counts,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,version_tool,CAMI_file,args.CAMI_output)
         else:
-            map_lgs.calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxonomy, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, args.taxonomic_level, args.BIOM_output, profile_mode,mOTU_counts, args.print_NCBI_id, args.print_rel_ab,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,args.print_full_rank,args.print_long_names,short_name_file,version_tool)
+            if args.print_all_taxa:
+                map_lgs.calculate_abundance_all(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxonomy, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, args.taxonomic_level, args.BIOM_output, profile_mode,mOTU_counts, args.print_NCBI_id, args.print_rel_ab,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,args.print_full_rank,args.print_long_names,short_name_file,version_tool)
+            else:
+                map_lgs.calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxonomy, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, args.taxonomic_level, args.BIOM_output, profile_mode,mOTU_counts, args.print_NCBI_id, args.print_rel_ab,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,args.print_full_rank,args.print_long_names,short_name_file,version_tool)
 
         if args.verbose>2:
             sys.stderr.write(" [calc_motu] (Create taxonomy profile) " + str("{0:.2f}".format(time.time() - time_after_map_genes))+" sec\n")
@@ -1849,8 +1863,10 @@ def main(argv=None):
         if args.CAMI_output != "no_CAMI":
             print_CAMI.calculate_abundance(infile, LGs_map, LGs_map_l, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, profile_mode,mOTU_counts,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,version_tool,CAMI_file,args.CAMI_output)
         else:
-            map_lgs.calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy,mOTULG_taxonomy, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, args.taxonomic_level, args.BIOM_output, profile_mode,mOTU_counts, args.print_NCBI_id, args.print_rel_ab,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,args.print_full_rank,args.print_long_names,short_name_file,version_tool)
-
+            if args.print_all_taxa:
+                map_lgs.calculate_abundance_all(infile, LGs_map, LGs_map_l, specI_taxonomy,mOTULG_taxonomy, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, args.taxonomic_level, args.BIOM_output, profile_mode,mOTU_counts, args.print_NCBI_id, args.print_rel_ab,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,args.print_full_rank,args.print_long_names,short_name_file,version_tool)
+            else:
+                map_lgs.calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy,mOTULG_taxonomy, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, args.taxonomic_level, args.BIOM_output, profile_mode,mOTU_counts, args.print_NCBI_id, args.print_rel_ab,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,args.print_full_rank,args.print_long_names,short_name_file,version_tool)
 
         if args.verbose>2:
             sys.stderr.write("[main] Total time calc_motu: " + str("{0:.2f}".format(time.time() - initial_start_time))+" sec\n")
