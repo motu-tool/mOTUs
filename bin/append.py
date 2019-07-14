@@ -31,7 +31,7 @@ def append_A_option(list_files, output, verbose, BIOM_output):
     if BIOM_output:
         if verbose>=2: sys.stderr.write("[W::merge] Warning: -B not supported when the profiles were created with -A\n")
     # read all files to find the sample names
-    sample_names = "clade"
+    sample_names = "#mOTUs2_clade"
     samples_clades = dict()
     for f in list_files:
         # open file --
@@ -44,7 +44,7 @@ def append_A_option(list_files, output, verbose, BIOM_output):
         try:
             header = location.readline().rstrip()
             header_vals = header.split("\t")
-            if len(header_vals) != 2 or header_vals[0] != "clade":
+            if len(header_vals) != 2 or header_vals[0] != "#mOTUs2_clade":
                 sys.stderr.write("[E::merge] Error: Header not correct in : "+f+"\n")
                 sys.exit(1)
             sample_names = sample_names + "\t" + header_vals[1]
@@ -165,7 +165,7 @@ def append_profilings(directory, list_files, output, verbose, BIOM_output,versio
         location.close()
         sys.exit(1)
     # check if the samples are from the -A option --------------------------
-    if header_execution[0:5] == "clade":
+    if header_execution.startswith("#mOTUs2_clade"):
         location.close()
         append_A_option(list_files, output, verbose, BIOM_output)
         sys.exit(0)

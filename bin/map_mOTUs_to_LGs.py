@@ -581,7 +581,7 @@ def calculate_abundance_one_level (infile, LGs_map, LGs_map_l, specI_taxonomy, m
         if i in taxonomy_s:
             base_str_taxonomy_s = taxonomy_s[i].split("|s__")[0]
             shor_name_vals = shortNames[i].split("\t")
-            shortNames[i] = base_str_taxonomy_s + "|s__" + shor_name_vals[1]   
+            shortNames[i] = base_str_taxonomy_s + "|s__" + shor_name_vals[1]
 
     # load the mOTU read counts (output from map_genes_to_mOTUs.py)
     if profile_mode:
@@ -874,7 +874,7 @@ def calculate_abundance_all (infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_
     else:
         outfile = sys.stdout
 
-    outfile.write("clade\t"+sampleName+"\n")
+    outfile.write("#mOTUs2_clade\t"+sampleName+"\n")
     for i in all_print:
         outfile.write(i)
 
