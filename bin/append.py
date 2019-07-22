@@ -27,7 +27,16 @@ def cArray(size1,size2):
 
 # ------------------------------------------------------------------------------
 # merge function for metaphlan like output
-def append_A_option(list_files, output, verbose, BIOM_output):
+def append_A_option(list_files_raw, output, verbose, BIOM_output, directory):
+    # if there is a directory, we change the file list
+    if directory is not None:
+        list_files = list()
+        for i in list_files_raw:
+            list_files.append(directory+i)
+    else:
+        list_files = list_files_raw
+
+
     if BIOM_output:
         if verbose>=2: sys.stderr.write("[W::merge] Warning: -B not supported when the profiles were created with -A\n")
     # read all files to find the sample names
@@ -167,7 +176,7 @@ def append_profilings(directory, list_files, output, verbose, BIOM_output,versio
     # check if the samples are from the -A option --------------------------
     if header_execution.startswith("#mOTUs2_clade"):
         location.close()
-        append_A_option(list_files, output, verbose, BIOM_output)
+        append_A_option(list_files, output, verbose, BIOM_output, directory)
         sys.exit(0)
 
 
