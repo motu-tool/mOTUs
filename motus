@@ -83,6 +83,8 @@ def strip_end(text, suffix):
         return text
     return strip_end(text[:-1], suffix)
 DATABASE = strip_end(DATABASE, "/")
+DATABASE_prefix = DATABASE.split("/")[-1]
+# we expect all the files in the database to have the same prefix
 
 
 
@@ -93,7 +95,7 @@ if not(os.path.isdir(relative_path+'db_mOTU')): # here we check db_mOTU exactly,
 
 #-------------------------------------------------------------------------------
 # tool version
-path_info_version = DATABASE + "/versions"
+path_info_version = DATABASE + "/" + DATABASE_prefix + "_versions"
 try:
     location = open(path_info_version,'r')
     versions = dict()
@@ -831,8 +833,8 @@ def main(argv=None):
     # --------------------------------------------------------------------------
 
 
-        reference = DATABASE+"/mOTU.v2b.centroids.reformatted.padded"
-        annotation = DATABASE+"/mOTU.v2b.centroids.reformatted.padded.annotations"
+        reference = DATABASE+"/"+DATABASE_prefix+"_DB_CEN.fasta"
+        annotation = DATABASE+"/"+DATABASE_prefix+"_DB_CEN.fasta.annotations"
         if not os.path.isfile(annotation):
             sys.stderr.write("[E::main] The annotation file %s does not exist. Create annotation file with the get.annotations.py command from the metaSNV package\n" % (annotation))
             sys.exit(1)
@@ -983,14 +985,14 @@ def main(argv=None):
 
 
     #set database of sequences
-    reference = DATABASE+"/mOTU.v2b.nr.padded" # must keep this
-    header_file = DATABASE+"/bam_header_nr" # must keep this
+    reference = DATABASE+"/"+DATABASE_prefix+"_DB_NR.fasta" # must keep this
+    header_file = DATABASE+"/"+DATABASE_prefix+"_bam_header_NR" # must keep this
     args_db = 'nr' # must keep this
 
     # if we use snv, then we use centroids
     if args.command == 'map_snv':
-        reference = DATABASE+"/mOTU.v2b.centroids.reformatted.padded"
-        header_file = DATABASE+"/bam_header_cen"
+        reference = DATABASE+"/"+DATABASE_prefix+"_DB_CEN.fasta"
+        header_file = DATABASE+"/"+DATABASE_prefix+"_bam_header_CEN"
         args_db == 'cen'
 
     # --------------------------------------------------------------------------
@@ -1172,11 +1174,8 @@ def main(argv=None):
                     sys.stderr.write("[main] process the sam/bam file for the snv calling\n")
 
                 # First: PE filtering
-                database_prefix = "mOTU.v2b"
-                database_dir = DATABASE
-
                 # coordinates for the padding of the genes are different for centroids
-                dictReference2geneLocation = os.path.sep.join([database_dir, database_prefix + ".padded.coords_for_centroids"])
+                dictReference2geneLocation = DATABASE+"/"+DATABASE_prefix+"_padding_coordinates_CEN.tsv"
                 if args.verbose>3:
                     sys.stderr.write("[main] -- File with gene padding coordinates: "+dictReference2geneLocation+"\n")
 
@@ -1396,7 +1395,7 @@ def main(argv=None):
 
             # prepare inputs
             listInputFiles = ['unused list']
-            database_prefix = "mOTU.v2b"
+            database_prefix = DATABASE_prefix
             database_dir = DATABASE
             sample_name = "trial"
             if (args.sampleName is not None): sample_name = args.sampleName
@@ -1515,12 +1514,12 @@ def main(argv=None):
             if args.verbose>2:sys.stderr.write("[main] Load the mgc table and compute the profile\n")
 
         database_dir = DATABASE+"/"
-        LGs_map = database_dir+"mOTU-LG.map.tsv"
-        LGs_map_l = database_dir+"mOTU-LG.map.line.tsv"
-        specI_taxonomy = database_dir+"prok-refdb-v11.0.0_specI-v2_taxonomy_v1.map"
-        mOTULG_taxonomy = database_dir+"mOTULG.taxonomy"
-        short_name_file = database_dir+"short_names.txt"
-        CAMI_file = database_dir+"CAMI_Sep_2015_mOTUs_2.0.0.tsv"
+        LGs_map = database_dir+DATABASE_prefix+"_MAP_MGCs_to_mOTUs.tsv"
+        LGs_map_l = database_dir+DATABASE_prefix+"_MAP_MGCs_to_mOTUs_in-line.tsv"
+        specI_taxonomy = database_dir+DATABASE_prefix+"_taxonomy_ref-mOTUs.tsv"
+        mOTULG_taxonomy = database_dir+DATABASE_prefix+"_taxonomy_meta-mOTUs.tsv"
+        short_name_file = database_dir+DATABASE_prefix+"_taxonomy_ref-mOTUs_short_names.tsv"
+        CAMI_file = database_dir+DATABASE_prefix+"_taxonomy_CAMI.tsv"
         infile=""
         sample_name = "trial"
         if (args.sampleName is not None): sample_name = args.sampleName
@@ -1719,7 +1718,7 @@ def main(argv=None):
             sys.exit(1)
 
         listInputFiles = args.listInputFiles.split(",")
-        database_prefix = "mOTU.v2b"
+        database_prefix = DATABASE_prefix
         database_dir = DATABASE
         sample_name = "trial"
         if (args.sampleName is not None): sample_name = args.sampleName
@@ -1841,12 +1840,12 @@ def main(argv=None):
             sys.exit(1)
 
         database_dir = DATABASE+"/"
-        LGs_map = database_dir+"mOTU-LG.map.tsv"
-        LGs_map_l = database_dir+"mOTU-LG.map.line.tsv"
-        specI_taxonomy = database_dir+"prok-refdb-v11.0.0_specI-v2_taxonomy_v1.map"
-        mOTULG_taxonomy = database_dir+"mOTULG.taxonomy"
-        short_name_file = database_dir+"short_names.txt"
-        CAMI_file = database_dir+"CAMI_Sep_2015_mOTUs_2.0.0.tsv"
+        LGs_map = database_dir+DATABASE_prefix+"_MAP_MGCs_to_mOTUs.tsv"
+        LGs_map_l = database_dir+DATABASE_prefix+"_MAP_MGCs_to_mOTUs_in-line.tsv"
+        specI_taxonomy = database_dir+DATABASE_prefix+"_taxonomy_ref-mOTUs.tsv"
+        mOTULG_taxonomy = database_dir+DATABASE_prefix+"_taxonomy_meta-mOTUs.tsv"
+        short_name_file = database_dir+DATABASE_prefix+"_taxonomy_ref-mOTUs_short_names.tsv"
+        CAMI_file = database_dir+DATABASE_prefix+"_taxonomy_CAMI.tsv"
         sample_name = "trial"
         if (args.sampleName is not None): sample_name = args.sampleName
 

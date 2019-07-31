@@ -1186,13 +1186,13 @@ def run_mOTUs_v2_mapping(listInputFiles, databaseDir, databasePrefix, sampleName
                     if verbose>=2: sys.stderr.write("[W::calc_mgc] Warning. File "+inputFile+" does not have extension \".bam\" or \".sam\" \n")
 
 
-    geneLocationFileName = os.path.sep.join([databaseDir, databasePrefix + ".padded.coords"])
+    geneLocationFileName = os.path.sep.join([databaseDir, databasePrefix + "_padding_coordinates_NR.tsv"])
     dictReference2geneLocation = getReferenceDict(geneLocationFileName)
 
-    geneLengthFileName = os.path.sep.join([databaseDir, databasePrefix + ".genes.len"])
+    geneLengthFileName = os.path.sep.join([databaseDir, databasePrefix + "_genes_length_NR"])
     dictGene2Lengths = parse2columnFile_int(geneLengthFileName)
 
-    gene2mOTUfileName = os.path.sep.join([databaseDir, databasePrefix + ".map"])
+    gene2mOTUfileName = os.path.sep.join([databaseDir, databasePrefix + "_MAP_genes_to_MGCs.tsv"])
     dictGene2mOTUs = getGene2mOTUdict(gene2mOTUfileName)
 
     listMultipleMappers = []
