@@ -11,9 +11,9 @@
 #
 # ============================================================================ #
 
-motus_version = "2.1.1"
-link_db = "https://www.embl.de/download/zeller/milanese/mOTUs2.5/old_DB/db_mOTU_v2.1.1.tar.gz"
-md5_db = "5a0cbf7c0db437d1c424846a94d03e8e"
+motus_version = "2.1.1_test"
+link_db = "https://www.embl.de/download/zeller/milanese/mOTUs2.5/old_DB/db_mOTU_v2.1.1_test.tar.gz"
+md5_db = "ab907e22229a5d38b66ff65cff47564d"
 DOI_db = "10.5281/zenodo.1244714"
 
 import os
@@ -85,7 +85,7 @@ def main(argv=None):
     sys.stderr.write("|                              SETUP MOTUS TOOL                                |\n")
     sys.stderr.write(" ------------------------------------------------------------------------------\n")
     # download the files -------------------------------------------------------
-    path_versions = relative_path + "db_mOTU/versions"
+    path_versions = relative_path + "db_mOTU/db_mOTU_versions"
     if os.path.isfile(path_versions) and "--force-redownload" not in sys.argv:
         sys.stderr.write("Database already downloaded. Not doing anything.\n"
                          "Use --force-redownload to download again.\n")

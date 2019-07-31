@@ -72,11 +72,11 @@ def main(argv=None):
             sys.stderr.write("ERROR. Run setup.py\n\n")
             sys.exit(1)
         # check that temp dir exists
-        if not(os.path.isdir(relative_path+'db_mOTU/test')):
+        if not(os.path.isdir(relative_path+'db_mOTU/db_mOTU_test')):
             sys.stderr.write("ERROR. db_mOTU/test directory is missing. Run setup.py\n\n")
             sys.exit(1)
         # check that files inside temp exists
-        if not(os.path.isfile(relative_path+'db_mOTU/test/test1_single.fastq') and os.path.isfile(relative_path+'db_mOTU/test/test1.motus')):
+        if not(os.path.isfile(relative_path+'db_mOTU/db_mOTU_test/test1_single.fastq') and os.path.isfile(relative_path+'db_mOTU/db_mOTU_test/test1.motus')):
             sys.stderr.write("ERROR. test files are missing. Run setup.py\n\n")
             sys.exit(1)
         sys.stderr.write("done\n\n")
@@ -137,8 +137,8 @@ def main(argv=None):
     if "--skip-setup-check" in sys.argv:
         sys.stderr.write("SKIPPED. Due to --skip-setup-check\n\n")
     else:
-        test_file = relative_path+'db_mOTU/test/test1_single.fastq'
-        ground_truth_file = relative_path+'db_mOTU/test/test1.motus'
+        test_file = relative_path+'db_mOTU/db_mOTU_test/test1_single.fastq'
+        ground_truth_file = relative_path+'db_mOTU/db_mOTU_test/test1.motus'
         temp_file_profile = tempfile.NamedTemporaryFile(delete=False, mode="w")
 
         sys.stderr.write("\n- Run motus (-v 1, only error messages):\n")
