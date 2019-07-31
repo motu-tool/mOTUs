@@ -12,7 +12,7 @@
 # ============================================================================ #
 
 motus_version = "2.1.1"
-link_db = "https://zenodo.org/record/2583171/files/db_mOTU_v2.1.1.tar.gz"
+link_db = "https://www.embl.de/download/zeller/milanese/mOTUs2.5/old_DB/db_mOTU_v2.1.1.tar.gz"
 md5_db = "5a0cbf7c0db437d1c424846a94d03e8e"
 DOI_db = "10.5281/zenodo.1244714"
 
