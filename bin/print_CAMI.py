@@ -74,7 +74,7 @@ def save_file_to_dict_two_headers(file_r,col_key,col_value,header,remove_first_v
     else:
         return res_dict
 
-def calculate_abundance(infile, LGs_map, LGs_map_l, output, cutoff, onlySpecI, sampleName, profile_mode,input_for_profile, mgc_table_header,version_map_lgs,motu_version_tool,verbose,motu_call,git_commit_id,version_tool,CAMI_file,type_output):
+def calculate_abundance(infile, LGs_map, LGs_map_l, output, cutoff, onlySpecI, sampleName, profile_mode,input_for_profile, mgc_table_header,version_map_lgs,motu_version_tool,verbose,motu_call,git_commit_id,version_tool,CAMI_file,type_output,renormalise_cami):
 
     # load the CAMI annotation for the mOTUs
     CAMI_annotation = dict()
@@ -334,6 +334,17 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, output, cutoff, onlySpecI, s
                     merged_lines[t_id] = "\t".join(vals_dict) + "\n"
                 else:
                     merged_lines[t_id] = line
+            # renormalise if needed ----
+            if renormalise_cami:
+                sum_A = 0
+                for ll in merged_lines:
+                    sum_A = sum_A + float(merged_lines[ll].rstrip().split("\t")[4])
+                if sum_A != 0:
+                    for line in merged_lines:
+                        vals_dict = merged_lines[line].rstrip().split("\t")
+                        vals_dict[4] = str( float(vals_dict[4]) / sum_A * 100 )
+                        merged_lines[t_id] = "\t".join(vals_dict) + "\n"
+
             # print all unique lines
             for ll in merged_lines:
                 outfile.write(merged_lines[ll])
@@ -342,16 +353,34 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, output, cutoff, onlySpecI, s
     # if no recall: ============================================================
     if type_output != "recall":
         for i in tax_levels:
+            merged_lines = dict()
             for taxa in lines_to_print:
                 if lines_to_print[taxa].split("\t")[1] == i:
                     # repleace "NA" with ""
                     lines_to_print[taxa] = lines_to_print[taxa].replace("NA", "")
                     # decide how to print it
                     if type_output == "parenthesis": # we print the result with parenthesis - this is not tecnically in CAMI format
-                        outfile.write(lines_to_print[taxa]+str(percentage_to_print[taxa])+"\n")
+                        dummy_v = lines_to_print[taxa]+str(percentage_to_print[taxa])+"\n"
+                        merged_lines[dummy_v] = dummy_v
                     if type_output == "precision":
                         if not (lines_to_print[taxa].startswith("(")): # print only the ones without parenthesis
-                            outfile.write(lines_to_print[taxa]+str(percentage_to_print[taxa])+"\n")
+                            dummy_v = lines_to_print[taxa]+str(percentage_to_print[taxa])+"\n"
+                            merged_lines[dummy_v] = dummy_v
+            # renormalise if needed ----
+            if renormalise_cami:
+                sum_A = 0
+                for ll in merged_lines:
+                    sum_A = sum_A + float(merged_lines[ll].rstrip().split("\t")[4])
+                if sum_A != 0:
+                    for line in merged_lines:
+                        vals_dict = merged_lines[line].rstrip().split("\t")
+                        vals_dict[4] = str( float(vals_dict[4]) / sum_A * 100 )
+                        merged_lines[line] = "\t".join(vals_dict) + "\n"
+
+            # print all unique lines
+            for ll in merged_lines:
+                outfile.write(merged_lines[ll])
+
 
 
 
