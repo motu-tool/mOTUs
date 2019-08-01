@@ -302,26 +302,57 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, output, cutoff, onlySpecI, s
 
     # print the values
     tax_levels = ["superkingdom","phylum","class","order","family","genus","species"]
-    for i in tax_levels:
-        for taxa in lines_to_print:
-            if lines_to_print[taxa].split("\t")[1] == i:
-                # repleace "NA" with ""
-                lines_to_print[taxa] = lines_to_print[taxa].replace("NA", "")
-                # decide how to print it
-                if type_output == "parenthesis": # we print the result with parenthesis - this is not tecnically in CAMI format
-                    outfile.write(lines_to_print[taxa]+str(percentage_to_print[taxa])+"\n")
-                if type_output == "precision":
-                    if not (lines_to_print[taxa].startswith("(")): # print only the ones without parenthesis
-                        outfile.write(lines_to_print[taxa]+str(percentage_to_print[taxa])+"\n")
-                if type_output == "recall":
+    # if recall, we have to check that there are no duplicates =================
+    # otherwise this can happen:
+    # 1328	species	2|1239|91061|186826|1300|1301|1328	Bacteria|Firmicutes|Bacilli|Lactobacillales|Streptococcaceae|Streptococcus|Streptococcus anginosus	3,285633475
+    # 1328	species	2|1239|91061|186826|1300|1301|(1328/1338)	Bacteria|Firmicutes|Bacilli|Lactobacillales|Streptococcaceae|Streptococcus|(Streptococcus anginosus/Streptococcus intermedius)	14,64201763
+    # 1338	species	2|1239|91061|186826|1300|1301|(1328/1338)	Bacteria|Firmicutes|Bacilli|Lactobacillales|Streptococcaceae|Streptococcus|(Streptococcus anginosus/Streptococcus intermedius)	14,64201763
+    # 1338	species	2|1239|91061|186826|1300|1301|(1338/76860)	Bacteria|Firmicutes|Bacilli|Lactobacillales|Streptococcaceae|Streptococcus|(Streptococcus intermedius/Streptococcus constellatus)	6,063508333
+    if type_output == "recall":
+        for i in tax_levels:
+            all_lines = list()
+            for taxa in lines_to_print:
+                if lines_to_print[taxa].split("\t")[1] == i:
+                    # repleace "NA" with ""
+                    lines_to_print[taxa] = lines_to_print[taxa].replace("NA", "")
                     if not (lines_to_print[taxa].startswith("(")): # print the one without parenthesis normally
-                        outfile.write(lines_to_print[taxa]+str(percentage_to_print[taxa])+"\n")
+                        all_lines.append(lines_to_print[taxa]+str(percentage_to_print[taxa])+"\n")
                     else: # for the one with parenthesis, we split the relative abundance equally
                         line_values = lines_to_print[taxa].split("\t")
                         all_taxa = line_values[0][1:-1].split("/")
                         splitted_perc = percentage_to_print[taxa]/len(all_taxa)
                         for t in all_taxa:
-                            outfile.write(t+"\t"+("\t".join(line_values[1:]))+str(splitted_perc)+"\n")
+                            all_lines.append(t+"\t"+("\t".join(line_values[1:]))+str(splitted_perc)+"\n")
+            # now find all unique tax ids (pos 1)
+            merged_lines = dict()
+            for line in all_lines:
+                t_id = line.split("\t")[0]
+                if t_id in merged_lines:
+                    vals = line.rstrip().split("\t")
+                    vals_dict = merged_lines[t_id].rstrip().split("\t")
+                    vals_dict[4] = str( float(vals_dict[4]) + float(vals[4]) )
+                    merged_lines[t_id] = "\t".join(vals_dict) + "\n"
+                else:
+                    merged_lines[t_id] = line
+            # print all unique lines
+            for ll in merged_lines:
+                outfile.write(merged_lines[ll])
+
+
+    # if no recall: ============================================================
+    if type_output != "recall":
+        for i in tax_levels:
+            for taxa in lines_to_print:
+                if lines_to_print[taxa].split("\t")[1] == i:
+                    # repleace "NA" with ""
+                    lines_to_print[taxa] = lines_to_print[taxa].replace("NA", "")
+                    # decide how to print it
+                    if type_output == "parenthesis": # we print the result with parenthesis - this is not tecnically in CAMI format
+                        outfile.write(lines_to_print[taxa]+str(percentage_to_print[taxa])+"\n")
+                    if type_output == "precision":
+                        if not (lines_to_print[taxa].startswith("(")): # print only the ones without parenthesis
+                            outfile.write(lines_to_print[taxa]+str(percentage_to_print[taxa])+"\n")
+
 
 
     # move the temp file to the final destination ------------------------------
