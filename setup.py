@@ -11,9 +11,9 @@
 #
 # ============================================================================ #
 
-motus_version = "2.1.1_test"
-link_db = "https://www.embl.de/download/zeller/milanese/mOTUs2.5/old_DB/db_mOTU_v2.1.1_test.tar.gz"
-md5_db = "ab907e22229a5d38b66ff65cff47564d"
+motus_version = "2.5.0_test"
+link_db = "https://www.embl.de/download/zeller/milanese/mOTUs2.5/db_mOTU_v2.5.0_test.tar.gz"
+md5_db = "256a1860a402499199908f8405cf8b03"
 DOI_db = "10.5281/zenodo.1244714"
 
 import os
