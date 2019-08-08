@@ -46,7 +46,7 @@ def check_reference_index(reference):
 # run bwa on a file that contains reads that are single end
 # ------------------------------------------------------------------------------
 def runBWA_singleEnd(strFilteredReadFile, reference, msamPercID, msamminLength, threads, technology, msam_script, msamOverlap,verbose):
-    if verbose >= 5: sys.stderr.write("bwa: values. msamPercID: "+str(msamPercID)+" msamminLength: "+str(msamminLength)+" msamOverlap: "+str(msamOverlap)+"\n")
+    if verbose >= 6: sys.stderr.write("bwa: values. msamPercID: "+str(msamPercID)+" msamminLength: "+str(msamminLength)+" msamOverlap: "+str(msamOverlap)+"\n")
     try:
         from subprocess import DEVNULL
     except ImportError:
@@ -89,7 +89,7 @@ def runBWA_singleEnd(strFilteredReadFile, reference, msamPercID, msamminLength, 
         else:
             bwaCMD = "bwa mem -v 1 -a" + techFlag + threadsFlag + " " + reference + " " + strFilteredReadFile
 
-        if verbose >= 5: sys.stderr.write("bwa call:\n"+bwaCMD+"\n")
+        if verbose >= 6: sys.stderr.write("bwa call:\n"+bwaCMD+"\n")
 
         if (zippedInput):
             unzip_popenCMD = shlex.split(unzipCMD)
@@ -105,7 +105,7 @@ def runBWA_singleEnd(strFilteredReadFile, reference, msamPercID, msamminLength, 
         min_length_align=msamminLength
         min_perc_cover=msamOverlap
 
-        if verbose >= 5: sys.stderr.write("Filter in bwa: MIN_PERC_ID:"+str(min_perc_id)+" MIN_LENGTH_ALIGN: "+str(min_length_align)+" MIN_PERC_COVER: "+str(min_perc_cover)+" \n")
+        if verbose >= 5: sys.stderr.write(" [map_db] Filter in bwa: MIN_PERC_ID:"+str(min_perc_id)+" MIN_LENGTH_ALIGN: "+str(min_length_align)+" MIN_PERC_COVER: "+str(min_perc_cover)+" \n")
 
         for line in bwa_cmd.stdout:
             #filter lines

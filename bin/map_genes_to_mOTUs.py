@@ -1106,6 +1106,14 @@ def get_mOTU_abundances(dictUniqueInsertCounts, dictUniqueBaseCounts, listMultip
         #sys.stderr.write("Multiple Mappers (both ends mapping to same ref): " + str(mmCount_p) + '\n')
         #print("mmCount_sp: " + str(mmCount_sp))
 
+    if verbose>4:
+        sys.stderr.write(" [calc_mgc] UniqueCounts: " + str(uniqueInsertCount) + '\n')
+        sys.stderr.write(" [calc_mgc] TotalCounts: " + str(totalInsertCount) + '\n')
+        sys.stderr.write(" [calc_mgc] Ignored multiple mapper without unique hit: " + str(ignoreMMInsertCount) + '\n')
+
+        sys.stderr.write(" [calc_mgc] Multiple Mappers (both ends mapping to different refs):  " + str(mmCount_s) + '\n')
+        sys.stderr.write(" [calc_mgc] Multiple Mappers (both ends mapping to same ref): " + str(mmCount_p) + '\n')
+
     if type_output == 'insert.raw_counts':
         if return_dictionary:
             return printDictToFile(dictmOTU_insert_rawCounts, header, output,return_dictionary)
@@ -1169,7 +1177,7 @@ def run_mOTUs_v2_mapping(listInputFiles, databaseDir, databasePrefix, sampleName
     minPercID = min_perc_id
     msamOverlap = min_perc_align
 
-    if verbose >= 5: sys.stderr.write("Filter in calc_mgc: MIN_PERC_ID:"+str(min_perc_id)+" MIN_LENGTH_ALIGN: "+str(min_len_align)+" MIN_PERC_COVER: "+str(min_perc_align)+" \n")
+    if verbose >= 5: sys.stderr.write(" [calc_mgc] Filter in calc_mgc: MIN_PERC_ID:"+str(min_perc_id)+" MIN_LENGTH_ALIGN: "+str(min_len_align)+" MIN_PERC_COVER: "+str(min_perc_align)+" \n")
 
 
     ## check that the input files exists

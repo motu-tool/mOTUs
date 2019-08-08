@@ -171,6 +171,40 @@ def is_fastq(fastq_file,verbose):
     return int(avg_length)
 
 # ------------------------------------------------------------------------------
+# check number of reads in the fastq files
+# ------------------------------------------------------------------------------
+def print_n_reads(fastq_file_list,verbose):
+    tot_n_reads = 0
+    for fastq_file in fastq_file_list:
+        if not os.path.isfile(fastq_file):
+            sys.stderr.write("[E::main] Error: "+fastq_file+': No such file.\n')
+            sys.exit(1)
+
+        try:
+            zippedInput = False
+            if (fastq_file.endswith(".gz")):
+                zippedInput = True
+                filef = GzipFile(fastq_file)
+            elif (fastq_file.endswith(".bz2")):
+                zippedInput = True
+                filef = BZ2File(fastq_file)
+            else:
+                filef = open(fastq_file)
+            # go throught the lines in the fastq file
+            for line in filef:
+                if zippedInput:
+                    line = line.decode('ascii')
+                if line.startswith("@"):
+                    tot_n_reads = tot_n_reads + 1
+        except:
+            sys.stderr.write("[E::main] Error. Cannot load the file "+fastq_file+"\n")
+            sys.stderr.write("[E::main] Supported file are zipped .gz or .bz2, or plain text\n")
+            sys.exit(1)
+
+    sys.stderr.write("[main] Total number of reads from "+str(len(fastq_file_list))+" fastq file(s): "+str(tot_n_reads)+"\n")
+
+
+# ------------------------------------------------------------------------------
 # read the length from a bam/sam file
 # ------------------------------------------------------------------------------
 def read_length_from_bam_file(SAM_BAM_file):

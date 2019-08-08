@@ -1101,6 +1101,16 @@ def main(argv=None):
             # ------------ execute bwa ---------------------------------------------
             all_sam_lines = list()
             avg_length_reads = list()
+            # check total number of reads:
+            if args.verbose > 4:
+                list_files_check = list()
+                if (args.reverseReads is not None):
+                    list_files_check = list_files_check + forw + reve
+                if (args.singleReads is not None):
+                    list_files_check = list_files_check + singles
+            motu_utilities.print_n_reads(list_files_check,args.verbose)
+
+
             for i in range(number_of_lanes):
                 if args.verbose>2: sys.stderr.write("[main] Run bwa on lane "+str(i+1)+"\n")
 
@@ -1130,6 +1140,7 @@ def main(argv=None):
                     avg_length_reads.append(motu_utilities.is_fastq(reverse_reads,args.verbose))
                 if single_reads != "":
                     avg_length_reads.append(motu_utilities.is_fastq(single_reads,args.verbose))
+
 
 
                 if multiple_cores:
