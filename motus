@@ -1108,7 +1108,7 @@ def main(argv=None):
                     list_files_check = list_files_check + forw + reve
                 if (args.singleReads is not None):
                     list_files_check = list_files_check + singles
-            motu_utilities.print_n_reads(list_files_check,args.verbose)
+                motu_utilities.print_n_reads(list_files_check,args.verbose)
 
 
             for i in range(number_of_lanes):
