@@ -13,7 +13,7 @@
 
 motus_version = "2.5.0_test"
 link_db = "https://www.embl.de/download/zeller/milanese/mOTUs2.5/db_mOTU_v2.5.0_test.tar.gz"
-md5_db = "256a1860a402499199908f8405cf8b03"
+md5_db = "f533a7b55fc133589f08f50648548b42"
 DOI_db = "10.5281/zenodo.1244714"
 
 import os
