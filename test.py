@@ -16,6 +16,7 @@ import sys
 import tempfile
 import subprocess
 import shlex
+import errno
 
 # position of the script -------------------------------------------------------
 path_mOTUs = os.path.realpath(__file__)
@@ -38,7 +39,7 @@ def is_tool_and_return0(name):
         else:
             return False
     except OSError as e:
-        if e.errno == os.errno.ENOENT:
+        if e.errno == errno.ENOENT:
             return False
     return True
 
@@ -47,7 +48,7 @@ def is_tool(name):
         devnull = open(os.devnull)
         subprocess.Popen([name], stdout=devnull, stderr=devnull).communicate()
     except OSError as e:
-        if e.errno == os.errno.ENOENT:
+        if e.errno == errno.ENOENT:
             return False
     return True
 
