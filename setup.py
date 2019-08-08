@@ -12,9 +12,9 @@
 # ============================================================================ #
 
 motus_version = "2.5.0_test"
-link_db = "https://www.embl.de/download/zeller/milanese/mOTUs2.5/db_mOTU_v2.5.0_test.tar.gz"
+link_db = "https://zenodo.org/record/3364101/files/db_mOTU_v2.5.0.tar.gz"
 md5_db = "f533a7b55fc133589f08f50648548b42"
-DOI_db = "10.5281/zenodo.1244714"
+DOI_db = "10.5281/zenodo.3364101"
 
 import os
 import sys
@@ -91,7 +91,7 @@ def main(argv=None):
                          "Use --force-redownload to download again.\n")
         sys.exit(0)
 
-    sys.stderr.write("Download the compressed motus database (~1Gb)\n")
+    sys.stderr.write("Download the compressed motus database (~1.5Gb)\n")
     db_name = relative_path+"db_mOTU.tar.gz"
 
     if type_download == "python2":

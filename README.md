@@ -88,6 +88,11 @@ motus profile -f sample1_run1_for.fastq,sample1_run2_for.fastq -r sample1_run1_r
 
 ChangeLog
 --------------
+**Version 2.5.0 2019-08-09 by AlessioMilanese**
+* Add -db option to use a database from another directory
+* Add -A to print all taxonomy levels together
+* Update the database with more than 60k new reference genomes. There are 11,915 ref-mOTUs and 2,297 meta-mOTUs.
+
 **Version 2.1.1 2019-03-04 by AlessioMilanese**
 * Correct problem with samtools when installing with conda
 
