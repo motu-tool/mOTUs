@@ -489,7 +489,7 @@ def main(argv=None):
 
     parser = argparse.ArgumentParser(usage=msg(), formatter_class=CapitalisedHelpFormatter,add_help=False)
     #parser = argparse.ArgumentParser(description='This program calculates mOTU-LGs and specI abundances for one sample', add_help = True)
-    parser.add_argument('command', action="store", default=None, help='mode to use the mOTU tool',choices=['profile','map_tax','calc_mgc','calc_motu','merge','map_snv','snv_call'])
+    parser.add_argument('command', action="store", default=None, help='mode to use the mOTU tool',choices=['profile','map_tax','calc_mgc','calc_motu','merge','map_snv','snv_call','util'])
     parser.add_argument('-f', action="store", default=None,dest='forwardReads', help='name of input file for reads in forward orientation, fastq formatted, can be gzipped')
     parser.add_argument('-r', action="store", default=None,dest='reverseReads', help='name of input file for reads in reverse orientation, fastq formatted, can be gzipped')
     parser.add_argument('-s', action="store", default=None,dest='singleReads', help='name of input file for reads without mate, fastq formatted, can be gzipped')
@@ -542,6 +542,7 @@ def main(argv=None):
                         default=None)
     parser.add_argument('--version', action='version', version='%(prog)s {0} on python {1}'.format(version_tool, sys.version.split()[0]))
     parser.add_argument('--test', action='store_true', default=None, dest='test_motu', help='test that motus has all the dependencies and is working correctly')
+    parser.add_argument('--split_cami_file', action="store", default=None,dest='cami_file_to_split', help='split a gzipped CAMI file into two fzipped for and rev files')
 
     args = parser.parse_args()
 
@@ -552,6 +553,11 @@ def main(argv=None):
         child.communicate()
         rc = child.wait()
         return(rc)
+
+    # hidden command: split fastq file from CAMI -------------------------------
+    if args.command == 'util':
+        if args.cami_file_to_split:
+            motu_utilities.split_cami_file(args.cami_file_to_split,args.verbose)
 
 
     # print menus ----------------------------------------------------------------

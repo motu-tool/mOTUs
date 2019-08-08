@@ -14,6 +14,7 @@ import os
 import shlex
 import subprocess
 import errno
+import gzip
 
 # ------------------------------------------------------------------------------
 # function to check if a specific tool exists
@@ -244,3 +245,37 @@ def read_filter_len_from_bam_file(SAM_BAM_file):
     except:
         return None
     return None
+
+# ------------------------------------------------------------------------------
+# split a CAMI .gz file into two .gz files
+# ------------------------------------------------------------------------------
+def split_cami_file(cami_file,verbose):
+    # check that file exists
+    if not os.path.isfile(cami_file):
+        sys.stderr.write("Error: file "+cami_file+" not found\n")
+        sys.exit(1)
+
+    # read file, split it and write it as .gz ----------------------------------
+    # create file name for the results
+    for_file = cami_file.replace(".fq.gz",".for.fq.gz")
+    rev_file = cami_file.replace(".fq.gz",".rev.fq.gz")
+
+    fq_file = gzip.open(cami_file, 'rb')
+    fq_for = gzip.open(for_file, 'wb')
+    fq_rev = gzip.open(rev_file, 'wb')
+
+    for line in fq_file:
+        fq_for.write(line)
+        fq_for.write(fq_file.readline())
+        fq_for.write(fq_file.readline())
+        fq_for.write(fq_file.readline())
+        fq_rev.write(fq_file.readline())
+        fq_rev.write(fq_file.readline())
+        fq_rev.write(fq_file.readline())
+        fq_rev.write(fq_file.readline())
+
+    fq_file.close()
+    fq_for.close()
+    fq_rev.close()
+
+    return 0  # success
