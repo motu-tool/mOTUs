@@ -1106,7 +1106,7 @@ def main(argv=None):
             if args.verbose > 4:
                 list_files_check = list()
                 if (args.reverseReads is not None):
-                    list_files_check = list_files_check + forw + reve
+                    list_files_check = list_files_check + forw
                 if (args.singleReads is not None):
                     list_files_check = list_files_check + singles
                 motu_utilities.print_n_reads(list_files_check,args.verbose)
