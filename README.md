@@ -1,4 +1,4 @@
-![alt text](motu_logo.png)
+![alt text](https://github.com/motu-tool/mOTUs_v2/tree/master/pics/motu_logo.png)
 
 [![Build status](https://ci.appveyor.com/api/projects/status/0x4veuuoabm6018v/branch/master?svg=true)](https://ci.appveyor.com/project/AlessioMilanese/motus-v2/branch/master)
 [![Install with Bioconda](https://anaconda.org/bioconda/motus/badges/installer/conda.svg)](https://anaconda.org/bioconda/motus)
@@ -85,6 +85,10 @@ You can profile samples that have been sequenced through different runs:
 ```shell
 motus profile -f sample1_run1_for.fastq,sample1_run2_for.fastq -r sample1_run1_rev.fastq,sample1_run2_rev.fastq -s sample1_run1_single.fastq > taxonomy_profile.txt
 ```
+
+mOTUs versions
+--------------
+![alt text](https://github.com/motu-tool/mOTUs_v2/tree/master/pics/mOTUs_versions.png)
 
 ChangeLog
 --------------
