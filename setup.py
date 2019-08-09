@@ -11,10 +11,10 @@
 #
 # ============================================================================ #
 
-motus_version = "2.1.1"
-link_db = "https://zenodo.org/record/2583171/files/db_mOTU_v2.1.1.tar.gz"
-md5_db = "5a0cbf7c0db437d1c424846a94d03e8e"
-DOI_db = "10.5281/zenodo.1244714"
+motus_version = "2.5.0_test"
+link_db = "https://zenodo.org/record/3364101/files/db_mOTU_v2.5.0.tar.gz"
+md5_db = "f533a7b55fc133589f08f50648548b42"
+DOI_db = "10.5281/zenodo.3364101"
 
 import os
 import sys
@@ -85,13 +85,13 @@ def main(argv=None):
     sys.stderr.write("|                              SETUP MOTUS TOOL                                |\n")
     sys.stderr.write(" ------------------------------------------------------------------------------\n")
     # download the files -------------------------------------------------------
-    path_versions = relative_path + "db_mOTU/versions"
+    path_versions = relative_path + "db_mOTU/db_mOTU_versions"
     if os.path.isfile(path_versions) and "--force-redownload" not in sys.argv:
         sys.stderr.write("Database already downloaded. Not doing anything.\n"
                          "Use --force-redownload to download again.\n")
         sys.exit(0)
 
-    sys.stderr.write("Download the compressed motus database (~1Gb)\n")
+    sys.stderr.write("Download the compressed motus database (~1.5Gb)\n")
     db_name = relative_path+"db_mOTU.tar.gz"
 
     if type_download == "python2":
@@ -148,20 +148,6 @@ def main(argv=None):
         sys.exit(1)
     else:
         sys.stderr.write("done\n")
-
-    # move the test dir outside db dir -----------------------------------------
-    sys.stderr.write("Move test directory...")
-    testdir = relative_path+"test"
-    if os.path.isdir(testdir):
-        shutil.rmtree(testdir, ignore_errors=True)
-
-    try:
-        shutil.move(relative_path+"db_mOTU/test", relative_path)
-    except (shutil.Error, OSError) as e:
-        print('test directory not copied. Error: %s' % e)
-        sys.exit(1)
-
-    sys.stderr.write("done\n")
 
     # --- remove db file
     sys.stderr.write("Remove zipped file...")

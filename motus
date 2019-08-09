@@ -41,6 +41,7 @@ import subprocess
 import glob
 import multiprocessing
 import tempfile
+import errno
 
 
 # position of the script -------------------------------------------------------
@@ -83,6 +84,8 @@ def strip_end(text, suffix):
         return text
     return strip_end(text[:-1], suffix)
 DATABASE = strip_end(DATABASE, "/")
+DATABASE_prefix = DATABASE.split("/")[-1]
+# we expect all the files in the database to have the same prefix
 
 
 
@@ -93,7 +96,7 @@ if not(os.path.isdir(relative_path+'db_mOTU')): # here we check db_mOTU exactly,
 
 #-------------------------------------------------------------------------------
 # tool version
-path_info_version = DATABASE + "/versions"
+path_info_version = DATABASE + "/" + DATABASE_prefix + "_versions"
 try:
     location = open(path_info_version,'r')
     versions = dict()
@@ -472,7 +475,7 @@ def is_tool(name):
         devnull = open(os.devnull)
         subprocess.Popen([name], stdout=devnull, stderr=devnull).communicate()
     except OSError as e:
-        if e.errno == os.errno.ENOENT:
+        if e.errno == errno.ENOENT:
             return False
     return True
 
@@ -486,7 +489,7 @@ def main(argv=None):
 
     parser = argparse.ArgumentParser(usage=msg(), formatter_class=CapitalisedHelpFormatter,add_help=False)
     #parser = argparse.ArgumentParser(description='This program calculates mOTU-LGs and specI abundances for one sample', add_help = True)
-    parser.add_argument('command', action="store", default=None, help='mode to use the mOTU tool',choices=['profile','map_tax','calc_mgc','calc_motu','merge','map_snv','snv_call'])
+    parser.add_argument('command', action="store", default=None, help='mode to use the mOTU tool',choices=['profile','map_tax','calc_mgc','calc_motu','merge','map_snv','snv_call','util'])
     parser.add_argument('-f', action="store", default=None,dest='forwardReads', help='name of input file for reads in forward orientation, fastq formatted, can be gzipped')
     parser.add_argument('-r', action="store", default=None,dest='reverseReads', help='name of input file for reads in reverse orientation, fastq formatted, can be gzipped')
     parser.add_argument('-s', action="store", default=None,dest='singleReads', help='name of input file for reads without mate, fastq formatted, can be gzipped')
@@ -519,6 +522,7 @@ def main(argv=None):
     # db has to be deleted
     #parser.add_argument('-db', action="store", default=None, dest='db', help='database of marker genes',choices=['nr', 'aug.cen', 'cen'])
     parser.add_argument('-db', action="store", default=None, dest='db', help='database of marker genes')
+    parser.add_argument('-not_renormalise_cami', action="store_true", default=None, dest='not_renormalise_cami', help='do_not renormalise the cami result')
     parser.add_argument('-save_sam_lines', action="store", dest='save_sam_lines', default=None, help='name of output file')
     parser.add_argument('-load_sam_lines', action="store", dest='load_sam_lines', default=None, help='name of output file')
     parser.add_argument('-min_perc_id', action="store", default=None, dest='min_perc_id', help='minimum percentage of identity when filtering - choose between 97 and 100')
@@ -538,6 +542,7 @@ def main(argv=None):
                         default=None)
     parser.add_argument('--version', action='version', version='%(prog)s {0} on python {1}'.format(version_tool, sys.version.split()[0]))
     parser.add_argument('--test', action='store_true', default=None, dest='test_motu', help='test that motus has all the dependencies and is working correctly')
+    parser.add_argument('--split_cami_file', action="store", default=None,dest='cami_file_to_split', help='split a gzipped CAMI file into two fzipped for and rev files')
 
     args = parser.parse_args()
 
@@ -548,6 +553,11 @@ def main(argv=None):
         child.communicate()
         rc = child.wait()
         return(rc)
+
+    # hidden command: split fastq file from CAMI -------------------------------
+    if args.command == 'util':
+        if args.cami_file_to_split:
+            motu_utilities.split_cami_file(args.cami_file_to_split,args.verbose)
 
 
     # print menus ----------------------------------------------------------------
@@ -743,6 +753,13 @@ def main(argv=None):
     if (args.fc is None): args.fc = 5.0
     if (args.fp is None): args.fp = 0.9
 
+    # for cami renormalise
+    if (args.not_renormalise_cami is None):
+        # if -not_renormalise_cami is not added, then we do normalise - DEFAULT: normalise
+        renormalise_cami = True
+    else:
+        # if -not_renormalise_cami is added, then we do not normalise
+        renormalise_cami = False
 
     # check min length alignment
     default_min_len_align_length = 75 # min length align that we use to filter for profiling
@@ -831,8 +848,8 @@ def main(argv=None):
     # --------------------------------------------------------------------------
 
 
-        reference = DATABASE+"/mOTU.v2b.centroids.reformatted.padded"
-        annotation = DATABASE+"/mOTU.v2b.centroids.reformatted.padded.annotations"
+        reference = DATABASE+"/"+DATABASE_prefix+"_DB_CEN.fasta"
+        annotation = DATABASE+"/"+DATABASE_prefix+"_DB_CEN.fasta.annotations"
         if not os.path.isfile(annotation):
             sys.stderr.write("[E::main] The annotation file %s does not exist. Create annotation file with the get.annotations.py command from the metaSNV package\n" % (annotation))
             sys.exit(1)
@@ -983,14 +1000,14 @@ def main(argv=None):
 
 
     #set database of sequences
-    reference = DATABASE+"/mOTU.v2b.nr.padded" # must keep this
-    header_file = DATABASE+"/bam_header_nr" # must keep this
+    reference = DATABASE+"/"+DATABASE_prefix+"_DB_NR.fasta" # must keep this
+    header_file = DATABASE+"/"+DATABASE_prefix+"_bam_header_NR" # must keep this
     args_db = 'nr' # must keep this
 
     # if we use snv, then we use centroids
     if args.command == 'map_snv':
-        reference = DATABASE+"/mOTU.v2b.centroids.reformatted.padded"
-        header_file = DATABASE+"/bam_header_cen"
+        reference = DATABASE+"/"+DATABASE_prefix+"_DB_CEN.fasta"
+        header_file = DATABASE+"/"+DATABASE_prefix+"_bam_header_CEN"
         args_db == 'cen'
 
     # --------------------------------------------------------------------------
@@ -1091,6 +1108,16 @@ def main(argv=None):
             # ------------ execute bwa ---------------------------------------------
             all_sam_lines = list()
             avg_length_reads = list()
+            # check total number of reads:
+            if args.verbose > 4:
+                list_files_check = list()
+                if (args.reverseReads is not None):
+                    list_files_check = list_files_check + forw
+                if (args.singleReads is not None):
+                    list_files_check = list_files_check + singles
+                motu_utilities.print_n_reads(list_files_check,args.verbose)
+
+
             for i in range(number_of_lanes):
                 if args.verbose>2: sys.stderr.write("[main] Run bwa on lane "+str(i+1)+"\n")
 
@@ -1120,6 +1147,7 @@ def main(argv=None):
                     avg_length_reads.append(motu_utilities.is_fastq(reverse_reads,args.verbose))
                 if single_reads != "":
                     avg_length_reads.append(motu_utilities.is_fastq(single_reads,args.verbose))
+
 
 
                 if multiple_cores:
@@ -1172,11 +1200,8 @@ def main(argv=None):
                     sys.stderr.write("[main] process the sam/bam file for the snv calling\n")
 
                 # First: PE filtering
-                database_prefix = "mOTU.v2b"
-                database_dir = DATABASE
-
                 # coordinates for the padding of the genes are different for centroids
-                dictReference2geneLocation = os.path.sep.join([database_dir, database_prefix + ".padded.coords_for_centroids"])
+                dictReference2geneLocation = DATABASE+"/"+DATABASE_prefix+"_padding_coordinates_CEN.tsv"
                 if args.verbose>3:
                     sys.stderr.write("[main] -- File with gene padding coordinates: "+dictReference2geneLocation+"\n")
 
@@ -1396,7 +1421,7 @@ def main(argv=None):
 
             # prepare inputs
             listInputFiles = ['unused list']
-            database_prefix = "mOTU.v2b"
+            database_prefix = DATABASE_prefix
             database_dir = DATABASE
             sample_name = "trial"
             if (args.sampleName is not None): sample_name = args.sampleName
@@ -1515,12 +1540,12 @@ def main(argv=None):
             if args.verbose>2:sys.stderr.write("[main] Load the mgc table and compute the profile\n")
 
         database_dir = DATABASE+"/"
-        LGs_map = database_dir+"mOTU-LG.map.tsv"
-        LGs_map_l = database_dir+"mOTU-LG.map.line.tsv"
-        specI_taxonomy = database_dir+"prok-refdb-v11.0.0_specI-v2_taxonomy_v1.map"
-        mOTULG_taxonomy = database_dir+"mOTULG.taxonomy"
-        short_name_file = database_dir+"short_names.txt"
-        CAMI_file = database_dir+"CAMI_Sep_2015_mOTUs_2.0.0.tsv"
+        LGs_map = database_dir+DATABASE_prefix+"_MAP_MGCs_to_mOTUs.tsv"
+        LGs_map_l = database_dir+DATABASE_prefix+"_MAP_MGCs_to_mOTUs_in-line.tsv"
+        specI_taxonomy = database_dir+DATABASE_prefix+"_taxonomy_ref-mOTUs.tsv"
+        mOTULG_taxonomy = database_dir+DATABASE_prefix+"_taxonomy_meta-mOTUs.tsv"
+        short_name_file = database_dir+DATABASE_prefix+"_taxonomy_ref-mOTUs_short_names.tsv"
+        CAMI_file = database_dir+DATABASE_prefix+"_taxonomy_CAMI.tsv"
         infile=""
         sample_name = "trial"
         if (args.sampleName is not None): sample_name = args.sampleName
@@ -1537,7 +1562,7 @@ def main(argv=None):
                 sys.exit(1)
 
         if args.CAMI_output != "no_CAMI":
-            print_CAMI.calculate_abundance(infile, LGs_map, LGs_map_l, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, profile_mode,mOTU_counts,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,version_tool,CAMI_file,args.CAMI_output)
+            print_CAMI.calculate_abundance(infile, LGs_map, LGs_map_l, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, profile_mode,mOTU_counts,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,version_tool,CAMI_file,args.CAMI_output,renormalise_cami)
         else:
             if args.print_all_taxa:
                 map_lgs.calculate_abundance_all(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxonomy, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, args.taxonomic_level, args.BIOM_output, profile_mode,mOTU_counts, args.print_NCBI_id, args.print_rel_ab,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,args.print_full_rank,args.print_long_names,short_name_file,version_tool)
@@ -1719,7 +1744,7 @@ def main(argv=None):
             sys.exit(1)
 
         listInputFiles = args.listInputFiles.split(",")
-        database_prefix = "mOTU.v2b"
+        database_prefix = DATABASE_prefix
         database_dir = DATABASE
         sample_name = "trial"
         if (args.sampleName is not None): sample_name = args.sampleName
@@ -1841,12 +1866,12 @@ def main(argv=None):
             sys.exit(1)
 
         database_dir = DATABASE+"/"
-        LGs_map = database_dir+"mOTU-LG.map.tsv"
-        LGs_map_l = database_dir+"mOTU-LG.map.line.tsv"
-        specI_taxonomy = database_dir+"prok-refdb-v11.0.0_specI-v2_taxonomy_v1.map"
-        mOTULG_taxonomy = database_dir+"mOTULG.taxonomy"
-        short_name_file = database_dir+"short_names.txt"
-        CAMI_file = database_dir+"CAMI_Sep_2015_mOTUs_2.0.0.tsv"
+        LGs_map = database_dir+DATABASE_prefix+"_MAP_MGCs_to_mOTUs.tsv"
+        LGs_map_l = database_dir+DATABASE_prefix+"_MAP_MGCs_to_mOTUs_in-line.tsv"
+        specI_taxonomy = database_dir+DATABASE_prefix+"_taxonomy_ref-mOTUs.tsv"
+        mOTULG_taxonomy = database_dir+DATABASE_prefix+"_taxonomy_meta-mOTUs.tsv"
+        short_name_file = database_dir+DATABASE_prefix+"_taxonomy_ref-mOTUs_short_names.tsv"
+        CAMI_file = database_dir+DATABASE_prefix+"_taxonomy_CAMI.tsv"
         sample_name = "trial"
         if (args.sampleName is not None): sample_name = args.sampleName
 
@@ -1861,7 +1886,7 @@ def main(argv=None):
         if args.verbose>2: sys.stderr.write(" [calc_motu] (Create taxonomy profile)\n")
 
         if args.CAMI_output != "no_CAMI":
-            print_CAMI.calculate_abundance(infile, LGs_map, LGs_map_l, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, profile_mode,mOTU_counts,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,version_tool,CAMI_file,args.CAMI_output)
+            print_CAMI.calculate_abundance(infile, LGs_map, LGs_map_l, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, profile_mode,mOTU_counts,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,version_tool,CAMI_file,args.CAMI_output,renormalise_cami)
         else:
             if args.print_all_taxa:
                 map_lgs.calculate_abundance_all(infile, LGs_map, LGs_map_l, specI_taxonomy,mOTULG_taxonomy, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, args.taxonomic_level, args.BIOM_output, profile_mode,mOTU_counts, args.print_NCBI_id, args.print_rel_ab,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,args.print_full_rank,args.print_long_names,short_name_file,version_tool)
