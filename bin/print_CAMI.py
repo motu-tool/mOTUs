@@ -74,7 +74,7 @@ def save_file_to_dict_two_headers(file_r,col_key,col_value,header,remove_first_v
     else:
         return res_dict
 
-def calculate_abundance(infile, LGs_map, LGs_map_l, output, cutoff, onlySpecI, sampleName, profile_mode,input_for_profile, mgc_table_header,version_map_lgs,motu_version_tool,verbose,motu_call,git_commit_id,version_tool,CAMI_file,type_output,renormalise_cami):
+def calculate_abundance(infile, LGs_map, LGs_map_l, output, cutoff, onlySpecI, sampleName, profile_mode,input_for_profile, mgc_table_header,version_map_lgs,motu_version_tool,verbose,motu_call,git_commit_id,version_tool,CAMI_file,type_output,renormalise_cami,remove_strain_cami,remove_cami_comments):
 
     # load the CAMI annotation for the mOTUs
     CAMI_annotation = dict()
@@ -289,14 +289,18 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, output, cutoff, onlySpecI, s
     map_lgs_header = ' | '.join(list_parameters)
 
     # print header
-    outfile.write("# Taxonomic Profiling Output\n")
-    outfile.write(git_commit_id+" | "+map_lgs_header[1:]+"\n")
-    outfile.write("# call: "+motu_call+"\n\n")
+    if not remove_cami_comments:
+        outfile.write("# Taxonomic Profiling Output\n")
+        outfile.write(git_commit_id+" | "+map_lgs_header[1:]+"\n")
+        outfile.write("# call: "+motu_call+"\n\n")
 
 
     outfile.write("@SampleID: "+sample_id_header+"\n")
-    outfile.write("@Version:0.9.1\n")
-    outfile.write("@Ranks:superkingdom|phylum|class|order|family|genus|species\n")
+    outfile.write("@Version:0.9.3\n")
+    if remove_strain_cami == True:
+        outfile.write("@Ranks:superkingdom|phylum|class|order|family|genus|species\n")
+    else:
+        outfile.write("@Ranks:superkingdom|phylum|class|order|family|genus|species|strain\n")
     outfile.write("@TaxonomyID: "+date_NCBI_dump+"\n")
     outfile.write("@@TAXID\tRANK\tTAXPATH\tTAXPATHSN\tPERCENTAGE\n")
 
