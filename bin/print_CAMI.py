@@ -347,7 +347,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, output, cutoff, onlySpecI, s
                     for line in merged_lines:
                         vals_dict = merged_lines[line].rstrip().split("\t")
                         vals_dict[4] = str( float(vals_dict[4]) / sum_A * 100 )
-                        merged_lines[t_id] = "\t".join(vals_dict) + "\n"
+                        merged_lines[line] = "\t".join(vals_dict) + "\n"
 
             # print all unique lines
             for ll in merged_lines:
