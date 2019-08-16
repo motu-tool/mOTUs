@@ -92,6 +92,9 @@ mOTUs versions
 
 ChangeLog
 --------------
+**Version 2.5.1 2019-08-17 by AlessioMilanese**
+* Update the taxonomy to partecipate to the CAMI 2 challenge
+
 **Version 2.5.0 2019-08-09 by AlessioMilanese**
 * Add -db option to use a database from another directory
 * Add -A to print all taxonomy levels together
