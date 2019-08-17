@@ -21,6 +21,7 @@ If you are using mOTUs2, please cite:
 > Alexandre Almeida, Alex L Mitchell, Robert D Finn, Jaime Huerta-Cepas,
 > Peer Bork, Georg Zeller & Shinichi Sunagawa.
 > **Microbial abundance, activity and population genomic profiling with mOTUs2**; _Nature Communications_ **10**, Article number: 1014 (2019).
+> PMID: 30833550; 
 > doi: [10.1038/s41467-019-08844-4](https://www.nature.com/articles/s41467-019-08844-4)
 
 
