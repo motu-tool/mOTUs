@@ -543,6 +543,9 @@ def main(argv=None):
     parser.add_argument('--version', action='version', version='%(prog)s {0} on python {1}'.format(version_tool, sys.version.split()[0]))
     parser.add_argument('--test', action='store_true', default=None, dest='test_motu', help='test that motus has all the dependencies and is working correctly')
     parser.add_argument('--split_cami_file', action="store", default=None,dest='cami_file_to_split', help='split a gzipped CAMI file into two fzipped for and rev files')
+    parser.add_argument('--remove_strain_from_cami_profile', action="store_true", default=None,dest='remove_strain_cami', help='in the cami header, do not print |strain')
+    parser.add_argument('--remove_cami_comments', action="store_true", default=None,dest='remove_cami_comments', help='remove comments from the beginning of a cami profile')
+
 
     args = parser.parse_args()
 
@@ -1562,7 +1565,7 @@ def main(argv=None):
                 sys.exit(1)
 
         if args.CAMI_output != "no_CAMI":
-            print_CAMI.calculate_abundance(infile, LGs_map, LGs_map_l, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, profile_mode,mOTU_counts,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,version_tool,CAMI_file,args.CAMI_output,renormalise_cami)
+            print_CAMI.calculate_abundance(infile, LGs_map, LGs_map_l, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, profile_mode,mOTU_counts,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,version_tool,CAMI_file,args.CAMI_output,renormalise_cami,args.remove_strain_cami,args.remove_cami_comments)
         else:
             if args.print_all_taxa:
                 map_lgs.calculate_abundance_all(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxonomy, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, args.taxonomic_level, args.BIOM_output, profile_mode,mOTU_counts, args.print_NCBI_id, args.print_rel_ab,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,args.print_full_rank,args.print_long_names,short_name_file,version_tool)
@@ -1886,7 +1889,7 @@ def main(argv=None):
         if args.verbose>2: sys.stderr.write(" [calc_motu] (Create taxonomy profile)\n")
 
         if args.CAMI_output != "no_CAMI":
-            print_CAMI.calculate_abundance(infile, LGs_map, LGs_map_l, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, profile_mode,mOTU_counts,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,version_tool,CAMI_file,args.CAMI_output,renormalise_cami)
+            print_CAMI.calculate_abundance(infile, LGs_map, LGs_map_l, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, profile_mode,mOTU_counts,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,version_tool,CAMI_file,args.CAMI_output,renormalise_cami,args.remove_strain_cami,args.remove_cami_comments)
         else:
             if args.print_all_taxa:
                 map_lgs.calculate_abundance_all(infile, LGs_map, LGs_map_l, specI_taxonomy,mOTULG_taxonomy, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, args.taxonomic_level, args.BIOM_output, profile_mode,mOTU_counts, args.print_NCBI_id, args.print_rel_ab,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,args.print_full_rank,args.print_long_names,short_name_file,version_tool)

@@ -11,10 +11,10 @@
 #
 # ============================================================================ #
 
-motus_version = "2.5.0"
-link_db = "https://zenodo.org/record/3364101/files/db_mOTU_v2.5.0.tar.gz"
-md5_db = "f533a7b55fc133589f08f50648548b42"
-DOI_db = "10.5281/zenodo.3364101"
+motus_version = "2.5.1"
+link_db = "https://zenodo.org/record/3366460/files/db_mOTU_v2.5.1.tar.gz"
+md5_db = "6117b479706ff805fb1bdcd8642b70e4"
+DOI_db = "10.5281/zenodo.3366460"
 
 import os
 import sys
