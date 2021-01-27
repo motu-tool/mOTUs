@@ -1340,13 +1340,13 @@ def main(argv=None):
                         str_end_header = "@PG\tID:bwa\tPN:map_tax "+versions["runBWA"]+" | gene database: "+version_db+" | "+str(reads_avg_length)+"\n"
                         sam_temp_file.write(str_end_header)
 
-                        str_info_min_len = "@CO min_len_alignment "+str(default_min_len_align_length_map_tax)+"\n"
+                        str_info_min_len = "@CO\tmin_len_alignment "+str(default_min_len_align_length_map_tax)+"\n"
                         sam_temp_file.write(str_info_min_len)
 
-                        str_perc_id = "@CO min_perc_id 97\n"
+                        str_perc_id = "@CO\tmin_perc_id 97\n"
                         sam_temp_file.write(str_perc_id)
 
-                        str_min_perc_query = "@CO min_perc_query 45\n"
+                        str_min_perc_query = "@CO\tmin_perc_query 45\n"
                         sam_temp_file.write(str_min_perc_query)
 
                         for i in h_file:
