@@ -236,9 +236,9 @@ def read_filter_len_from_bam_file(SAM_BAM_file):
     try:
         for strSamline in samLines:
             strSamline = strSamline.decode('ascii')
-            if (strSamline.startswith('@CO min_len_alignment')):
+            if (strSamline.startswith('@CO\tmin_len_alignment')):
                 all_info = strSamline.rstrip().split(" ")
-                length_filter = float(all_info[2])
+                length_filter = float(all_info[1])
                 return length_filter
             else:
                 continue
