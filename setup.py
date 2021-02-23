@@ -11,7 +11,7 @@
 #
 # ============================================================================ #
 
-motus_version = "2.5.1"
+motus_version = "2.6.0"
 link_db = "https://zenodo.org/record/3366460/files/db_mOTU_v2.5.1.tar.gz"
 md5_db = "6117b479706ff805fb1bdcd8642b70e4"
 DOI_db = "10.5281/zenodo.3366460"
