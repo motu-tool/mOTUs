@@ -21,7 +21,7 @@ If you are using mOTUs2, please cite:
 > Alexandre Almeida, Alex L Mitchell, Robert D Finn, Jaime Huerta-Cepas,
 > Peer Bork, Georg Zeller & Shinichi Sunagawa.
 > **Microbial abundance, activity and population genomic profiling with mOTUs2**; _Nature Communications_ **10**, Article number: 1014 (2019).
-> PMID: 30833550; 
+> PMID: 30833550;
 > doi: [10.1038/s41467-019-08844-4](https://www.nature.com/articles/s41467-019-08844-4)
 
 
@@ -93,8 +93,12 @@ mOTUs versions
 
 ChangeLog
 --------------
+**Version 2.6.0 2021-02-24 by AlessioMilanese**
+* Add 19,358 new mOTUs
+* Minor bug fixes
+
 **Version 2.5.1 2019-08-17 by AlessioMilanese**
-* Update the taxonomy to partecipate to the CAMI 2 challenge
+* Update the taxonomy to participate to the CAMI 2 challenge
 
 **Version 2.5.0 2019-08-09 by AlessioMilanese**
 * Add -db option to use a database from another directory
