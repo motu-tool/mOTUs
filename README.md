@@ -96,6 +96,7 @@ ChangeLog
 **Version 2.6.0 2021-02-24 by AlessioMilanese**
 * Add 19,358 new mOTUs
 * Minor bug fixes
+* Change `-1` to `unassigned`
 
 **Version 2.5.1 2019-08-17 by AlessioMilanese**
 * Update the taxonomy to participate to the CAMI 2 challenge
