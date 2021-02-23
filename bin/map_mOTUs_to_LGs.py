@@ -243,7 +243,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
                 cog_type.append(genes_list[i].split('.')[0]) # and save the COG type
 
         rel_ab_LGs[j] = 0
-        if j != '-1':
+        if j != 'unassigned':
             if len(list_diff_zero) >= cutoff:
                 if len(list_diff_zero) == 1:
                     rel_ab_LGs[j] = float(sum(list_diff_zero))
@@ -258,7 +258,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
                         pos_median1 = int(len(list_diff_zero)/2)
                         pos_median2 = int(len(list_diff_zero)/2 - 1)
                         rel_ab_LGs[j] = float(list_diff_zero[pos_median1] + list_diff_zero[pos_median2]) / 2
-        else: # what to do with -1: take the average of the different COGs values
+        else: # what to do with unassigned: take the average of the different COGs values
             all_cog_type = list(set(cog_type))
             count_cogs_m_1 = dict()
             # set to zero to start
@@ -314,7 +314,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
         rel_ab_LGs_rel = dict()
         value_minus1 = 0
         for j in list_LGs:
-            if j == '-1':
+            if j == 'unassigned':
                 value_minus1 = value_minus1 + rel_ab_LGs_rel_temp[j]
             else:
                 type_c = j.split("_")[0]
@@ -322,7 +322,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
                     value_minus1 = value_minus1 + rel_ab_LGs_rel_temp[j]
                 else:
                     rel_ab_LGs_rel[j] = rel_ab_LGs_rel_temp[j]
-        rel_ab_LGs_rel['-1'] = value_minus1
+        rel_ab_LGs_rel['unassigned'] = value_minus1
 
     # general print
     if output != "":
@@ -365,7 +365,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
         outfile.write("    \"rows\":[\n")
         list_rows = list()
         list_vals = list()
-        first_val = rel_ab_LGs_rel["-1"]
+        first_val = rel_ab_LGs_rel["unassigned"]
 
 
     # print result FOR SPECIES LEVEL ===========================================
@@ -376,11 +376,11 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
         if onlySpecI:
             list_LGs_print = list()
             for j in list_LGs:
-                if j != '-1':
+                if j != 'unassigned':
                     type_c = j.split("_")[0]
                     if (type_c != 'meta'):
                         list_LGs_print.append(j)
-            list_LGs_print.append("-1")
+            list_LGs_print.append("unassigned")
 
         for j in list_LGs_print:
             if ((j in taxonomy_s) or (j in taxonomy_m)):
@@ -400,15 +400,15 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
                     list_rows.append("            {\"id\":\""+j+"\", \"metadata\":"+name+"},\n")
                     if rel_ab_is_rounded: list_vals.append("["+str(rel_ab_LGs_rel[j])+"],\n") # BIOMvals - INT
                     else: list_vals.append("[{0:.10f}],\n".format(rel_ab_LGs_rel[j])) # BIOMvals - FLOAT
-            elif j == "-1": # -1
-                name = "-1\t-1"
+            elif j == "unassigned": # -1
+                name = "unassigned\tunassigned"
                 if print_NCBI_id: name = name + "\tNA"
                 if rel_ab_is_rounded: name = name + "\t" +str(rel_ab_LGs_rel[j])+"\n" # value - INT
                 else: name = "{0}\t{1:.10f}\n".format(name, rel_ab_LGs_rel[j]) # value - FLOAT (10digits)
                 if not BIOM_output:
                     outfile.write(name)
                 else:
-                    list_rows.append("            {\"id\":\"-1\", \"metadata\":{\"name\":\"unknown\",\n                                    \"NCBI_id\":\"NA\"}}\n")
+                    list_rows.append("            {\"id\":\"unassigned\", \"metadata\":{\"name\":\"unknown\",\n                                    \"NCBI_id\":\"NA\"}}\n")
                     if rel_ab_is_rounded: list_vals.append("["+str(rel_ab_LGs_rel[j])+"]]\n") # BIOMvals - INT
                     else: list_vals.append("[{0:.10f}]]\n".format(rel_ab_LGs_rel[j])) #BIOMvals - FLOAT
 
@@ -422,11 +422,11 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
         if onlySpecI:
             list_LGs_print = list()
             for j in list_LGs:
-                if j != '-1':
+                if j != 'unassigned':
                     type_c = j.split("_")[0]
                     if (type_c != 'meta'):
                         list_LGs_print.append(j)
-            list_LGs_print.append("-1")
+            list_LGs_print.append("unassigned")
 
         for j in list_LGs_print:
             if ((j in taxonomy_s) or (j in taxonomy_m)):
@@ -442,8 +442,8 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
                 if rel_ab_is_rounded: name = name + "\t" + str(rel_ab_LGs_rel[j]) +"\n" # value - INT
                 else: name = "{0}\t{1:.10f}\n".format(name, rel_ab_LGs_rel[j]) # value - FLOAT (10digits)
                 outfile.write(name)
-            elif j == "-1": # -1
-                name = "-1"
+            elif j == "unassigned": # -1
+                name = "unassigned"
                 if print_NCBI_id: name = name + "\tNA"
                 if rel_ab_is_rounded: name = name + "\t" +str(rel_ab_LGs_rel[j])+"\n" # value - INT
                 else: name = "{0}\t{1:.10f}\n".format(name, rel_ab_LGs_rel[j]) # value - FLOAT (10digits)
@@ -474,12 +474,12 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
             list_taxon = list(set(list(taxonomy_s_2.values())+list(taxonomy_m_2.values())))
 
         list_taxon.sort()
-        list_taxon.append("-1")
+        list_taxon.append("unassigned")
         rel_abundance_taxon = dict()
         for i in list_taxon:
             rel_abundance_taxon[i] = 0
         for i in rel_ab_LGs_rel:
-            if i != "-1":
+            if i != "unassigned":
                 if i in taxonomy_s_2:
                     rel_abundance_taxon[taxonomy_s_2[i]] = rel_abundance_taxon[taxonomy_s_2[i]] + rel_ab_LGs_rel[i]
                 if i in taxonomy_m_2:
@@ -489,7 +489,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
 
         # print
         for i in list_taxon:
-            if i != "-1":
+            if i != "unassigned":
                 all_val = i.split("\t")
                 # prepare line to print
                 name = all_val[1] # consensus_name
@@ -507,14 +507,14 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
             else:
                 if not BIOM_output:
                     if print_NCBI_id:
-                        if rel_ab_is_rounded: name = "-1\tNA\t"+str(rel_abundance_taxon[i])+"\n" # value - INT
-                        else: name = "-1\tNA\t{0:.10f}\n".format(rel_abundance_taxon[i]) # value - FLOAT (10digits)
+                        if rel_ab_is_rounded: name = "unassigned\tNA\t"+str(rel_abundance_taxon[i])+"\n" # value - INT
+                        else: name = "unassigned\tNA\t{0:.10f}\n".format(rel_abundance_taxon[i]) # value - FLOAT (10digits)
                     else:
-                        if rel_ab_is_rounded: name = "-1\t"+str(rel_abundance_taxon[i])+"\n" # value - INT
-                        else: name = "-1\t{0:.10f}\n".format(rel_abundance_taxon[i]) # value - FLOAT (10digits)
+                        if rel_ab_is_rounded: name = "unassigned\t"+str(rel_abundance_taxon[i])+"\n" # value - INT
+                        else: name = "unassigned\t{0:.10f}\n".format(rel_abundance_taxon[i]) # value - FLOAT (10digits)
                     outfile.write(name)
                 else:
-                    list_rows.append("            {\"id\":\"-1\", \"metadata\":{\"NCBI_id\":\"NA\"}}\n")
+                    list_rows.append("            {\"id\":\"unassigned\", \"metadata\":{\"NCBI_id\":\"NA\"}}\n")
                     if rel_ab_is_rounded: list_vals.append("["+str(rel_abundance_taxon[i])+"]]\n") #BIOMvals - INT
                     else: list_vals.append("[{0:.10f}]]\n".format(rel_abundance_taxon[i])) # BIOMvals - FLOAT
 
@@ -666,7 +666,7 @@ def calculate_abundance_one_level (infile, LGs_map, LGs_map_l, specI_taxonomy, m
                 cog_type.append(genes_list[i].split('.')[0]) # and save the COG type
 
         rel_ab_LGs[j] = 0
-        if j != '-1':
+        if j != 'unassigned':
             if len(list_diff_zero) >= cutoff:
                 if len(list_diff_zero) == 1:
                     rel_ab_LGs[j] = float(sum(list_diff_zero))
@@ -737,7 +737,7 @@ def calculate_abundance_one_level (infile, LGs_map, LGs_map_l, specI_taxonomy, m
         rel_ab_LGs_rel = dict()
         value_minus1 = 0
         for j in list_LGs:
-            if j == '-1':
+            if j == 'unassigned':
                 value_minus1 = value_minus1 + rel_ab_LGs_rel_temp[j]
             else:
                 type_c = j.split("_")[0]
@@ -745,7 +745,7 @@ def calculate_abundance_one_level (infile, LGs_map, LGs_map_l, specI_taxonomy, m
                     value_minus1 = value_minus1 + rel_ab_LGs_rel_temp[j]
                 else:
                     rel_ab_LGs_rel[j] = rel_ab_LGs_rel_temp[j]
-        rel_ab_LGs_rel['-1'] = value_minus1
+        rel_ab_LGs_rel['unassigned'] = value_minus1
 
     LIST_ALL = list()
 
@@ -757,11 +757,11 @@ def calculate_abundance_one_level (infile, LGs_map, LGs_map_l, specI_taxonomy, m
         if onlySpecI:
             list_LGs_print = list()
             for j in list_LGs:
-                if j != '-1':
+                if j != 'unassigned':
                     type_c = j.split("_")[0]
                     if (type_c != 'meta'):
                         list_LGs_print.append(j)
-            list_LGs_print.append("-1")
+            list_LGs_print.append("unassigned")
 
         for j in list_LGs_print:
             if ((j in taxonomy_s) or (j in taxonomy_m)):
@@ -775,7 +775,7 @@ def calculate_abundance_one_level (infile, LGs_map, LGs_map_l, specI_taxonomy, m
                 if rel_ab_LGs_rel[j] != 0:
                     LIST_ALL.append(name)
 
-            elif j == "-1": # -1
+            elif j == "unassigned": # -1
                 dummy = "dummy"
             else: # if it not in anyone (it should not happen)
                 if verbose>1: sys.stderr.write(" [W::calc_motu] Warning: find mOTU "+j+" that is not present in the taxonomy\n")
@@ -787,11 +787,11 @@ def calculate_abundance_one_level (infile, LGs_map, LGs_map_l, specI_taxonomy, m
         if onlySpecI:
             list_LGs_print = list()
             for j in list_LGs:
-                if j != '-1':
+                if j != 'unassigned':
                     type_c = j.split("_")[0]
                     if (type_c != 'meta'):
                         list_LGs_print.append(j)
-            list_LGs_print.append("-1")
+            list_LGs_print.append("unassigned")
 
         for j in list_LGs_print:
             if ((j in taxonomy_s) or (j in taxonomy_m)):
@@ -808,7 +808,7 @@ def calculate_abundance_one_level (infile, LGs_map, LGs_map_l, specI_taxonomy, m
                 if rel_ab_LGs_rel[j] != 0:
                     LIST_ALL.append(name)
 
-            elif j == "-1": # -1
+            elif j == "unassigned": # -1
                 dummy = "dummy"
             else: # if it not in anyone (it should not happen)
                 if verbose>1: sys.stderr.write(" [W::calc_motu] Warning: find mOTU "+j+" that is not present in the taxonomy\n")
@@ -831,12 +831,12 @@ def calculate_abundance_one_level (infile, LGs_map, LGs_map_l, specI_taxonomy, m
             list_taxon = list(set(list(taxonomy_s_2.values())+list(taxonomy_m_2.values())))
 
         list_taxon.sort()
-        list_taxon.append("-1")
+        list_taxon.append("unassigned")
         rel_abundance_taxon = dict()
         for i in list_taxon:
             rel_abundance_taxon[i] = 0
         for i in rel_ab_LGs_rel:
-            if i != "-1":
+            if i != "unassigned":
                 if i in taxonomy_s_2:
                     rel_abundance_taxon[taxonomy_s_2[i]] = rel_abundance_taxon[taxonomy_s_2[i]] + rel_ab_LGs_rel[i]
                 if i in taxonomy_m_2:
@@ -844,7 +844,7 @@ def calculate_abundance_one_level (infile, LGs_map, LGs_map_l, specI_taxonomy, m
 
         # print
         for i in list_taxon:
-            if i != "-1":
+            if i != "unassigned":
                 all_val = i.split("\t")
                 # prepare line to print
                 name = all_val[1] # consensus_name

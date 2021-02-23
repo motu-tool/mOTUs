@@ -184,7 +184,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, output, cutoff, onlySpecI, s
                 cog_type.append(genes_list[i].split('.')[0]) # and save the COG type
 
         rel_ab_LGs[j] = 0
-        if j != '-1':
+        if j != 'unassigned':
             if len(list_diff_zero) >= cutoff:
                 if len(list_diff_zero) == 1:
                     rel_ab_LGs[j] = float(sum(list_diff_zero))
@@ -199,7 +199,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, output, cutoff, onlySpecI, s
                         pos_median1 = int(len(list_diff_zero)/2)
                         pos_median2 = int(len(list_diff_zero)/2 - 1)
                         rel_ab_LGs[j] = float(list_diff_zero[pos_median1] + list_diff_zero[pos_median2]) / 2
-        else: # what to do with -1: take the average of the different COGs values
+        else: # what to do with -1(unassigned): take the average of the different COGs values
             all_cog_type = list(set(cog_type))
             count_cogs_m_1 = dict()
             # set to zero to start
@@ -243,7 +243,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, output, cutoff, onlySpecI, s
         rel_ab_LGs_rel = dict()
         value_minus1 = 0
         for j in list_LGs:
-            if j == '-1':
+            if j == 'unassigned':
                 value_minus1 = value_minus1 + rel_ab_LGs_rel_temp[j]
             else:
                 type_c = j.split("_")[0]
@@ -251,7 +251,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, output, cutoff, onlySpecI, s
                     value_minus1 = value_minus1 + rel_ab_LGs_rel_temp[j]
                 else:
                     rel_ab_LGs_rel[j] = rel_ab_LGs_rel_temp[j]
-        rel_ab_LGs_rel['-1'] = value_minus1
+        rel_ab_LGs_rel['unassigned'] = value_minus1
 
     # select only the mOTUs that are different from zero -----------------------
     mOTUs_to_print = dict()
@@ -264,7 +264,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, output, cutoff, onlySpecI, s
     lines_to_print = dict()
     percentage_to_print = dict()
     for k in mOTUs_to_print:
-        if k != "-1":
+        if k != "unassigned":
             for base in range(0,27,4):
                 current_tax_id = CAMI_annotation[k][base+0]
                 if current_tax_id != "NA":
