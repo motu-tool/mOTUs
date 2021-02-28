@@ -89,7 +89,18 @@ motus profile -f sample1_run1_for.fastq,sample1_run2_for.fastq -r sample1_run1_r
 
 Construction of the mOTUs database
 --------------
+The mOTUs database is created from reference genomes, metagenomic samples and metagenome assembled genomes (MAGs):
 ![alt text](https://www.embl.de/download/zeller/milanese/temp/motus_type.png)
+
+A mOTUs database is composed of three types of mOTUs:
+- ref-mOTUs, which represents known species
+- meta-mOTUs, which represents unknown species obtained from metagenomic samples
+- ext-mOTUs, which represents unknown species obtained from MAGs
+
+Note that meta- and ext-mOTUs will not have a species level annotation.
+
+When profiling a metagenomic sample to a motus database, the mOTUs tool maps the reads from the sample to the genes in the different mOTUs:
+![alt text](https://www.embl.de/download/zeller/milanese/temp/tax_profiling.png)
 
 mOTUs versions
 --------------
