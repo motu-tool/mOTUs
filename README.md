@@ -89,7 +89,7 @@ motus profile -f sample1_run1_for.fastq,sample1_run2_for.fastq -r sample1_run1_r
 
 Construction of the mOTUs database
 --------------
-![alt text](https://www.embl.de/download/zeller/STAG/databases/0.7/genomes/NCBI/10_mOTUs_MGs/NCBI_10genes.stag_DB)
+![alt text](https://www.embl.de/download/zeller/milanese/temp/motus_type.png)
 
 mOTUs versions
 --------------
