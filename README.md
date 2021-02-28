@@ -87,6 +87,10 @@ You can profile samples that have been sequenced through different runs:
 motus profile -f sample1_run1_for.fastq,sample1_run2_for.fastq -r sample1_run1_rev.fastq,sample1_run2_rev.fastq -s sample1_run1_single.fastq > taxonomy_profile.txt
 ```
 
+Construction of the mOTUs database
+--------------
+![alt text](https://www.embl.de/download/zeller/STAG/databases/0.7/genomes/NCBI/10_mOTUs_MGs/NCBI_10genes.stag_DB)
+
 mOTUs versions
 --------------
 ![alt text](https://github.com/motu-tool/mOTUs_v2/blob/master/pics/mOTUs_versions.png)
