@@ -109,7 +109,7 @@ When profiling (`motus profile`) a metagenomic sample, the mOTUs tool maps the r
 
 ChangeLog
 --------------
-**Version 2.6.0 2021-02-24 by AlessioMilanese**
+**Version 2.6.0 2021-03-04 by AlessioMilanese**
 * Add 19,358 new mOTUs
 * Minor bug fixes
 * Change `-1` to `unassigned`
