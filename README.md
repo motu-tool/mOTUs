@@ -87,9 +87,25 @@ You can profile samples that have been sequenced through different runs:
 motus profile -f sample1_run1_for.fastq,sample1_run2_for.fastq -r sample1_run1_rev.fastq,sample1_run2_rev.fastq -s sample1_run1_single.fastq > taxonomy_profile.txt
 ```
 
-mOTUs versions
+How mOTUs works
 --------------
-![alt text](https://github.com/motu-tool/mOTUs_v2/blob/master/pics/mOTUs_versions.png)
+The mOTUs tool does taxonomic profiling of metagenomic samples, i.e. it identifies which species are present in your sample and their relative abundance. It is based on a set of mOTUs (~species) contained in the mOTUs database.
+
+The mOTUs database is created from reference genomes, metagenomic samples and metagenome assembled genomes (MAGs):
+![alt text](https://www.embl.de/download/zeller/milanese/temp/motus_type.png)
+
+A mOTUs database is composed of three types of mOTUs:
+- ref-mOTUs, which represents known species,
+- meta-mOTUs, which represents unknown species obtained from metagenomic samples,
+- ext-mOTUs, which represents unknown species obtained from MAGs.
+
+Note that meta- and ext-mOTUs will not have a species level annotation.
+
+We release a new version of the mOTUs database when new resources are available. The latest mOTUs version is 2.6, and the major releases are represented in the following graph (where the numbers represents the number of mOTUs for each of the three groups, with the same color-code as the previous graph):
+![alt text](https://www.embl.de/download/zeller/milanese/temp/mOTUs_versions_2.png)
+
+When profiling (`motus profile`) a metagenomic sample, the mOTUs tool maps the reads from the sample to the genes in the different mOTUs:
+![alt text](https://www.embl.de/download/zeller/milanese/temp/tax_profiling.png)
 
 ChangeLog
 --------------
