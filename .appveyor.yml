@@ -14,6 +14,7 @@ environment:
     - PYTHON_VERSION: 3.7
 
 install:
+  - sudo apt-get update -y
   - sudo apt-get install -y -q biom-format-tools
   # Clone testing repository
   - git clone --depth 1 git://github.com/motu-tool/mOTUs_v2_testing.git
