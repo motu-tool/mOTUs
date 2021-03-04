@@ -342,7 +342,8 @@ def print_menu_append():
     sys.stderr.write("Usage: motus merge [options]\n\n")
     sys.stderr.write("Input options:\n")
     sys.stderr.write("   -i STR[,STR]  list of files (comma separated)\n")
-    sys.stderr.write("   -d DIR        merge all the files in the directory\n\n")
+    sys.stderr.write("   -d DIR        merge all the files in the directory\n")
+    sys.stderr.write("   -a STR[,STR]  Add public profiles from different environments. [all, air, bioreactor, bee, cat, \n\t\t cattle, chicken, dog, fish, freshwater, human, \n\t\t marine, mouse, pig, sheep, soil, termite, wastewater]\n\n")
     sys.stderr.write("Output options:\n")
     sys.stderr.write("   -o FILE       output file name [stdout]\n")
     sys.stderr.write("   -B            print result in BIOM format\n\n")
@@ -500,6 +501,7 @@ def main(argv=None):
     parser.add_argument('-y', action="store", dest='type_output', default=None, help='type of output that you want to print',choices=['base.coverage', 'insert.raw_counts', 'insert.scaled_counts'])
     parser.add_argument('-n', action="store", dest='sampleName', default=None, help='sample name for the current mapping')
     parser.add_argument('-i', action="store", dest='listInputFiles', default=None, help='name of input file(s); sam or bam formatted files. If it is a list: insert all files separated by a comma')
+    parser.add_argument('-a', action="store", dest='append_profiles', default=None,help='Environments to add to the profiles.')
     parser.add_argument('-m', action="store", dest='motu_read_counts_file', default=None, help='name of input file; for profiling. It is the file of mOTU read count')
     parser.add_argument('-v', action='store', type=int, default=None, dest='verbose', help='Verbose levels')
     parser.add_argument('-d', action="store", default=None, dest='directory_append', help='directory from where to take the files to append')
@@ -1923,9 +1925,24 @@ def main(argv=None):
             if args.verbose>2: sys.stderr.write(" [merge] Merge all the files in the directory\n")
             if (args.directory_append[-1]!="/"):
                 args.directory_append = args.directory_append + "/"
+        environments_to_merge = []
+        public_profiles = DATABASE+"/mOTUs_2.6.profiles.gz"
+        public_profiles_envo = DATABASE+"/mOTUs_2.6.environments.gz"
+        if (args.append_profiles is not None):
+            allowed_envo = ['all', 'air', 'bioreactor', 'bee', 'cat', 'cattle', 'chicken', 'dog', 'fish', 'freshwater', 'human', 'marine', 'mouse', 'pig', 'sheep', 'soil', 'termite', 'wastewater']
+
+            for envo in args.append_profiles.split(','):
+                if envo not in allowed_envo:
+                    sys.stderr.write("[E::merge] Error: Unknown environment " + envo + "\n")
+                    sys.exit(1)
+                if envo == 'all':
+                    environments_to_merge = ['all']
+                    break
+                else:
+                    environments_to_merge.append(envo)
 
 
-        append.append_profilings(args.directory_append, args.listInputFiles, args.output, args.verbose, args.BIOM_output,version_append,motu_call,version_tool)
+        append.append_profilings(args.directory_append, args.listInputFiles, args.output, args.verbose, args.BIOM_output,version_append,motu_call,version_tool, environments_to_merge, public_profiles, public_profiles_envo)
 
         if args.verbose>2:
             sys.stderr.write("[main] Total time merge: " + str("{0:.2f}".format(time.time() - initial_start_time))+" sec\n")
