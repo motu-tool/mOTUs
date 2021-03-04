@@ -31,7 +31,8 @@ cache:
   - test -> setup.py  # Cache test/ but expire it if setup.py (which contains database version information) changes
 
 #build: off
-build: "Script"
+#build: "Script"
+build_script: ""
 
 test_script:
   - python --version
