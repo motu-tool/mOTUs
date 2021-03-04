@@ -30,9 +30,7 @@ cache:
   - db_mOTU -> setup.py  # Cache db_mOTU/ but expire it if setup.py (which contains database version information) changes
   - test -> setup.py  # Cache test/ but expire it if setup.py (which contains database version information) changes
 
-#build: off
-#build: "Script"
-build_script: ""
+build: off
 
 test_script:
   - python --version
