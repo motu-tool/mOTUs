@@ -92,6 +92,7 @@ How mOTUs works
 The mOTUs tool does taxonomic profiling of metagenomic samples, i.e. it identifies which species are present in your sample and their relative abundance. It is based on a set of mOTUs (~species) contained in the mOTUs database.
 
 The mOTUs database is created from reference genomes, metagenomic samples and metagenome assembled genomes (MAGs):
+
 ![alt text](https://www.embl.de/download/zeller/milanese/temp/motus_type.png)
 
 A mOTUs database is composed of three types of mOTUs:
