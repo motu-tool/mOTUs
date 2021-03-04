@@ -7,8 +7,8 @@ image: ubuntu
 environment:
   # APPVEYOR_SSH_KEY: ssh-rsa <insert hash here>
   matrix:
-    - PYTHON_VERSION: 2.7
-    - PYTHON_VERSION: 3.4
+#    - PYTHON_VERSION: 2.7
+#    - PYTHON_VERSION: 3.4
     - PYTHON_VERSION: 3.5
     - PYTHON_VERSION: 3.6
     - PYTHON_VERSION: 3.7
@@ -30,7 +30,7 @@ cache:
   - db_mOTU -> setup.py  # Cache db_mOTU/ but expire it if setup.py (which contains database version information) changes
   - test -> setup.py  # Cache test/ but expire it if setup.py (which contains database version information) changes
 
-build: off
+#build: off
 
 test_script:
   - python --version
