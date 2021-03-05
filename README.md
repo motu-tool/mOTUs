@@ -101,7 +101,7 @@ A mOTUs database is composed of three types of mOTUs:
 
 Note that meta- and ext-mOTUs will not have a species level annotation.
 
-The mOTUs database is updated periodically, e.g the latest version (2.6) which doubles the number of profilable species by including ~600,000 draft genomes. Major releases are represented in the following graph (where the numbers represents the number of mOTUs for each of the three groups, with the same color-code as the previous graph):
+The mOTUs database is updated periodically, e.g the latest version (2.6), which doubles the number of profilable species by including ~600,000 draft genomes. Major releases are represented in the following graph (where the numbers represents the number of mOTUs for each of the three groups, with the same color-code as the previous graph):
 ![alt text](https://www.embl.de/download/zeller/milanese/temp/mOTUs_versions_2.png)
 
 When profiling (`motus profile`) a metagenomic sample, the mOTUs tool maps the reads from the sample to the genes in the different mOTUs:
