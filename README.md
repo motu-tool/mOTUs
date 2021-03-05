@@ -89,7 +89,7 @@ motus profile -f sample1_run1_for.fastq,sample1_run2_for.fastq -r sample1_run1_r
 
 How mOTUs works
 --------------
-The mOTUs tool performs taxonomic profiling of metagenomic and metatrancriptomics samples, i.e. it identifies species and their relative abundance present in sample. It is based on a set of mOTUs (~species) contained in the mOTUs database.
+The mOTUs tool performs taxonomic profiling of metagenomics and metatrancriptomics samples, i.e. it identifies species and their relative abundance present in a sample. It is based on a set of mOTUs (~species) contained in the mOTUs database.
 The mOTUs database is created from reference genomes, metagenomic samples and metagenome assembled genomes (MAGs):
 
 ![alt text](https://www.embl.de/download/zeller/milanese/temp/motus_type.png)
