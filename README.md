@@ -95,9 +95,9 @@ The mOTUs database is created from reference genomes, metagenomic samples and me
 ![alt text](https://www.embl.de/download/zeller/milanese/temp/motus_type.png)
 
 A mOTUs database is composed of three types of mOTUs:
-- ref-mOTUs, which represents **known species**,
-- meta-mOTUs, which represents **unknown species** obtained from metagenomic samples,
-- ext-mOTUs, which represents **unknown species** obtained from MAGs.
+- ref-mOTUs, which represent **known species**,
+- meta-mOTUs, which represent **unknown species** obtained from metagenomic samples,
+- ext-mOTUs, which represent **unknown species** obtained from MAGs.
 
 Note that meta- and ext-mOTUs will not have a species level annotation.
 
