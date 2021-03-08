@@ -31,7 +31,7 @@ def is_tool_and_return0(name):
     try:
         devnull = open(os.devnull)
         popenCMD = shlex.split(name)
-        child = subprocess.Popen(popenCMD, stdout=devnull, stderr=devnull)
+        child = subprocess.Popen(popenCMD, stdout=devnull)
         streamdata = child.communicate()
         rc = child.wait()
         if rc == 0:
