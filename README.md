@@ -7,10 +7,10 @@
 [![Install with Bioconda](https://img.shields.io/conda/dn/bioconda/motus.svg?style=flat)](https://anaconda.org/bioconda/motus)
 
 
-mOTUs profiler
+mOTU profiler
 ========
 
-The mOTUs profiler is a computational tool that estimates relative abundance of known and currently unknown microbial community members using metagenomic shotgun sequencing data.
+The mOTU profiler is a computational tool that estimates relative taxonomic abundance of known and currently unknown microbial community members using metagenomic shotgun sequencing data.
 
 Check the [wiki](https://github.com/motu-tool/mOTUs_v2/wiki) for more information.
 
