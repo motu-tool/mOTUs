@@ -318,7 +318,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
                 value_minus1 = value_minus1 + rel_ab_LGs_rel_temp[j]
             else:
                 type_c = j.split("_")[0]
-                if (type_c == 'meta'):
+                if (type_c == 'meta' or type_c == 'ext'):
                     value_minus1 = value_minus1 + rel_ab_LGs_rel_temp[j]
                 else:
                     rel_ab_LGs_rel[j] = rel_ab_LGs_rel_temp[j]
@@ -378,7 +378,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
             for j in list_LGs:
                 if j != 'unassigned':
                     type_c = j.split("_")[0]
-                    if (type_c != 'meta'):
+                    if (type_c != 'meta' and type_c != 'ext'):
                         list_LGs_print.append(j)
             list_LGs_print.append("unassigned")
 
@@ -424,7 +424,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
             for j in list_LGs:
                 if j != 'unassigned':
                     type_c = j.split("_")[0]
-                    if (type_c != 'meta'):
+                    if (type_c != 'meta' and type_c != 'ext'):
                         list_LGs_print.append(j)
             list_LGs_print.append("unassigned")
 
@@ -741,7 +741,7 @@ def calculate_abundance_one_level (infile, LGs_map, LGs_map_l, specI_taxonomy, m
                 value_minus1 = value_minus1 + rel_ab_LGs_rel_temp[j]
             else:
                 type_c = j.split("_")[0]
-                if (type_c == 'meta'):
+                if (type_c == 'meta' or type_c == 'ext'):
                     value_minus1 = value_minus1 + rel_ab_LGs_rel_temp[j]
                 else:
                     rel_ab_LGs_rel[j] = rel_ab_LGs_rel_temp[j]
@@ -759,7 +759,7 @@ def calculate_abundance_one_level (infile, LGs_map, LGs_map_l, specI_taxonomy, m
             for j in list_LGs:
                 if j != 'unassigned':
                     type_c = j.split("_")[0]
-                    if (type_c != 'meta'):
+                    if (type_c != 'meta' and type_c != 'ext'):
                         list_LGs_print.append(j)
             list_LGs_print.append("unassigned")
 
@@ -789,7 +789,7 @@ def calculate_abundance_one_level (infile, LGs_map, LGs_map_l, specI_taxonomy, m
             for j in list_LGs:
                 if j != 'unassigned':
                     type_c = j.split("_")[0]
-                    if (type_c != 'meta'):
+                    if (type_c != 'meta' and type_c != 'ext'):
                         list_LGs_print.append(j)
             list_LGs_print.append("unassigned")
 
