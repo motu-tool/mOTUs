@@ -405,4 +405,4 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, output, cutoff, onlySpecI, s
             sys.stderr.write("[E::main] you can find the file here:\n"+outfile.name+"\n")
             sys.exit(1)
 
-    sys.exit(1)
+    sys.exit(0)
