@@ -266,7 +266,7 @@ def print_menu_snv_call():
     sys.stderr.write("   -fb FLOAT   Coverage breadth: minimal horizontal genome coverage percentage per sample per species. Default=80.0\n")
     sys.stderr.write("   -fd FLOAT   Coverage depth: minimal average vertical genome coverage per sample per species. Default=5.0\n")
     sys.stderr.write("   -fm INT     Minimum number of samples per species. Default=2\n")
-    sys.stderr.write("   -fp FLOAT   FILTERING STEP II: Required proportion of informative samples (coverage non-zero) per position. Default=0.50\n")
+    sys.stderr.write("   -fp FLOAT   FILTERING STEP II: Required proportion of informative samples (coverage non-zero) per position. Default=0.90\n")
     sys.stderr.write("   -fc FLOAT   FILTERING STEP II: Minimum coverage per position per sample per species. Default=5.0\n")
     sys.stderr.write("   -t  INT     Number of threads. Default=1\n")
     sys.stderr.write("   -db DIR     Provide a database directory\n\n")
@@ -846,6 +846,10 @@ def main(argv=None):
         if args.output == "":
             sys.stderr.write("[E::main] Error: -o is missing\n")
             sys.exit(1)
+        if args.threads > 1:
+            if (args.verbose>1):
+                sys.stderr.write("[W::main] Warning: -t set to 1 due to a metaSNV bug\n")
+            args.threads = 1
 
         if (args.verbose>2): sys.stderr.write("[main] Begin metaSNV\n")
     # --------------------------------------------------------------------------
