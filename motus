@@ -90,7 +90,7 @@ DATABASE_prefix = DATABASE.split("/")[-1]
 
 
 # check if setup.py has been ran already ---------------------------------------
-if not(os.path.isdir(relative_path+'db_mOTU')): # here we check db_mOTU exactly, because want to see if it was installed
+if not(os.path.isdir(DATABASE)): # here we check db_mOTU exactly, because want to see if it was installed
     sys.stderr.write("[E::main] Error: database has not been downloaded. Run setup.py before using the motus profiler\n\n")
     sys.exit(1)
 
