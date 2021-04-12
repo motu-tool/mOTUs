@@ -108,6 +108,10 @@ When profiling (`motus profile`) a metagenomic sample, the mOTUs tool maps the r
 
 ChangeLog
 --------------
+**Version 2.6.1 2021-04-14 by AlessioMilanese**
+* Minor bug fixes
+* Improved the taxonomy of 32 ref-mOTUs (#45)
+
 **Version 2.6.0 2021-03-08 by AlessioMilanese**
 * Add 19,358 new mOTUs
 * Add taxonomic profiles of > 11k metagenomic and metatranscriptomic samples. The updated merge function can integrate those in to the users results.
