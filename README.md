@@ -1,4 +1,4 @@
-![alt text](https://github.com/motu-tool/mOTUs_v2/blob/master/pics/motu_logo.png)
+![alt text](https://github.com/motu-tool/mOTUs/blob/master/pics/motu_logo.png)
 
 [![Build status](https://ci.appveyor.com/api/projects/status/0x4veuuoabm6018v/branch/master?svg=true)](https://ci.appveyor.com/project/AlessioMilanese/motus-v2/branch/master)
 [![Install with Bioconda](https://anaconda.org/bioconda/motus/badges/installer/conda.svg)](https://anaconda.org/bioconda/motus)
@@ -11,9 +11,9 @@ mOTU profiler
 
 The mOTU profiler is a computational tool that estimates relative taxonomic abundance of known and currently unknown microbial community members using metagenomic shotgun sequencing data.
 
-Check the [wiki](https://github.com/motu-tool/mOTUs_v2/wiki) for more information.
+Check the [wiki](https://github.com/motu-tool/mOTUs/wiki) for more information.
 
-If you are using mOTUs2, please cite:
+If you are using mOTUs, please cite:
 
 > Alessio Milanese, Daniel R Mende, Lucas Paoli, Guillem Salazar, Hans-Joachim Ruscheweyh, Miguelangel Cuenca,
 > Pascal Hingamp, Renato Alves, Paul I Costea, Luis Pedro Coelho, Thomas S B Schmidt,
@@ -35,13 +35,13 @@ The mOTU profiler requires:
 In order to use the command ```snv_call``` you need:
 * [metaSNV v1.0.3](https://git.embl.de/costea/metaSNV), available also on [bioconda](https://anaconda.org/bioconda/metasnv) (we assume metaSNV.py to be in the system path)
 
-Check [installation wiki](https://github.com/motu-tool/mOTUs_v2/wiki/Installation) to see how to install the dependencies with conda.
+Check [installation wiki](https://github.com/motu-tool/mOTUs/wiki/Installation) to see how to install the dependencies with conda.
 
 Installation
 --------------
 ```bash
-git clone https://github.com/motu-tool/mOTUs_v2.git
-cd mOTUs_v2
+git clone https://github.com/motu-tool/mOTUs.git
+cd mOTUs
 python setup.py
 python test.py
 export PATH=`pwd`:$PATH
@@ -91,7 +91,7 @@ How mOTUs works
 The mOTUs tool performs taxonomic profiling of metagenomics and metatrancriptomics samples, i.e. it identifies species and their relative abundance present in a sample. It is based on a set of mOTUs (~species) contained in the mOTUs database.
 The mOTUs database is created from reference genomes, metagenomic samples and metagenome assembled genomes (MAGs):
 
-![alt text](https://github.com/motu-tool/mOTUs_v2/blob/master/pics/motus_type.png)
+![alt text](https://github.com/motu-tool/mOTUs/blob/master/pics/motus_type.png)
 
 A mOTUs database is composed of three types of mOTUs:
 - ref-mOTUs, which represent **known species**,
@@ -100,14 +100,18 @@ A mOTUs database is composed of three types of mOTUs:
 
 Note that meta- and ext-mOTUs will not have a species level annotation.
 
-The mOTUs database is updated periodically, e.g the latest version (2.6), which doubles the number of profilable species by including ~600,000 draft genomes. Major releases are represented in the following graph (where the numbers represents the number of mOTUs for each of the three groups, with the same color-code as the previous graph):
-![alt text](https://github.com/motu-tool/mOTUs_v2/blob/master/pics/mOTUs_versions_2.png)
+The mOTUs database is updated periodically, e.g the latest version (2.6.1), which doubles the number of profilable species by including ~600,000 draft genomes. Major releases are represented in the following graph (where the numbers represents the number of mOTUs for each of the three groups, with the same color-code as the previous graph):
+![alt text](https://github.com/motu-tool/mOTUs/blob/master/pics/mOTUs_versions_2.png)
 
 When profiling (`motus profile`) a metagenomic sample, the mOTUs tool maps the reads from the sample to the genes in the different mOTUs:
-![alt text](https://github.com/motu-tool/mOTUs_v2/blob/master/pics/tax_profiling.png)
+![alt text](https://github.com/motu-tool/mOTUs/blob/master/pics/tax_profiling.png)
 
 ChangeLog
 --------------
+**Version 2.6.1 2021-04-27 by AlessioMilanese**
+* Minor bug fixes
+* Improved the taxonomy of 32 ref-mOTUs (#45)
+
 **Version 2.6.0 2021-03-08 by AlessioMilanese**
 * Add 19,358 new mOTUs
 * Add taxonomic profiles of > 11k metagenomic and metatranscriptomic samples. The updated merge function can integrate those in to the users results.

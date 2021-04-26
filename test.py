@@ -58,13 +58,13 @@ def is_tool(name):
 # ------------------------------------------------------------------------------
 def main(argv=None):
     sys.stderr.write(" ------------------------------------------------------------------------------\n")
-    sys.stderr.write("|                               TEST MOTUS TOOL                                |\n")
+    sys.stderr.write("|                               TEST mOTU profiler                             |\n")
     sys.stderr.write(" ------------------------------------------------------------------------------\n")
 
     error_found = False
 
     # check if setup.py has been ran already -----------------------------------
-    sys.stderr.write("\n1-- ran setup.py: ")
+    sys.stderr.write("\n1-- run setup.py: ")
     if "--skip-setup-check" in sys.argv:
         sys.stderr.write("SKIPPED. As requested due to --skip-setup-check\n\n")
     else:

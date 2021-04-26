@@ -90,7 +90,7 @@ DATABASE_prefix = DATABASE.split("/")[-1]
 
 
 # check if setup.py has been ran already ---------------------------------------
-if not(os.path.isdir(relative_path+'db_mOTU')): # here we check db_mOTU exactly, because want to see if it was installed
+if not(os.path.isdir(DATABASE)): # here we check db_mOTU exactly, because want to see if it was installed
     sys.stderr.write("[E::main] Error: database has not been downloaded. Run setup.py before using the motus profiler\n\n")
     sys.exit(1)
 
@@ -266,9 +266,8 @@ def print_menu_snv_call():
     sys.stderr.write("   -fb FLOAT   Coverage breadth: minimal horizontal genome coverage percentage per sample per species. Default=80.0\n")
     sys.stderr.write("   -fd FLOAT   Coverage depth: minimal average vertical genome coverage per sample per species. Default=5.0\n")
     sys.stderr.write("   -fm INT     Minimum number of samples per species. Default=2\n")
-    sys.stderr.write("   -fp FLOAT   FILTERING STEP II: Required proportion of informative samples (coverage non-zero) per position. Default=0.50\n")
+    sys.stderr.write("   -fp FLOAT   FILTERING STEP II: Required proportion of informative samples (coverage non-zero) per position. Default=0.90\n")
     sys.stderr.write("   -fc FLOAT   FILTERING STEP II: Minimum coverage per position per sample per species. Default=5.0\n")
-    sys.stderr.write("   -t  INT     Number of threads. Default=1\n")
     sys.stderr.write("   -db DIR     Provide a database directory\n\n")
     sys.stderr.write("Output options:\n")
     sys.stderr.write("   -o  DIR     Output directory. Will fail if already exists. [Mandatory]\n")
@@ -846,6 +845,8 @@ def main(argv=None):
         if args.output == "":
             sys.stderr.write("[E::main] Error: -o is missing\n")
             sys.exit(1)
+        # set threads to 1
+        args.threads = 1
 
         if (args.verbose>2): sys.stderr.write("[main] Begin metaSNV\n")
     # --------------------------------------------------------------------------
@@ -1926,8 +1927,8 @@ def main(argv=None):
             if (args.directory_append[-1]!="/"):
                 args.directory_append = args.directory_append + "/"
         environments_to_merge = []
-        public_profiles = DATABASE+"/public_profiles/mOTUs_2.6.profiles.gz"
-        public_profiles_envo = DATABASE+"/public_profiles/mOTUs_2.6.environments.gz"
+        public_profiles = DATABASE+"/public_profiles/mOTUs_2.6.1.profiles.gz"
+        public_profiles_envo = DATABASE+"/public_profiles/mOTUs_2.6.1.environments.gz"
         if (args.append_profiles is not None):
             allowed_envo = ['all', 'air', 'bioreactor', 'bee', 'cat', 'cattle', 'chicken', 'dog', 'fish', 'freshwater', 'human', 'marine', 'mouse', 'pig', 'sheep', 'soil', 'termite', 'wastewater']
 
