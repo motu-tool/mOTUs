@@ -1927,8 +1927,8 @@ def main(argv=None):
             if (args.directory_append[-1]!="/"):
                 args.directory_append = args.directory_append + "/"
         environments_to_merge = []
-        public_profiles = DATABASE+"/public_profiles/mOTUs_2.6.1.profiles.gz"
-        public_profiles_envo = DATABASE+"/public_profiles/mOTUs_2.6.1.environments.gz"
+        public_profiles = DATABASE+"/public_profiles/mOTUs.profiles.gz"
+        public_profiles_envo = DATABASE+"/public_profiles/mOTUs.profiles_environments.gz"
         if (args.append_profiles is not None):
             allowed_envo = ['all', 'air', 'bioreactor', 'bee', 'cat', 'cattle', 'chicken', 'dog', 'fish', 'freshwater', 'human', 'marine', 'mouse', 'pig', 'sheep', 'soil', 'termite', 'wastewater']
 
