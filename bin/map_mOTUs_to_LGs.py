@@ -324,6 +324,28 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
                     rel_ab_LGs_rel[j] = rel_ab_LGs_rel_temp[j]
         rel_ab_LGs_rel['unassigned'] = value_minus1
 
+
+    # print number of different mOTUs type -------------------------------------
+    n_ref_m = 0
+    n_meta_m = 0
+    n_ext_m = 0
+    for motu in rel_ab_LGs_rel:
+        if motu != "unassigned":
+            type_c = motu.split("_")[0]
+            if type_c == "ref":
+                if rel_ab_LGs_rel[motu] > 0:
+                    n_ref_m = n_ref_m + 1
+            if type_c == "meta":
+                if rel_ab_LGs_rel[motu] > 0:
+                    n_meta_m = n_meta_m + 1
+            if type_c == "ext":
+                if rel_ab_LGs_rel[motu] > 0:
+                    n_ext_m = n_ext_m + 1
+    sys.stderr.write("     Number of ref-mOTUs:  " + str(n_ref_m) + '\n')
+    sys.stderr.write("     Number of meta-mOTUs: " + str(n_meta_m) + '\n')
+    sys.stderr.write("     Number of ext-mOTUs:  " + str(n_ext_m) + '\n')
+
+
     # general print
     if output != "":
         #outfile = open(output, "w")

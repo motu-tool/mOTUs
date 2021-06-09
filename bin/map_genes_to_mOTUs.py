@@ -1106,13 +1106,12 @@ def get_mOTU_abundances(dictUniqueInsertCounts, dictUniqueBaseCounts, listMultip
         #sys.stderr.write("Multiple Mappers (both ends mapping to same ref): " + str(mmCount_p) + '\n')
         #print("mmCount_sp: " + str(mmCount_sp))
 
-    if verbose>4:
-        sys.stderr.write(" [calc_mgc] UniqueCounts: " + str(uniqueInsertCount) + '\n')
-        sys.stderr.write(" [calc_mgc] TotalCounts: " + str(totalInsertCount) + '\n')
-        sys.stderr.write(" [calc_mgc] Ignored multiple mapper without unique hit: " + str(ignoreMMInsertCount) + '\n')
-
-        sys.stderr.write(" [calc_mgc] Multiple Mappers (both ends mapping to different refs):  " + str(mmCount_s) + '\n')
-        sys.stderr.write(" [calc_mgc] Multiple Mappers (both ends mapping to same ref): " + str(mmCount_p) + '\n')
+    if verbose>2:
+        sys.stderr.write("     Total counts: " + str(totalInsertCount) + '\n')
+        sys.stderr.write("     Unique counts: " + str(uniqueInsertCount) + '\n')
+        sys.stderr.write("     Multiple Mappers (paired ends mapping to different genes):  " + str(mmCount_s) + '\n')
+        sys.stderr.write("     Multiple Mappers (paired ends mapping to same gene): " + str(mmCount_p) + '\n')
+        sys.stderr.write("     Ignored multiple mapper without unique hit: " + str(ignoreMMInsertCount) + '\n')
 
     if type_output == 'insert.raw_counts':
         if return_dictionary:
@@ -1248,7 +1247,7 @@ def run_mOTUs_v2_mapping(listInputFiles, databaseDir, databasePrefix, sampleName
         samLines = input_sam_file_for_profile
         parseBWA_SAMoutput(samLines, dictGene2counts, dictGene2basecount, dictReference2geneLocation, listMultipleMappers, minAlignLength, minClippedAlignLength, minPercID, dictGene2mOTUs, profile_mode,verbose,version_information_map_read)
 
-    if verbose>2:
+    if verbose>3:
         if len(listInputFiles) == 1: errstr = "1 sam/bam file"
         if len(listInputFiles) > 1: errstr = str(len(listInputFiles))+ " files"
         sys.stderr.write(" [calc_mgc](parse " + errstr + ") "+ str("{0:.2f}".format(time.time() - start_time))+" sec\n")
@@ -1258,7 +1257,7 @@ def run_mOTUs_v2_mapping(listInputFiles, databaseDir, databasePrefix, sampleName
         get_mOTU_abundances(dictGene2counts, dictGene2basecount, listMultipleMappers, dictGene2mOTUs, dictGene2Lengths, nonUniqueMultThreshold, winnerThreshold, loserThreshold, sampleName, output, type_output, profile_mode, return_dictionary,verbose)
     else:
         dict_temp = get_mOTU_abundances(dictGene2counts, dictGene2basecount, listMultipleMappers, dictGene2mOTUs, dictGene2Lengths, nonUniqueMultThreshold, winnerThreshold, loserThreshold, sampleName, output, type_output, profile_mode, return_dictionary,verbose)
-    if verbose>2: sys.stderr.write(" [calc_mgc](get mgc abundances) " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
+    if verbose>3: sys.stderr.write(" [calc_mgc](get mgc abundances) " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
 
     if (return_dictionary): return version_information_map_read[0],dict_temp
 

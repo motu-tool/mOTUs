@@ -15,6 +15,10 @@ import subprocess
 import re
 import errno
 
+# ------------------------------------------------------------------------------
+# global variables
+tot_num_reads = 0
+num_filt_reads = 0
 
 # ------------------------------------------------------------------------------
 # function to check if a specific tool exists
@@ -47,6 +51,9 @@ def check_reference_index(reference):
 # run bwa on a file that contains reads that are single end
 # ------------------------------------------------------------------------------
 def runBWA_singleEnd(strFilteredReadFile, reference, msamPercID, msamminLength, threads, technology, msam_script, msamOverlap,verbose):
+    global tot_num_reads
+    global num_filt_reads
+
     if verbose >= 6: sys.stderr.write("bwa: values. msamPercID: "+str(msamPercID)+" msamminLength: "+str(msamminLength)+" msamOverlap: "+str(msamOverlap)+"\n")
     try:
         from subprocess import DEVNULL
@@ -112,6 +119,7 @@ def runBWA_singleEnd(strFilteredReadFile, reference, msamPercID, msamminLength, 
             #filter lines
             line = line.decode('ascii')
             if line[0]!="@": # header
+                tot_num_reads = tot_num_reads + 1
                 arr = line.split("\t")
                 if not((arr[1] == '4') or (arr[2] == '*') or (arr[5] == '*')):
                     len_seq = 0
@@ -144,6 +152,7 @@ def runBWA_singleEnd(strFilteredReadFile, reference, msamPercID, msamminLength, 
                         flag3 = True
 
                     if flag1 and flag2 and flag3:
+                        num_filt_reads = num_filt_reads + 1
                         yield line
 
         #check that bzip finished correctly
@@ -172,6 +181,11 @@ def runBWA_singleEnd(strFilteredReadFile, reference, msamPercID, msamminLength, 
 # run the bwa mapping considering all files as single end
 # ------------------------------------------------------------------------------
 def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, output, bamOutput, msam_script,technology, verbose, profile_mode, lane_id, msamminLength_from_motus):
+    global tot_num_reads
+    global num_filt_reads
+    tot_num_reads = 0
+    num_filt_reads = 0
+
     # parameters for msamtools are fixed
     msamPercID = 0.97
     msamminLength = msamminLength_from_motus
@@ -210,7 +224,7 @@ def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, o
             else:
                 sam_header.append(line)
 
-        if verbose>2: sys.stderr.write(" [map_db](map forward reads) " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
+        if verbose>2: sys.stderr.write("     map forward reads: " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
 
         # reverse -----
         if verbose>2: start_time = time.time()
@@ -224,12 +238,12 @@ def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, o
                 line = line.replace("\t", orientation+"\t", 1)
                 mapped_sam_lines.append(line)
 
-        if verbose>2: sys.stderr.write(" [map_db](map reverse reads) " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
+        if verbose>2: sys.stderr.write("     map reverse reads: " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
 
         # sort for and rev
         if verbose>2: start_time = time.time()
         mapped_sam_lines.sort()
-        if verbose>2: sys.stderr.write(" [map_db](sort reads) " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
+        if verbose>2: sys.stderr.write("     sort reads: " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
 
 
     # computation single -------------------------------------------------------
@@ -247,8 +261,11 @@ def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, o
                 if (forwardReads==""): # if the header has not been printed already, then we print the header
                     sam_header.append(line)
 
-        if verbose>2: sys.stderr.write(" [map_db](map single reads) " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
+        if verbose>2: sys.stderr.write("     map single reads: " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
 
+    # print number of reads
+    if verbose>2: sys.stderr.write("   Total number of reads: " + str(tot_num_reads)+"\n")
+    if verbose>2: sys.stderr.write("   Number of reads that map to marker genes and pass the filter: " +str(num_filt_reads) + " (" + str("{0:.2f}".format(num_filt_reads/tot_num_reads*100))+" percent)\n")
     # if we are running this as profile mode, then we return the list of the sam lines
     # without the header.
     if profile_mode:
