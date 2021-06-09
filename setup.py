@@ -11,9 +11,9 @@
 #
 # ============================================================================ #
 
-motus_version = "2.6.1"
-link_db = "https://zenodo.org/record/4721452/files/db_mOTU_v2.6.1.tar.gz"
-md5_db = "e9b99af8afcff4010ebbf91f928fdb11"
+motus_version = "3.0.0"
+link_db = "https://www.embl.de/download/zeller/TEMP/db_mOTU_v3.0.0.tar.gz"
+md5_db = "ee89cfbb33af71c70418e5f21482a6ac"
 DOI_db = "10.5281/zenodo.4721452"
 
 import os
