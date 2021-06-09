@@ -124,6 +124,16 @@ except:
     sys.stderr.write("[E::main] Error: "+relative_path+"bin directory is missing.\n[E::main] Download the motus profiler again\n\n")
     sys.exit(1)
 try:
+    import UTIL_log_col as log
+except:
+    # in case the colour format is not accepted, we load one that do not use colours
+    try:
+        import UTIL_log as log
+    except:
+        sys.stderr.write("[E::main] Error: fail to load the script: "+relative_path+"bin/UTIL_log.py\n[E::main] Download the motus profiler again\n\n")
+        sys.exit(1)
+
+try:
     import map_genes_to_mOTUs as map_motu
 except:
     sys.stderr.write("[E::main] Error: fail to load the script: "+relative_path+"bin/map_genes_to_mOTUs.py\n[E::main] Download the motus profiler again\n\n")
@@ -806,17 +816,13 @@ def main(argv=None):
 
     # ---------------------- check general parameters --------------------------
     if args.verbose < 1:
-        sys.stderr.write("[E::main] Error: verbose level (-v) is less than 1\n")
-        sys.exit(1)
+        log.print_error("verbose level (-v) is less than 1")
     if args.threads < 1:
-        sys.stderr.write("[E::main] Error: number of threads (-t) is less than 1\n")
-        sys.exit(1)
+        log.print_error("number of threads (-t) is less than 1")
     if args.number_of_cores < 1:
-        sys.stderr.write("[E::main] Error: number of cores (-CC) is less than 1\n")
-        sys.exit(1)
+        log.print_error("number of cores (-CC) is less than 1")
     if args.map_lgs_cutoff<1 or args.map_lgs_cutoff>10:
-        sys.stderr.write("[E::main] Error: invalid number of marker genes cutoff (-g): "+str(args.map_lgs_cutoff)+" (possible values: from 1 to 10)\n")
-        sys.exit(1)
+        log.print_error("invalid number of marker genes cutoff (-g): "+str(args.map_lgs_cutoff)+" (possible values: from 1 to 10)")
 
     # check if CAMI output interfer with other parameters ----------------------
     if (args.CAMI_output != "no_CAMI") and args.BIOM_output:
@@ -1048,9 +1054,12 @@ def main(argv=None):
             time_after_bwa = time.time() # for now we initialize it, so that if we skip bwa, then we use the initial time
             time_after_map_genes = time.time() # for now we initialize it, so that if we skip calc_mgc, then we use the initial time
             if args.command == 'profile' and (args.listInputFiles is None and args.motu_read_counts_file is None):
-                sys.stderr.write("[main]  MAP_TAX -----------\n")
+                log.print_log("Map reads to marker gene sequences")
+                log.print_message("In this step we map the reads to the marker gene database. In the process we filter reads based on:")
+                log.print_message(" - Similarity to the reference gene (>97%), and")
+                log.print_message(" - Length of the alignment ("+str(args.min_len_align_length)+" nucleotides)")
             if args.command == 'map_snv':
-                sys.stderr.write("[main]  MAP_SNV -----------\n")
+                log.print_log("MAP SNV")
 
         # check that there is at least one file with reads
         if (args.forwardReads is None) and (args.reverseReads is None) and (args.singleReads is None) and (args.listInputFiles is None) and (args.motu_read_counts_file is None):
@@ -1085,7 +1094,7 @@ def main(argv=None):
             if (args.reverseReads is not None): reve = args.reverseReads.split(",")
 
             number_of_lanes = max(len(singles),len(forw),len(reve))
-            if args.verbose > 2: sys.stderr.write("[main] Number of detected lanes: "+str(number_of_lanes)+"\n")
+            if args.verbose > 2: log.print_message("\n   Number of detected lanes: "+str(number_of_lanes)+"\n")
 
             # ----check input: check number of files for forw and rev --------------
             if (args.forwardReads is not None):
@@ -1100,7 +1109,7 @@ def main(argv=None):
                 multiple_cores = False
 
             # check that we have the same number
-            #of cores as the number of lanes
+            # of cores as the number of lanes
             if args.number_of_cores > number_of_lanes:
                 if args.verbose >= 2: sys.stderr.write(" [W::map_db] Warning: We use only "+str(number_of_lanes)+" out of "+str(args.number_of_cores)+" cores\n")
             if args.number_of_cores < number_of_lanes and args.number_of_cores != 1:
@@ -1125,7 +1134,7 @@ def main(argv=None):
 
 
             for i in range(number_of_lanes):
-                if args.verbose>2: sys.stderr.write("[main] Run bwa on lane "+str(i+1)+"\n")
+                if args.verbose>2: log.print_message_time("Run bwa on lane "+str(i+1))
 
                 forward_reads = ""
                 reverse_reads = ""
@@ -1412,13 +1421,21 @@ def main(argv=None):
 
             if args.verbose>2:
                 time_after_bwa = time.time()
-                sys.stderr.write("[main] Total time map_tax: " + str("{0:.2f}".format(time_after_bwa - initial_start_time))+" sec\n")
+                log.print_message("")
+                log.print_message("Total time for mapping reads: " + str("{0:.2f}".format(time_after_bwa - initial_start_time))+" sec")
+                log.print_message("\n")
 
 
 #-------# map genes ------------------------------------------------------------
         if args.motu_read_counts_file is None:
 
-            if args.verbose>2: sys.stderr.write("[main]  CALC_MGC -----------\n")
+            if args.verbose>2:
+                log.print_log("Aggregate reads from the same marker gene cluster (MGC)")
+                log.print_message("The gene sequences have been clustered in marker gene clusters (MGCs).")
+                log.print_message("Here, we sum the read counts from the different sequences that belong to the same MGC.\n")
+
+                log.print_message("Some reads map only to one gene sequence ('Unique'), while other map to multiple")
+                log.print_message("gene sequences (Multiple Mappers).\n")
 
             if (args.listInputFiles is not None):
                 if args.verbose>2:
@@ -1477,7 +1494,7 @@ def main(argv=None):
                 if reads_avg_length < min_len_align:
                     if args.verbose>1: sys.stderr.write("[W::main] Warning. Average read length ("+str(reads_avg_length)+") is lower than the -l filter ("+str(min_len_align)+"). We suggest to decrease the value of -l\n")
 
-            if args.verbose>2: sys.stderr.write("[main] Minimum alignment length: "+str(min_len_align)+" (average read length: "+str(reads_avg_length)+")\n")
+            if args.verbose>3: sys.stderr.write("[main] Minimum alignment length: "+str(min_len_align)+" (average read length: "+str(reads_avg_length)+")\n")
 
             # set min clipped length
             if args.verbose>4: sys.stderr.write("[main] Selecting the clipped length:...")
@@ -1536,12 +1553,19 @@ def main(argv=None):
 
             if args.verbose>2:
                 time_after_map_genes = time.time()
-                sys.stderr.write("[main] Total time calc_mgc: " + str("{0:.2f}".format(time_after_map_genes - time_after_bwa))+" sec\n")
+                log.print_message("")
+                log.print_message("Total time to calculate the MGCs: " + str("{0:.2f}".format(time_after_map_genes - time_after_bwa))+" sec")
+                log.print_message("\n")
 
 
 #-------# create LGs -----------------------------------------------------------
         if args.verbose>2:
-            sys.stderr.write("[main]  CALC_MOTU -----------\n")
+            log.print_log("Calculate mOTUs read counts")
+            log.print_message("Each mOTU (~species) is composed of 10 MGCs.")
+            log.print_message("To evaluate the read count of each mOTU, we use its MGCs median read count.\n")
+
+            log.print_message("We require at least "+str(args.map_lgs_cutoff)+" (-g) MGCs to have reads to consider a mOTU.\n")
+
         if args.motu_read_counts_file is not None:# we load the mOTU read count table
             if args.verbose>2:sys.stderr.write("[main] Load the mgc table and compute the profile\n")
 
@@ -1575,12 +1599,14 @@ def main(argv=None):
             else:
                 map_lgs.calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxonomy, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, args.taxonomic_level, args.BIOM_output, profile_mode,mOTU_counts, args.print_NCBI_id, args.print_rel_ab,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,args.print_full_rank,args.print_long_names,short_name_file,version_tool)
 
+
+
+        # end
         if args.verbose>2:
-            sys.stderr.write(" [calc_motu] (Create taxonomy profile) " + str("{0:.2f}".format(time.time() - time_after_map_genes))+" sec\n")
-            executed_steps = "map_tax+calc_mgc+calc_motu"
-            if (args.listInputFiles is not None and args.motu_read_counts_file is None): executed_steps = "calc_mgc+calc_motu"
-            if (args.motu_read_counts_file is not None): executed_steps = "calc_motu"
-            sys.stderr.write("[main]  TOTAL TIME ("+executed_steps+"): " + str("{0:.2f}".format(time.time() - initial_start_time))+" sec\n")
+            log.print_message("\n")
+            log.print_log("Finished computation")
+            log.print_log("Total time: "+ str("{0:.2f}".format(time.time() - initial_start_time)))
+
 
 
 
