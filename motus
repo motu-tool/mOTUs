@@ -886,10 +886,10 @@ def main(argv=None):
             time_after_bwa = time.time() # for now we initialize it, so that if we skip bwa, then we use the initial time
             time_after_map_genes = time.time() # for now we initialize it, so that if we skip calc_mgc, then we use the initial time
             if args.command == 'profile' and (args.listInputFiles is None and args.motu_read_counts_file is None):
-                log.print_log("Map reads to marker gene sequences")
-                log.print_message("In this step we map the reads to the marker gene database. In the process we filter reads based on:")
-                log.print_message(" - Similarity to the reference gene (>97%), and")
-                log.print_message(" - Length of the alignment ("+str(args.min_len_align_length)+" nucleotides)")
+                log.print_log("Align reads to marker gene sequences")
+                log.print_message("Reads are aligned (by bwa) to marker gene sequences in the reference database. Reads are filtered for:")
+                log.print_message(" - similarity to the reference gene (>97%), and")
+                log.print_message(" - length of the alignment ("+str(args.min_len_align_length)+" nucleotides, -l option)")
             if args.command == 'map_snv':
                 log.print_log("MAP SNV")
 
@@ -1263,11 +1263,11 @@ def main(argv=None):
 
             if args.verbose>2:
                 log.print_log("Aggregate reads from the same marker gene cluster (MGC)")
-                log.print_message("The gene sequences have been clustered in marker gene clusters (MGCs).")
-                log.print_message("Here, we sum the read counts from the different sequences that belong to the same MGC.\n")
+                log.print_message("Gene sequences with high similarity are clustered into marker gene clusters (MGCs).")
+                log.print_message("Read counts from the different sequences that belong to the same MGC are sum up together.\n")
 
-                log.print_message("Some reads map only to one gene sequence ('Unique'), while other map to multiple")
-                log.print_message("gene sequences (Multiple Mappers).\n")
+                log.print_message("Reads can either map preferably to one MGC ('Unique' mappers), or map to multiple reference")
+                log.print_message("genes with the same quality ('Multiple' mappers).\n")
 
             if (args.listInputFiles is not None):
                 if args.verbose>2:
@@ -1393,10 +1393,10 @@ def main(argv=None):
 #-------# create LGs -----------------------------------------------------------
         if args.verbose>2:
             log.print_log("Calculate mOTUs read counts")
-            log.print_message("Each mOTU (~species) is composed of 10 MGCs.")
-            log.print_message("To evaluate the read count of each mOTU, we use its MGCs median read count.\n")
+            log.print_message("Each mOTU species is composed of 6 to 10 MGCs.")
+            log.print_message("The final mOTU read count is obtained as the median of its MGC read counts.\n")
 
-            log.print_message("We require at least "+str(args.map_lgs_cutoff)+" (-g) MGCs to have reads to consider a mOTU.\n")
+            log.print_message("At least "+str(args.map_lgs_cutoff)+" (-g) MGCs are required to have reads mapping to them to consider a mOTU.\n")
 
         if args.motu_read_counts_file is not None:# we load the mOTU read count table
             if args.verbose>2:sys.stderr.write("[main] Load the mgc table and compute the profile\n")
@@ -1437,7 +1437,7 @@ def main(argv=None):
         if args.verbose>2:
             log.print_message("\n")
             log.print_log("Finished computation")
-            log.print_log("Total time: "+ str("{0:.2f}".format(time.time() - initial_start_time)))
+            log.print_log("Total time: "+ str("{0:.2f}".format(time.time() - initial_start_time)) + " sec")
 
 
 

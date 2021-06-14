@@ -264,8 +264,8 @@ def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, o
         if verbose>2: sys.stderr.write("     map single reads: " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
 
     # print number of reads
-    if verbose>2: sys.stderr.write("   Total number of reads: " + str(tot_num_reads)+"\n")
-    if verbose>2: sys.stderr.write("   Number of reads that map to marker genes and pass the filter: " +str(num_filt_reads) + " (" + str("{0:.2f}".format(num_filt_reads/tot_num_reads*100))+" percent)\n")
+    if verbose>2: sys.stderr.write("   Total number of sam lines: " + str(tot_num_reads)+"\n")
+    if verbose>2: sys.stderr.write("   Number sam lines after filtering: " +str(num_filt_reads) + " (" + str("{0:.2f}".format(num_filt_reads/tot_num_reads*100))+" percent)\n")
     # if we are running this as profile mode, then we return the list of the sam lines
     # without the header.
     if profile_mode:
