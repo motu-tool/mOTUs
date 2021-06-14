@@ -53,15 +53,15 @@ def get_timestamp():
 
 
 def print_log(text):
-    sys.stderr.write(colour(get_timestamp(),"bold")+" "+colour(text,"bold_yellow")+"\n")
+    sys.stderr.write(colour(get_timestamp(),"bold_blue")+" "+colour(text,"bold_blue")+"\n")
     sys.stderr.flush()
 
 def print_message(text):
-    sys.stderr.write("   "+colour(text,"green")+"\n")
+    sys.stderr.write("   "+text+"\n")
     sys.stderr.flush()
 
 def print_message_time(text):
-    sys.stderr.write("   "+colour(get_timestamp(),"bold")+" "+colour(text,"green")+"\n")
+    sys.stderr.write("   "+colour(get_timestamp(),"bold")+" "+text+"\n")
     sys.stderr.flush()
 
 def print_error(text, exit = True):
