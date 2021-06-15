@@ -118,7 +118,7 @@ def append_A_option(list_files_raw, output, verbose, BIOM_output, directory):
         outfile.write(lines_print[c] + "\n")
 
     if output != "":
-        if verbose>2: sys.stderr.write(" [merge] (Saving the the merged profiles)\n")
+        if verbose>2: sys.stderr.write("   Saving the the merged profiles\n")
         try:
             outfile.flush()
             os.fsync(outfile.fileno())
@@ -151,9 +151,8 @@ def memory_map_public_profiles(verbose, environments_to_merge, public_profiles, 
                 samples_2_use.add(sample)
             else:
                 continue
-    if verbose > 2: sys.stderr.write(f" [merge] (Selected {len(samples_2_use)} public samples for merging)\n")
+    if verbose > 2: sys.stderr.write(f"\n   Selected {len(samples_2_use)} public samples for merging\n")
 
-    if verbose > 2: sys.stderr.write(f" [merge] (Extracting mOTUs from public samples)\n")
     with gzip.open(public_profiles, 'rt') as handle:
         handle.readline()
         handle.readline()
@@ -214,13 +213,14 @@ def append_profilings(directory, list_files, output, verbose, BIOM_output,versio
             sys.stderr.write("[E::merge] Error: failed to open directory: "+directory+"\n")
             sys.exit(1)
         list_files = sorted(list_files)
-        if verbose>2: sys.stderr.write(" [merge] Number of detected files: " +str(len(list_files))+"\n")
         first_file = list_files[0]#first_file = directory+list_files[0]
+
+    if verbose>2: sys.stderr.write("   Number of detected files: " +str(len(list_files))+"\n")
 
     if len(environments_to_merge) > 0:
         list_files_public = memory_map_public_profiles(verbose, environments_to_merge, public_profiles, public_profiles_envo)
         list_files = list_files + list_files_public
-        if verbose > 2: sys.stderr.write(" [merge] Number of detected files including public profiles: " + str(len(list_files)) + "\n")
+        if verbose > 2: sys.stderr.write("   Number of detected files including public profiles: " + str(len(list_files)) + "\n")
 
     # first file to get informations
     if verbose>=5: sys.stderr.write("[merge] Opening file: "+first_file+"\n")
@@ -453,7 +453,7 @@ def append_profilings(directory, list_files, output, verbose, BIOM_output,versio
 
 
     if output != "":
-        if verbose>2: sys.stderr.write(" [merge] (Saving the the merged profiles)\n")
+        if verbose>2: sys.stderr.write("   Saving the the merged profiles\n")
         try:
             outfile.flush()
             os.fsync(outfile.fileno())

@@ -1755,20 +1755,21 @@ def main(argv=None):
     # --------------------------------------------------------------------------
     if args.command == 'merge':
         initial_start_time = time.time()
-        if args.verbose>2: sys.stderr.write("[main]  MERGE -----------\n")
+        if args.verbose>2:
+            log.print_log("Merge taxonomic profiles")
         # check that there is at least one input
         if (args.directory_append is None) and (args.listInputFiles is None):
-            slog.print_error("input option missing")
+            log.print_error("input option missing")
 
         # check that we dont have both inputs
         if (args.directory_append is not None) and (args.listInputFiles is not None):
             log.print_error("too many inputs (-i and -d)")
 
         if (args.listInputFiles is not None):
-            if args.verbose>2: sys.stderr.write(" [merge] Merge all the files in the list of input\n")
+            if args.verbose>2: log.print_message("Merge all the files in the list of input")
 
         if args.directory_append is not None:
-            if args.verbose>2: sys.stderr.write(" [merge] Merge all the files in the directory\n")
+            if args.verbose>2: log.print_message("Merge all the files in the input directory")
             if (args.directory_append[-1]!="/"):
                 args.directory_append = args.directory_append + "/"
         environments_to_merge = []
@@ -1790,7 +1791,8 @@ def main(argv=None):
         append.append_profilings(args.directory_append, args.listInputFiles, args.output, args.verbose, args.BIOM_output,version_append,motu_call,version_tool, environments_to_merge, public_profiles, public_profiles_envo)
 
         if args.verbose>2:
-            sys.stderr.write("[main] Total time merge: " + str("{0:.2f}".format(time.time() - initial_start_time))+" sec\n")
+            log.print_log("Finished computation")
+            log.print_log("Total time: "+ str("{0:.2f}".format(time.time() - initial_start_time))+" sec")
 
 
     return 0        # success
