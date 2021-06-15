@@ -17,8 +17,8 @@ import errno
 
 # ------------------------------------------------------------------------------
 # global variables
-tot_num_reads = 0
-num_filt_reads = 0
+tot_num_reads = set()
+num_filt_reads = set()
 
 # ------------------------------------------------------------------------------
 # function to check if a specific tool exists
@@ -119,7 +119,8 @@ def runBWA_singleEnd(strFilteredReadFile, reference, msamPercID, msamminLength, 
             #filter lines
             line = line.decode('ascii')
             if line[0]!="@": # header
-                tot_num_reads = tot_num_reads + 1
+                read_name = line.split("\t")[0]
+                tot_num_reads.add(read_name)
                 arr = line.split("\t")
                 if not((arr[1] == '4') or (arr[2] == '*') or (arr[5] == '*')):
                     len_seq = 0
@@ -152,7 +153,7 @@ def runBWA_singleEnd(strFilteredReadFile, reference, msamPercID, msamminLength, 
                         flag3 = True
 
                     if flag1 and flag2 and flag3:
-                        num_filt_reads = num_filt_reads + 1
+                        num_filt_reads.add(read_name)
                         yield line
 
         #check that bzip finished correctly
@@ -183,8 +184,8 @@ def runBWA_singleEnd(strFilteredReadFile, reference, msamPercID, msamminLength, 
 def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, output, bamOutput, msam_script,technology, verbose, profile_mode, lane_id, msamminLength_from_motus):
     global tot_num_reads
     global num_filt_reads
-    tot_num_reads = 0
-    num_filt_reads = 0
+    tot_num_reads = set()
+    num_filt_reads = set()
 
     # parameters for msamtools are fixed
     msamPercID = 0.97
@@ -264,8 +265,8 @@ def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, o
         if verbose>2: sys.stderr.write("     map single reads: " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
 
     # print number of reads
-    if verbose>2: sys.stderr.write("   Total number of sam lines: " + str(tot_num_reads)+"\n")
-    if verbose>2: sys.stderr.write("   Number of sam lines after filtering: " +str(num_filt_reads) + " (" + str("{0:.2f}".format(num_filt_reads/tot_num_reads*100))+" percent)\n")
+    if verbose>2: sys.stderr.write("   Total number of reads: " + str(len(tot_num_reads))+"\n")
+    if verbose>2: sys.stderr.write("   Number of reads after filtering: " +str(len(num_filt_reads)) + " (" + str("{0:.2f}".format(len(num_filt_reads)/len(tot_num_reads)*100))+" percent)\n")
     # if we are running this as profile mode, then we return the list of the sam lines
     # without the header.
     if profile_mode:
