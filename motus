@@ -672,15 +672,12 @@ def main(argv=None):
 
     # check if CAMI output interfer with other parameters ----------------------
     if (args.CAMI_output != "no_CAMI") and args.BIOM_output:
-        sys.stderr.write("[E::main] Error: cannot print result with both -B and -C.\n")
-        sys.exit(1)
+        log.print_error("cannot print result with both -B and -C.")
     # check other output options
     if (args.CAMI_output != "no_CAMI") and args.print_all_taxa:
-        sys.stderr.write("[E::main] Error: cannot print result with both -A and -C.\n")
-        sys.exit(1)
+        log.print_error("cannot print result with both -A and -C.")
     if args.BIOM_output and args.print_all_taxa:
-        sys.stderr.write("[E::main] Error: cannot print result with both -A and -B.\n")
-        sys.exit(1)
+        log.print_error("cannot print result with both -A and -B.")
 
 
 
@@ -692,11 +689,9 @@ def main(argv=None):
     # --------------------------------------------------------------------------
     if args.command == 'snv_call':
         if args.directory_append is None:
-            sys.stderr.write("[E::main] Error: -d is missing\n")
-            sys.exit(1)
+            log.print_error("-d is missing")
         if args.output == "":
-            sys.stderr.write("[E::main] Error: -o is missing\n")
-            sys.exit(1)
+            log.print_error("-o is missing")
         # set threads to 1
         args.threads = 1
 
@@ -709,8 +704,8 @@ def main(argv=None):
         reference = DATABASE+"/"+DATABASE_prefix+"_DB_CEN.fasta"
         annotation = DATABASE+"/"+DATABASE_prefix+"_DB_CEN.fasta.annotations"
         if not os.path.isfile(annotation):
-            sys.stderr.write("[E::main] The annotation file %s does not exist. Create annotation file with the get.annotations.py command from the metaSNV package\n" % (annotation))
-            sys.exit(1)
+            error_text = "The annotation file "+annotation+" does not exist. Create annotation file with the get.annotations.py command from the metaSNV package"
+            log.print_error(error_text)
         bamdir = args.directory_append
         fb = args.fb
         fd = args.fd
@@ -722,8 +717,7 @@ def main(argv=None):
         sample_file = os.path.abspath(os.path.join(bamdir, 'sample_list'))
         outdir = os.path.abspath(args.output)
         if os.path.exists(outdir):
-            sys.stderr.write("[E::main] The output directory already exists: %s Existing. Delete and restart\n" % (outdir))
-            sys.exit(1)
+            log.print_error("The output directory already exists: "+outdir+" Existing. Delete and restart")
         msnv_log_file = os.path.abspath(os.path.join(outdir, 'metaSNV.log'))
         if (args.verbose>=2): sys.stderr.write("[main] metaSNV stderr/stdout log file: %s\n" % (msnv_log_file))
     # --------------------------------------------------------------------------
@@ -739,8 +733,7 @@ def main(argv=None):
         bamfiles = [os.path.abspath(p) for p in glob.glob(os.path.join(bamdir, '*bam'))]
 
         if len(bamfiles) == 0:
-            sys.stderr.write("[E::main] No BAM files found in the input folder. Exiting\n")
-            sys.exit(0)
+            log.print_error("No BAM files found in the input folder.")
         with open(sample_file, 'w') as handle:
             for bamfile in bamfiles:
                 handle.write(bamfile + '\n')
@@ -763,9 +756,9 @@ def main(argv=None):
         mlf.write(stdout.decode('ascii') + '\n')
         mlf.write(stderr.decode('ascii') + '\n')
         if p.returncode:
-            sys.stderr.write("[E::main] metaSNV finished with an error. Exiting\n")
-            sys.stderr.write("[E::main] %s\n" %(stderr))
-            sys.stderr.write("[E::main] %s\n" %(stdout))
+            log.print_error("metaSNV finished with an error.", exit = False)
+            log.print_error(str(stderr), exit = False)
+            log.print_error(str(stdout), exit = False)
             mlf.close()
             sys.exit(1)
     # --------------------------------------------------------------------------
@@ -784,9 +777,9 @@ def main(argv=None):
         mlf.write(stdout.decode('ascii') + '\n')
         mlf.write(stderr.decode('ascii') + '\n')
         if p.returncode:
-            sys.stderr.write("[E::main] metaSNVFilter finished with an error. Exiting\n")
-            sys.stderr.write("[E::main] %s\n" %(stderr))
-            sys.stderr.write("[E::main] %s\n" %(stdout))
+            log.print_error("metaSNV finished with an error.", exit = False)
+            log.print_error(str(stderr), exit = False)
+            log.print_error(str(stdout), exit = False)
             mlf.close()
             sys.exit(1)
     # --------------------------------------------------------------------------
@@ -804,9 +797,9 @@ def main(argv=None):
         mlf.write(stdout.decode('ascii') + '\n')
         mlf.write(stderr.decode('ascii') + '\n')
         if p.returncode:
-            sys.stderr.write("[E::main] metaSNVRMPadded finished with an error. Exiting\n")
-            sys.stderr.write("[E::main] %s\n" %(stderr))
-            sys.stderr.write("[E::main] %s\n" %(stdout))
+            log.print_error("metaSNVRMPadded finished with an error.", exit = False)
+            log.print_error(str(stderr), exit = False)
+            log.print_error(str(stdout), exit = False)
             mlf.close()
             sys.exit(1)
     # --------------------------------------------------------------------------
@@ -824,9 +817,9 @@ def main(argv=None):
         mlf.write(stdout.decode('ascii') + '\n')
         mlf.write(stderr.decode('ascii') + '\n')
         if p.returncode:
-            sys.stderr.write("[E::main] metaSNVDist finished with an error. Exiting\n")
-            sys.stderr.write("[E::main] %s\n" %(stderr))
-            sys.stderr.write("[E::main] %s\n" %(stdout))
+            log.print_error("metaSNVDist finished with an error.", exit = False)
+            log.print_error(str(stderr), exit = False)
+            log.print_error(str(stdout), exit = False)
             mlf.close()
             sys.exit(1)
     # --------------------------------------------------------------------------
@@ -846,7 +839,7 @@ def main(argv=None):
         # check if the 'distances' dir is empty
         dist_files = [os.path.abspath(p) for p in glob.glob(os.path.join(outdir, 'dist*/*dist'))]
         if len(dist_files) == 0 and args.verbose >= 2:
-            sys.stderr.write("[W::main] The result is empty\n")
+            log.print_warning("The result is empty")
 
 
         if (args.verbose>=2): sys.stderr.write("[main] End metaSNV\n")
@@ -909,14 +902,12 @@ def main(argv=None):
 
         # check that there is at least one file with reads
         if (args.forwardReads is None) and (args.reverseReads is None) and (args.singleReads is None) and (args.listInputFiles is None) and (args.motu_read_counts_file is None):
-            sys.stderr.write("[E::map_db] Error: input is missing. Please provide -f,-r or -s or -i or -m.\n")
-            sys.exit(1)
+            log.print_error("input is missing. Please provide -f,-r or -s or -i or -m.")
         # check that for and rev reads are present togehter
         if ((args.forwardReads is not None) and (args.reverseReads is None) and (args.listInputFiles is None) and (args.motu_read_counts_file is None)):
-            sys.stderr.write("[E::map_db] Error: reverse reads (-r) missing\n")
-            sys.exit(1)
+            log.print_error("reverse reads (-r) missing.")
         if ((args.forwardReads is None) and (args.reverseReads is not None) and (args.listInputFiles is None) and (args.motu_read_counts_file is None)):
-            sys.stderr.write("[E::map_db] Error: forward reads (-f) missing\n")
+            log.print_error("forward reads (-f) missing")
             sys.exit(1)
         # if we have -i bam/sam file, then we ignore the reads input
         if (args.listInputFiles is not None and (args.motu_read_counts_file is None)):
@@ -945,8 +936,7 @@ def main(argv=None):
             # ----check input: check number of files for forw and rev --------------
             if (args.forwardReads is not None):
                 if len(forw) != len(reve):
-                    sys.stderr.write("[E::map_db] Error: number of files for forward reads ("+str(len(forw))+") is different from number of files for reverse reads ("+str(len(reve))+")\n")
-                    sys.exit(1)
+                    log.print_error("number of files for forward reads ("+str(len(forw))+") is different from number of files for reverse reads ("+str(len(reve))+").")
 
             # ----check if use multicores and prepere data for multicores ----------
             if args.number_of_cores > 1:
@@ -1113,8 +1103,7 @@ def main(argv=None):
                     os.fsync(temp_file.fileno())
                     temp_file.close()
                 except:
-                    sys.stderr.write("[E::map_snv] Error saving the intermediate sam file, used for sorting\n")
-                    sys.exit(1)
+                    log.print_error("error saving the intermediate sam file, used for sorting")
 
                 if args.verbose>4: sys.stderr.write("   [man_snv] saving intermediate sam file in "+temp_file.name + "\n")
 
@@ -1133,11 +1122,9 @@ def main(argv=None):
                     if is_tool("samtools"):
                         convert_cmd = subprocess.call(convertCMD, stdout=outfile_bam, shell=True)
                     else:
-                        sys.stderr.write("[E::map_snv] Error: samtools is not in the path\n")
-                        sys.exit(1)
+                        log.print_error("samtools is not in the path")
                 except:
-                    sys.stderr.write("[E::map_snv] Error: couldn't save the sorted file\n")
-                    sys.exit(1)
+                    log.print_error("couldn't save the sorted file")
 
                 # remove temporary file1
                 os.remove(temp_file.name) #the file used before sorting
@@ -1148,15 +1135,13 @@ def main(argv=None):
                         os.fsync(outfile_bam.fileno())
                         outfile_bam.close()
                     except:
-                        sys.stderr.write("[E::map_snv] Error: failed to save the final bam/sam file\n")
-                        sys.exit(1)
+                        log.print_error("failed to save the final bam/sam file")
                     try:
                         #os.rename(outfile_bam.name,args.output) # atomic operation
                         shutil.move(outfile_bam.name,args.output) #It is not atomic if the files are on different filsystems.
                     except:
-                        sys.stderr.write("[E::map_snv] Error: failed to save the final bam/sam file\n")
-                        sys.stderr.write("[E::map_snv] you can find the file here:\n"+outfile_bam.name+"\n")
-                        sys.exit(1)
+                        log.print_error("failed to save the final bam/sam file",exit = True)
+                        log.print_error("you can find the file here:\n"+outfile_bam.name)
 
                 # print info
                 time_final_SNV = time.time()
@@ -1186,8 +1171,7 @@ def main(argv=None):
                     try:
                         h_file = open(header_file,'r')
                     except:
-                        sys.stderr.write("[E::map_db] Error loading file: "+header_file+"\n[E::map_db] Try to download again the motus profiler\n\n")
-                        sys.exit(1)
+                        log.print_error("error loading file: "+header_file+"\n[E::map_db] Try to download again the motus profiler")
 
                     # create the temp sam file with the result
                     try:
@@ -1212,7 +1196,7 @@ def main(argv=None):
                         for i in all_sam_lines:
                             sam_temp_file.write(i)
                     except:
-                        sys.stderr.write(" [W::map_db] Warning: failed to save intermediate bam file\n")
+                        if args.verbose>1: log.print_warning("failed to save intermediate bam file")
                         if args.verbose>4: sys.stderr.write("Error when saving the intermediate sam file\n")
                         error_save_intermediate_bam_file = True
 
@@ -1224,7 +1208,7 @@ def main(argv=None):
                     except:
                         if args.verbose>4: sys.stderr.write("Error when closing sam file\n")
                         if not error_save_intermediate_bam_file:
-                            sys.stderr.write(" [W::map_db] Warning: failed to save intermediate bam file\n")
+                            if args.verbose>1: log.print_warning("ailed to save intermediate bam file")
 
                     # convert to bam
                     try:
@@ -1237,13 +1221,13 @@ def main(argv=None):
                         stdout_s,stderr_s = convert_cmd.communicate()
                         if convert_cmd.returncode:
                             if not error_save_intermediate_bam_file:
-                                sys.stderr.write("[W::map_db] Warning: failed to save intermediate bam file\n")
-                                sys.stderr.write(stderr_s.decode('ascii'))
+                                if args.verbose>1: log.print_warning("failed to save intermediate bam file")
+                                if args.verbose>1: log.print_warning(stderr_s.decode('ascii'))
                                 sys.exit(1)
                     except:
                         if args.verbose>4: sys.stderr.write("Error when converting to bam\n")
                         if not error_save_intermediate_bam_file:
-                            sys.stderr.write(" [W::map_db] Warning: failed to save intermediate bam file\n")
+                            if args.verbose>1: log.print_warning("failed to save intermediate bam file")
 
                     # move the temp file to the final destination
                     try:
@@ -1252,8 +1236,8 @@ def main(argv=None):
                     except:
                         if args.verbose>4: sys.stderr.write("Error when copying intermediate bam to the final destination\n")
                         if not error_save_intermediate_bam_file:
-                            sys.stderr.write(" [W::map_db] Warning: failed to save intermediate bam file\n")
-                            sys.stderr.write(" [W::map_db] you can find the file here:\n"+bam_temp_file.name+"\n")
+                            if args.verbose>1: log.print_warning("failed to save intermediate bam file")
+                            if args.verbose>1: log.print_warning("you can find the file here:\n"+bam_temp_file.name)
 
                     # remove the temporary sam file
                     os.remove(sam_temp_file.name)
@@ -1263,7 +1247,7 @@ def main(argv=None):
 
 
                 else:
-                    sys.stderr.write("[E::main] Error: samtools is not in the path. The intemediate bam file (-I) was not saved.\n")
+                    if args.verbose>1: log.print_warning("samtools is not in the path. The intemediate bam file (-I) was not saved")
 
             if args.verbose>2:
                 time_after_bwa = time.time()
@@ -1323,14 +1307,14 @@ def main(argv=None):
                 for kk in listInputFiles:
                     l_temp = motu_utilities.read_length_from_bam_file(kk)
                     if l_temp is None:
-                        if args.verbose>1: sys.stderr.write("[W::main] Warning: Cannot find the average read length for the file: "+kk+"\n")
+                        if args.verbose>1: log.print_warning("Cannot find the average read length for the file: "+kk)
                     else:
                         all_length_avg.append(l_temp)
                 # if we are inside this if, then reads_avg_length is not present and we create it here
                 if len(all_length_avg) != 0:
                     reads_avg_length = int(sum(all_length_avg) / float(len(all_length_avg)))
                 else:
-                    if args.verbose>1: sys.stderr.write("[W::main] Warning: no file with information of the length of the reads\n")
+                    if args.verbose>1: log.print_warning("no file with information of the length of the reads")
                     reads_avg_length = "unknown" # if we dont know the average length of the file, we set it to 100
 
 
@@ -1338,7 +1322,7 @@ def main(argv=None):
             min_len_align = args.min_len_align_length
             if reads_avg_length != "unknown":
                 if reads_avg_length < min_len_align:
-                    if args.verbose>1: sys.stderr.write("[W::main] Warning. Average read length ("+str(reads_avg_length)+") is lower than the -l filter ("+str(min_len_align)+"). We suggest to decrease the value of -l\n")
+                    if args.verbose>1: log.print_warning("Average read length ("+str(reads_avg_length)+") is lower than the -l filter ("+str(min_len_align)+"). We suggest to decrease the value of -l")
 
             if args.verbose>3: sys.stderr.write("[main] Minimum alignment length: "+str(min_len_align)+" (average read length: "+str(reads_avg_length)+")\n")
 
@@ -1379,7 +1363,7 @@ def main(argv=None):
                     for m, value in sorted(mOTU_counts.items()):
                         mgc_temp_file.write("{0}\t{1:.10f}\n".format(m, value))
                 except:
-                    sys.stderr.write("[W::main] Warning: failed to save the intermediate mgc table\n")
+                    if args.verbose>1: log.print_warning("failed to save the intermediate mgc table")
 
 
                 try:
@@ -1387,13 +1371,13 @@ def main(argv=None):
                     os.fsync(mgc_temp_file.fileno())
                     mgc_temp_file.close()
                 except:
-                    sys.stderr.write("[W::main] Warning: failed to save the intermediate mgc table\n")
+                    if args.verbose>1: log.print_warning("failed to save the intermediate mgc table\n")
                 try:
                     #os.rename(mgc_temp_file.name,args.profile_mOTU_reads_file) # atomic operation
                     shutil.move(mgc_temp_file.name,args.profile_mOTU_reads_file) #It is not atomic if the files are on different filsystems.
                 except:
-                    sys.stderr.write("[W::main] Warning: failed to save the intermediate mgc table\n")
-                    sys.stderr.write("[W::main] you can find the file here:\n"+mgc_temp_file.name+"\n")
+                    if args.verbose>1: log.print_warning("failed to save the intermediate mgc table")
+                    if args.verbose>1: log.print_warning("you can find the file here:\n"+mgc_temp_file.name)
 
                 if args.verbose>2: sys.stderr.write("[main] (Save mgc abundance table) " + str("{0:.2f}".format(time.time() - start_time_save_motu))+" sec\n")
 
@@ -1477,15 +1461,12 @@ def main(argv=None):
 
         # check that there is at least one file with reads
         if (args.forwardReads is None) and (args.reverseReads is None) and (args.singleReads is None):
-            sys.stderr.write("[E::map_db] Error: input is missing. Please provide -f,-r or -s\n")
-            sys.exit(1)
+            log.print_error("input is missing. Please provide -f,-r or -s")
         # check that for and rev reads are present togehter
         if ((args.forwardReads is not None) and (args.reverseReads is None) and (args.listInputFiles is None) and (args.motu_read_counts_file is None)):
-            sys.stderr.write("[E::map_db] Error: reverse reads (-r) missing\n")
-            sys.exit(1)
+            log.print_error("reverse reads (-r) missing")
         if ((args.forwardReads is None) and (args.reverseReads is not None) and (args.listInputFiles is None) and (args.motu_read_counts_file is None)):
-            sys.stderr.write("[E::map_db] Error: forward reads (-f) missing\n")
-            sys.exit(1)
+            log.print_error("forward reads (-f) missing")
 
         # ---------------------- divide the lanes ------------------------------
         singles = list()
@@ -1501,8 +1482,7 @@ def main(argv=None):
         # ----check input: check number of files for forw and rev --------------
         if (args.forwardReads is not None):
             if len(forw) != len(reve):
-                sys.stderr.write("[E::map_db] Error: number of files for forward reads ("+str(len(forw))+") is different from number of files for reverse reads ("+str(len(reve))+")\n")
-                sys.exit(1)
+                log.print_error("number of files for forward reads ("+str(len(forw))+") is different from number of files for reverse reads ("+str(len(reve))+")")
 
         # ----check if use multicores and prepere data for multicores ----------
         if args.number_of_cores > 1:
@@ -1513,9 +1493,9 @@ def main(argv=None):
         # check that we have the same number
         #of cores as the number of lanes
         if args.number_of_cores > number_of_lanes:
-            if args.verbose >= 2: sys.stderr.write(" [W::map_db] Warning: We use only "+str(number_of_lanes)+" out of "+str(args.number_of_cores)+" cores\n")
+            if args.verbose >= 2: log.print_warning("We use only "+str(number_of_lanes)+" out of "+str(args.number_of_cores)+" cores")
         if args.number_of_cores < number_of_lanes and args.number_of_cores != 1:
-            if args.verbose >= 2: sys.stderr.write(" [W::map_db] Warning: multiple cores computation is implemented only if the number of cores is equal to the number of lanes ("+str(number_of_lanes)+"). Set -CC "+str(number_of_lanes)+"\n")
+            if args.verbose >= 2: log.print_warning("multiple cores computation is implemented only if the number of cores is equal to the number of lanes ("+str(number_of_lanes)+"). Set -CC "+str(number_of_lanes))
             multiple_cores = False
         #prepare data
         if multiple_cores:
@@ -1618,8 +1598,7 @@ def main(argv=None):
             initial_start_time = time.time()
 
         if (args.listInputFiles is None):
-            sys.stderr.write("[calc_mgc] Please provide at least one input file.\n")
-            sys.exit(1)
+            log.print_error("Please provide at least one input file")
 
         listInputFiles = args.listInputFiles.split(",")
         database_prefix = DATABASE_prefix
@@ -1642,7 +1621,7 @@ def main(argv=None):
             if filter_l_temp is not None:
                 if args.verbose>5: sys.stderr.write("Map_tax used -l "+str(filter_l_temp)+"\n")
                 if args.min_len_align_length < filter_l_temp:
-                    if args.verbose>1: sys.stderr.write("[W::main] Warning: The bam input file was filtered with -l "+str(filter_l_temp)+". If you want to set a lower value for -l, you have to run profile again from the fastq files\n")
+                    if args.verbose>1: log.print_warning("the bam input file was filtered with -l "+str(filter_l_temp)+". If you want to set a lower value for -l, you have to run profile again from the fastq files")
 
 
         # we have to check what is the average length of the reads
@@ -1650,20 +1629,20 @@ def main(argv=None):
         for kk in listInputFiles:
             l_temp = motu_utilities.read_length_from_bam_file(kk)
             if l_temp is None:
-                if args.verbose>1: sys.stderr.write("[W::main] Warning: Cannot find the average read length for the file: "+kk+"\n")
+                if args.verbose>1: log.print_warning("Cannot find the average read length for the file: "+kk)
             else:
                 all_length_avg.append(l_temp)
         # if we are inside this if, then reads_avg_length is not present and we create it here
         if len(all_length_avg) != 0:
             reads_avg_length = int(sum(all_length_avg) / float(len(all_length_avg)))
         else:
-            if args.verbose>1: sys.stderr.write("[W::main] Warning: no file with information of the length of the reads\n")
+            if args.verbose>1: log.print_warning("no file with information of the length of the reads")
             reads_avg_length = "unknown" # if we dont know the average length of the file, we set it to 100
         # choose the proper valur for min_len_align -------------------
         min_len_align = args.min_len_align_length
         if reads_avg_length != "unknown":
             if reads_avg_length < min_len_align:
-                if args.verbose>1: sys.stderr.write("[W::main] Warning. Average read length ("+str(reads_avg_length)+") is lower than the -l filter ("+str(min_len_align)+"). We suggest to decrease the value of -l\n")
+                if args.verbose>1: log.print_warning("Average read length ("+str(reads_avg_length)+") is lower than the -l filter ("+str(min_len_align)+"). We suggest to decrease the value of -l")
 
         if args.verbose>2: sys.stderr.write("[main] Minimum alignment length: "+str(min_len_align)+" (average read length: "+str(reads_avg_length)+")\n")
 
@@ -1701,8 +1680,7 @@ def main(argv=None):
             for i in mOTU_counts:
                 outfile.write(i+"\t"+str(mOTU_counts[i])+"\n")
         except:
-            sys.stderr.write("[E::main] Error: failed to save the mgc table\n")
-            sys.exit(1)
+            log.print_error("failed to save the mgc table")
 
         if args.output != "":
             try:
@@ -1710,14 +1688,13 @@ def main(argv=None):
                 os.fsync(outfile.fileno())
                 outfile.close()
             except:
-                sys.stderr.write("[E::main] Error: failed to save the intermediate mgc table\n")
-                sys.exit(1)
+                log.print_error("failed to save the intermediate mgc table")
             try:
                 #os.rename(outfile.name,args.output) # atomic operation
                 shutil.move(outfile.name,args.output) #It is not atomic if the files are on different filsystems.
             except:
-                sys.stderr.write("[E::main] Error: failed to save the intermediate mgc table\n")
-                sys.stderr.write("[E::main] you can find the file here:\n"+outfile.name+"\n")
+                log.print_error("failed to save the intermediate mgc table",exit = False)
+                log.print_error("you can find the file here:\n"+outfile.name, exit = False)
                 sys.exit(1)
 
         if args.verbose>2:
@@ -1740,8 +1717,7 @@ def main(argv=None):
             sys.stderr.write("[main]  CALC_MOTU -----------\n")
             initial_start_time = time.time()
         if (args.listInputFiles is None):
-            sys.stderr.write("[calc_motu] Please provide at least one input file.\n")
-            sys.exit(1)
+            log.print_error("Please provide at least one input file")
 
         database_dir = DATABASE+"/"
         LGs_map = database_dir+DATABASE_prefix+"_MAP_MGCs_to_mOTUs.tsv"
@@ -1758,8 +1734,7 @@ def main(argv=None):
         infile = args.listInputFiles
         mgc_table_header=""
         if not os.path.isfile(infile):
-            sys.stderr.write("[E::main] Error: "+infile+': No such file.\n')
-            sys.exit(1)
+            log.print_error(infile+': No such file')
 
         if args.verbose>2: sys.stderr.write(" [calc_motu] (Create taxonomy profile)\n")
 
@@ -1783,13 +1758,11 @@ def main(argv=None):
         if args.verbose>2: sys.stderr.write("[main]  MERGE -----------\n")
         # check that there is at least one input
         if (args.directory_append is None) and (args.listInputFiles is None):
-            sys.stderr.write("[E::merge] Error: input option missing\n")
-            sys.exit(1)
+            slog.print_error("input option missing")
 
         # check that we dont have both inputs
         if (args.directory_append is not None) and (args.listInputFiles is not None):
-            sys.stderr.write("[E::merge] Error: too many inputs (-i and -d)\n")
-            sys.exit(1)
+            log.print_error("too many inputs (-i and -d)")
 
         if (args.listInputFiles is not None):
             if args.verbose>2: sys.stderr.write(" [merge] Merge all the files in the list of input\n")
@@ -1806,8 +1779,7 @@ def main(argv=None):
 
             for envo in args.append_profiles.split(','):
                 if envo not in allowed_envo:
-                    sys.stderr.write("[E::merge] Error: Unknown environment " + envo + "\n")
-                    sys.exit(1)
+                    log.print_error("Unknown environment " + envo)
                 if envo == 'all':
                     environments_to_merge = ['all']
                     break

@@ -65,7 +65,7 @@ def print_message_time(text):
     sys.stderr.flush()
 
 def print_error(text, exit = True):
-    sys.stderr.write("   "+colour("Error: ","red_bold")+colour(text,"red")+"\n")
+    sys.stderr.write(colour("Error: ","red_bold")+colour(text,"red")+"\n")
     sys.stderr.flush()
     if exit:
         sys.exit(1)
