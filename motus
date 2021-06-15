@@ -1276,9 +1276,9 @@ def main(argv=None):
         if args.motu_read_counts_file is None:
 
             if args.verbose>2:
-                log.print_log("Aggregate reads from the same marker gene cluster (MGC)")
+                log.print_log("Aggregate inserts by marker gene cluster (MGC)")
                 log.print_message("Gene sequences with high similarity are clustered into marker gene clusters (MGCs).")
-                log.print_message("Read counts from the different sequences that belong to the same MGC are summed up together.\n")
+                log.print_message("Marker genes clusters are quantified by insert alignments on their member genes.\n")
 
                 log.print_message("Reads can either map preferably to one MGC ('Unique' mappers), or map to multiple reference")
                 log.print_message("genes with the same quality ('Multiple' mappers).\n")
@@ -1408,7 +1408,7 @@ def main(argv=None):
         if args.verbose>2:
             log.print_log("Calculate mOTUs read counts")
             log.print_message("Each mOTU species is composed of 6 to 10 MGCs.")
-            log.print_message("The final mOTU read count is obtained as the median of its MGC read counts.\n")
+            log.print_message("The final mOTU insert count is obtained as the median of its MGC read counts.\n")
 
             log.print_message("At least "+str(args.map_lgs_cutoff)+" (-g) MGCs are required to have reads mapping to them to consider a mOTU.\n")
 

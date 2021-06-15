@@ -243,7 +243,7 @@ def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, o
         # sort for and rev
         if verbose>2: start_time = time.time()
         mapped_sam_lines.sort()
-        if verbose>2: sys.stderr.write("     sort reads: " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
+        if verbose>2: sys.stderr.write("     sort alignments: " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
 
 
     # computation single -------------------------------------------------------
@@ -265,7 +265,7 @@ def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, o
 
     # print number of reads
     if verbose>2: sys.stderr.write("   Total number of sam lines: " + str(tot_num_reads)+"\n")
-    if verbose>2: sys.stderr.write("   Number sam lines after filtering: " +str(num_filt_reads) + " (" + str("{0:.2f}".format(num_filt_reads/tot_num_reads*100))+" percent)\n")
+    if verbose>2: sys.stderr.write("   Number of sam lines after filtering: " +str(num_filt_reads) + " (" + str("{0:.2f}".format(num_filt_reads/tot_num_reads*100))+" percent)\n")
     # if we are running this as profile mode, then we return the list of the sam lines
     # without the header.
     if profile_mode:
