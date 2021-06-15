@@ -124,16 +124,29 @@ except:
     sys.stderr.write("[E::main] Error: "+relative_path+"bin directory is missing.\n[E::main] Download the motus profiler again\n\n")
     sys.exit(1)
 
-# add the log
-try:
-    import UTIL_log_col as log
-except:
-    # in case the colour format is not accepted, we load one that do not use colours
+# add the log ------------
+do_not_use_colour = False
+for i in range(len(sys.argv)):
+    arg_this = sys.argv[i]
+    if arg_this == "--no_colour":
+        do_not_use_colour = True
+if do_not_use_colour:
     try:
         import UTIL_log as log
     except:
         sys.stderr.write("[E::main] Error: fail to load the script: "+relative_path+"bin/UTIL_log.py\n[E::main] Download the motus profiler again\n\n")
         sys.exit(1)
+else:
+    try:
+        import UTIL_log_col as log
+    except:
+        # in case the colour format is not accepted, we load one that do not use colours
+        try:
+            import UTIL_log as log
+        except:
+            sys.stderr.write("[E::main] Error: fail to load the script: "+relative_path+"bin/UTIL_log.py\n[E::main] Download the motus profiler again\n\n")
+            sys.exit(1)
+
 
 try:
     import map_genes_to_mOTUs as map_motu
@@ -388,6 +401,7 @@ def main(argv=None):
     parser.add_argument('--split_cami_file', action="store", default=None,dest='cami_file_to_split', help='split a gzipped CAMI file into two fzipped for and rev files')
     parser.add_argument('--remove_strain_from_cami_profile', action="store_true", default=None,dest='remove_strain_cami', help='in the cami header, do not print |strain')
     parser.add_argument('--remove_cami_comments', action="store_true", default=None,dest='remove_cami_comments', help='remove comments from the beginning of a cami profile')
+    parser.add_argument('--no_colour', action='store_true', default=None, dest='no_colour', help='Do not use colours for the interface')
 
 
     args = parser.parse_args()
