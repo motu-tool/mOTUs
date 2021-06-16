@@ -204,7 +204,6 @@ def append_profilings(directory, list_files, output, verbose, BIOM_output,versio
     global log
     log = log_
     #--------------------------- save files ------------------------------------
-    log.print_error("sfsd")
     if directory is None and list_files is None:
         sys.stderr.write("[E::merge] Error: both -d and -i are empty")
         sys.exit(1)
