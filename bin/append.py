@@ -14,6 +14,8 @@ import shutil
 import datetime
 import re
 
+log = ""
+
 #function that detect the python version
 def python_version():
     if(sys.version_info >= (3,0,0)):
@@ -118,7 +120,7 @@ def append_A_option(list_files_raw, output, verbose, BIOM_output, directory):
         outfile.write(lines_print[c] + "\n")
 
     if output != "":
-        if verbose>2: sys.stderr.write("   Saving the the merged profiles\n")
+        if verbose>2: sys.stderr.write("   Saving the merged profiles\n")
         try:
             outfile.flush()
             os.fsync(outfile.fileno())
@@ -135,9 +137,10 @@ def append_A_option(list_files_raw, output, verbose, BIOM_output, directory):
             sys.exit(1)
 
 
-
+# ------------------------------------------------------------------------------
+# merge function for metaphlan like output
 def memory_map_public_profiles(verbose, environments_to_merge, public_profiles, public_profiles_envo):
-    sample_header = '# git tag version 2.6.0 |  motus version 2.6.0 | map_tax 2.6.0 | gene database: nr2.6.0 | calc_mgc 2.6.0 -y insert.scaled_counts -l 75 | calc_motu 2.6.0 -k mOTU -C no_CAMI -g 3 -c | taxonomy: ref_mOTU_2.6.0 meta_mOTU_2.6.0\n# call: python mOTUs_v2/motus profile -n {} -s m.fq.gz,s.fq.gz -f r1.fq.gz -r r2.fq.gz -c\n#consensus_taxonomy	{}\n'
+    sample_header = '# git tag version 3.0.0 |  motus version 3.0.0 | map_tax 3.0.0 | gene database: nr3.0.0 | calc_mgc 3.0.0 -y insert.scaled_counts -l 75 | calc_motu 3.0.0 -k mOTU -C no_CAMI -g 3 -c | taxonomy: ref_mOTU_3.0.0 meta_mOTU_3.0.0\n# call: python mOTUs_v2/motus profile -n {} -s m.fq.gz,s.fq.gz -f r1.fq.gz -r r2.fq.gz -c\n#consensus_taxonomy	{}\n'
     samples_2_use = set()
     import gzip
     with gzip.open(public_profiles_envo, 'rt') as handle:
@@ -196,8 +199,12 @@ def memory_map_public_profiles(verbose, environments_to_merge, public_profiles, 
 
 # ------------------------------------------------------------------------------
 # MAIN MERGE FUNCTION
-def append_profilings(directory, list_files, output, verbose, BIOM_output,version_append,motu_call,version_tool, environments_to_merge, public_profiles, public_profiles_envo):
+def append_profilings(directory, list_files, output, verbose, BIOM_output,version_append,motu_call,version_tool, environments_to_merge, public_profiles, public_profiles_envo, log_):
+    # set up log
+    global log
+    log = log_
     #--------------------------- save files ------------------------------------
+    log.print_error("sfsd")
     if directory is None and list_files is None:
         sys.stderr.write("[E::merge] Error: both -d and -i are empty")
         sys.exit(1)
@@ -453,7 +460,7 @@ def append_profilings(directory, list_files, output, verbose, BIOM_output,versio
 
 
     if output != "":
-        if verbose>2: sys.stderr.write("   Saving the the merged profiles\n")
+        if verbose>2: sys.stderr.write("   Saving the merged profiles\n")
         try:
             outfile.flush()
             os.fsync(outfile.fileno())

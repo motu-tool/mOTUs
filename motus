@@ -1788,7 +1788,7 @@ def main(argv=None):
                     environments_to_merge.append(envo)
 
 
-        append.append_profilings(args.directory_append, args.listInputFiles, args.output, args.verbose, args.BIOM_output,version_append,motu_call,version_tool, environments_to_merge, public_profiles, public_profiles_envo)
+        append.append_profilings(args.directory_append, args.listInputFiles, args.output, args.verbose, args.BIOM_output,version_append,motu_call,version_tool, environments_to_merge, public_profiles, public_profiles_envo, log)
 
         if args.verbose>2:
             log.print_log("Finished computation")
