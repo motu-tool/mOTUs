@@ -341,9 +341,9 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
             if type_c == "ext":
                 if rel_ab_LGs_rel[motu] > 0:
                     n_ext_m = n_ext_m + 1
-    sys.stderr.write("     Number of ref-mOTUs:  " + str(n_ref_m) + '\n')
-    sys.stderr.write("     Number of meta-mOTUs: " + str(n_meta_m) + '\n')
-    sys.stderr.write("     Number of ext-mOTUs:  " + str(n_ext_m) + '\n')
+    if verbose>2: sys.stderr.write("     Number of ref-mOTUs:  " + str(n_ref_m) + '\n')
+    if verbose>2: sys.stderr.write("     Number of meta-mOTUs: " + str(n_meta_m) + '\n')
+    if verbose>2: sys.stderr.write("     Number of ext-mOTUs:  " + str(n_ext_m) + '\n')
 
 
     # general print
