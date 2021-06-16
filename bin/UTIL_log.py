@@ -53,11 +53,13 @@ Command:
       merge       Merge different taxonomic profiles to create a table
 
       map_tax     Map reads to the marker gene database
-      calc_mgc    Aggregate reads from the same marker gene cluster (mgc)
+      calc_mgc    Aggregate reads from the same marker gene cluster (mgc) and
+                  generate mgc abundance table
       calc_motu   From a mgc abundance table, produce the mOTU abundance table
 
  -- SNV calling
-      map_snv     Map reads to create bam/sam file for snv calling
+      map_snv     Map reads to the centroid marker gene database and create a
+                  bam/sam file for snv calling
       snv_call    SNV calling using metaSNV
 
 Type motus <command> to print the help for a specific command
@@ -204,9 +206,9 @@ def print_menu_append():
     sys.stderr.write("\n")
     sys.stderr.write("Usage: motus merge [options]\n\n")
     sys.stderr.write("Input options:\n")
-    sys.stderr.write("   -i STR[,STR]  list of files (comma separated)\n")
+    sys.stderr.write("   -i STR[,STR]  list of mOTU profiles to merge (comma separated)\n")
     sys.stderr.write("   -d DIR        merge all the files in the directory\n")
-    sys.stderr.write("   -a STR[,STR]  Add public profiles from different environments. [all, air, bioreactor, bee, cat, \n\t\t cattle, chicken, dog, fish, freshwater, human, \n\t\t marine, mouse, pig, sheep, soil, termite, wastewater]\n\n")
+    sys.stderr.write("   -a STR[,STR]  Add public profiles from different environments.\n                 Values: [all, air, bioreactor, bee, cat,\n                 cattle, chicken, dog, fish, freshwater, human, \n                 marine, mouse, pig, sheep, soil, termite, wastewater]\n\n")
     sys.stderr.write("Output options:\n")
     sys.stderr.write("   -o FILE       output file name [stdout]\n")
     sys.stderr.write("   -B            print result in BIOM format\n\n")

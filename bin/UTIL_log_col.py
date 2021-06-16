@@ -100,11 +100,13 @@ def msg(version_tool):
 '''+colour("      merge","cyan")+'''       Merge different taxonomic profiles to create a table
 
 '''+colour("      map_tax","cyan")+'''     Map reads to the marker gene database
-'''+colour("      calc_mgc","cyan")+'''    Aggregate reads from the same marker gene cluster (mgc)
+'''+colour("      calc_mgc","cyan")+'''    Aggregate reads from the same marker gene cluster (mgc) and
+                  generate mgc abundance table
 '''+colour("      calc_motu","cyan")+'''   From a mgc abundance table, produce the mOTU abundance table
 
 '''+colour("-- SNV calling","bold")+'''
-'''+colour("      map_snv","cyan")+'''     Map reads to create bam/sam file for snv calling
+'''+colour("      map_snv","cyan")+'''     Map reads to the centroid marker gene database and create a
+                  bam/sam file for snv calling
 '''+colour("      snv_call","cyan")+'''    SNV calling using metaSNV
 
 Type motus <command> to print the help for a specific command
@@ -249,9 +251,9 @@ def print_menu_append():
     sys.stderr.write("\n")
     sys.stderr.write(colour("Usage:","blue_bold")+" motus merge [options]\n\n")
     sys.stderr.write(colour("Input options:\n","bold"))
-    sys.stderr.write("   "+colour("-i ","blue_bold")+" STR[,STR]  list of files (comma separated)\n")
+    sys.stderr.write("   "+colour("-i ","blue_bold")+" STR[,STR]  list of mOTU profiles to merge (comma separated)\n")
     sys.stderr.write("   "+colour("-d ","blue_bold")+" DIR        merge all the files in the directory\n")
-    sys.stderr.write("   "+colour("-a ","blue_bold")+" STR[,STR]  Add public profiles from different environments. [all, air, bioreactor, bee, cat, \n\t\t cattle, chicken, dog, fish, freshwater, human, \n\t\t marine, mouse, pig, sheep, soil, termite, wastewater]\n\n")
+    sys.stderr.write("   "+colour("-a ","blue_bold")+" STR[,STR]  Add public profiles from different environments.\n                  Values: [all, air, bioreactor, bee, cat,\n                  cattle, chicken, dog, fish, freshwater, human, \n                  marine, mouse, pig, sheep, soil, termite, wastewater]\n\n")
     sys.stderr.write(colour("Output options:\n","bold"))
     sys.stderr.write("   "+colour("-o ","blue_bold")+" FILE       output file name "+colour("[stdout]","magenta")+"\n")
     sys.stderr.write("   "+colour("-B ","blue_bold")+"            print result in BIOM format\n\n")
