@@ -1261,11 +1261,11 @@ def main(argv=None):
 
             if args.verbose>2:
                 log.print_log("Aggregate inserts by marker gene cluster (MGC)")
-                log.print_message("Gene sequences with high similarity are clustered into marker gene clusters (MGCs).")
+                log.print_message("Gene sequences with high similarity were clustered into marker gene clusters (MGCs).")
                 log.print_message("Marker genes clusters are quantified by insert alignments on their member genes.\n")
 
-                log.print_message("Reads can either map preferably to one MGC ('Unique' mappers), or map to multiple reference")
-                log.print_message("genes with the same quality ('Multiple' mappers).\n")
+                log.print_message("Reads can either map preferably to one MGC ('Unique' mappers), or map to many MGCs from")
+                log.print_message("different species ('Multiple' mappers).\n")
 
             if (args.listInputFiles is not None):
                 if args.verbose>2:

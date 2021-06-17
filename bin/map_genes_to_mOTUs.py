@@ -1109,8 +1109,8 @@ def get_mOTU_abundances(dictUniqueInsertCounts, dictUniqueBaseCounts, listMultip
     if verbose>2:
         sys.stderr.write("     Total number of inserts: " + str(totalInsertCount) + '\n')
         sys.stderr.write("      - Unique mappers: " + str(uniqueInsertCount) + '\n')
-        sys.stderr.write("      - Multiple Mappers (paired ends mapping to different genes):  " + str(mmCount_s) + '\n')
-        sys.stderr.write("      - Multiple Mappers (paired ends mapping to same gene): " + str(mmCount_p) + '\n')
+        sys.stderr.write("      - Multiple Mappers (paired ends mapping to different MGCs):  " + str(mmCount_s) + '\n')
+        sys.stderr.write("      - Multiple Mappers (paired ends mapping to same MGC): " + str(mmCount_p) + '\n')
         sys.stderr.write("      - Ignored multiple mapper without unique hit: " + str(ignoreMMInsertCount) + '\n')
 
     if type_output == 'insert.raw_counts':
