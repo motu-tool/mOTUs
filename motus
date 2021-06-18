@@ -630,10 +630,9 @@ def main(argv=None):
 
     if (args.min_len_align_length is None): args.min_len_align_length = default_min_len_align_length
     if (args.min_len_align_length < 20):
-        sys.stderr.write("[E::main] Error: -l should be greater than 20\n")
-        sys.exit(1)
+        log.print_error("-l should be greater than 20")
     if (args.min_len_align_length < 45) and (args.verbose>=2):
-        sys.stderr.write("[W::main] Warning: Minimum suggested value for -l is 45\n")
+        log.print_warning("minimum suggested value for -l is 45")
     if (args.min_len_align_length < default_min_len_align_length_map_tax):
         default_min_len_align_length_map_tax = args.min_len_align_length
     if args.command == 'map_snv': # if we use map_snv then we filter with the value that was inserted
@@ -651,14 +650,11 @@ def main(argv=None):
     args.min_clip_length = float(args.min_clip_length)
     # check parameters that are not displayed
     if (args.min_perc_id < 97 or args.min_perc_id >100):
-        sys.stderr.write("[E::main] Error: -min_perc_id should be between 97 and 100\n")
-        sys.exit(1)
+        log.print_error("-min_perc_id should be between 97 and 100")
     if (args.min_perc_align < 45 or args.min_perc_align >100):
-        sys.stderr.write("[E::main] Error: -min_perc_align should be between 45 and 100\n")
-        sys.exit(1)
+        log.print_error("-min_perc_align should be between 45 and 100")
     if (args.min_clip_length < 60):
-        sys.stderr.write("[E::main] Error: -min_clip_length should be greater than 60\n")
-        sys.exit(1)
+        log.print_error("-min_clip_length should be greater than 60")
 
     # ---------------------- check general parameters --------------------------
     if args.verbose < 1:
@@ -908,18 +904,17 @@ def main(argv=None):
             log.print_error("reverse reads (-r) missing.")
         if ((args.forwardReads is None) and (args.reverseReads is not None) and (args.listInputFiles is None) and (args.motu_read_counts_file is None)):
             log.print_error("forward reads (-f) missing")
-            sys.exit(1)
         # if we have -i bam/sam file, then we ignore the reads input
         if (args.listInputFiles is not None and (args.motu_read_counts_file is None)):
-            if (args.verbose >= 2) and (args.forwardReads is not None): sys.stderr.write("[W::main] Warning: -f FILE ignored since there is -i\n")
-            if (args.verbose >= 2) and (args.reverseReads is not None): sys.stderr.write("[W::main] Warning: -r FILE ignored since there is -i\n")
-            if (args.verbose >= 2) and (args.singleReads is not None): sys.stderr.write("[W::main] Warning: -s FILE ignored since there is -i\n")
+            if (args.verbose >= 2) and (args.forwardReads is not None): log.print_warning("-f FILE ignored since there is -i")
+            if (args.verbose >= 2) and (args.reverseReads is not None): log.print_warning("-r FILE ignored since there is -i")
+            if (args.verbose >= 2) and (args.singleReads is not None): log.print_warning("-s FILE ignored since there is -i")
         # if we have -m, then we ignore other inputs
         if (args.motu_read_counts_file is not None):
-            if (args.verbose >= 2) and (args.forwardReads is not None): sys.stderr.write("[W::main] Warning: -f FILE ignored since there is -m\n")
-            if (args.verbose >= 2) and (args.reverseReads is not None): sys.stderr.write("[W::main] Warning: -r FILE ignored since there is -m\n")
-            if (args.verbose >= 2) and (args.singleReads is not None): sys.stderr.write("[W::main] Warning: -s FILE ignored since there is -m\n")
-            if (args.verbose >= 2) and (args.listInputFiles is not None): sys.stderr.write("[W::main] Warning: -i FILE ignored since there is -m\n")
+            if (args.verbose >= 2) and (args.forwardReads is not None): log.print_warning("-f FILE ignored since there is -m")
+            if (args.verbose >= 2) and (args.reverseReads is not None): log.print_warning("-r FILE ignored since there is -m")
+            if (args.verbose >= 2) and (args.singleReads is not None): log.print_warning("-s FILE ignored since there is -m")
+            if (args.verbose >= 2) and (args.listInputFiles is not None): log.print_warning("-i FILE ignored since there is -m")
 
         if (args.listInputFiles is None and args.motu_read_counts_file is None): ## run BWA
             # ---------------------- divide the lanes ------------------------------
@@ -947,9 +942,11 @@ def main(argv=None):
             # check that we have the same number
             # of cores as the number of lanes
             if args.number_of_cores > number_of_lanes:
-                if args.verbose >= 2: sys.stderr.write(" [W::map_db] Warning: We use only "+str(number_of_lanes)+" out of "+str(args.number_of_cores)+" cores\n")
+                if args.verbose >= 2:
+                     log.print_warning("We use only "+str(number_of_lanes)+" out of "+str(args.number_of_cores)+" cores")
             if args.number_of_cores < number_of_lanes and args.number_of_cores != 1:
-                if args.verbose >= 2: sys.stderr.write(" [W::map_db] Warning: multiple cores computation is implemented only if the number of cores is equal to the number of lanes ("+str(number_of_lanes)+"). Set -CC "+str(number_of_lanes)+"\n")
+                if args.verbose >= 2:
+                     log.print_warning("multiple cores computation is implemented only if the number of cores is equal to the number of lanes ("+str(number_of_lanes)+"). Set -CC "+str(number_of_lanes))
                 multiple_cores = False
             #prepare data
             if multiple_cores:
@@ -1091,8 +1088,7 @@ def main(argv=None):
                 try:
                     h_file = open(header_file,'r')
                 except:
-                    sys.stderr.write("[E::map_db] Error loading file: "+header_file+"\n [map_db] Try to download again the motus profiler\n\n")
-                    sys.exit(1)
+                    log.print_error("Error loading file: "+header_file+"\n [map_db] Try to download again the motus profiler")
 
                 try:
                     for i in h_file:
@@ -1117,7 +1113,7 @@ def main(argv=None):
 
 
                 convertCMD = "samtools view -b -Sh "+temp_file.name + " |  samtools sort - "
-                if args.verbose>4: sys.stderr.write("call for sorting: samtools view -b -Sh "+temp_file.name + " |  samtools sort - \n")
+                if args.verbose>4: log.print_message("call for sorting: samtools view -b -Sh "+temp_file.name + " |  samtools sort - ")
                 try:
                     if is_tool("samtools"):
                         convert_cmd = subprocess.call(convertCMD, stdout=outfile_bam, shell=True)
@@ -1177,7 +1173,7 @@ def main(argv=None):
                     try:
                         sam_temp_file = tempfile.NamedTemporaryFile(delete=False, mode="w")
 
-                        if args.verbose>4: sys.stderr.write("  \n[map_db] saving intermediate sam file in "+sam_temp_file.name + "\n")
+                        if args.verbose>4: log.print_message("  \n[map_db] saving intermediate sam file in "+sam_temp_file.name)
 
                         str_end_header = "@PG\tID:bwa\tPN:map_tax "+versions["runBWA"]+" | gene database: "+version_db+" | "+str(reads_avg_length)+"\n"
                         sam_temp_file.write(str_end_header)
@@ -1197,7 +1193,7 @@ def main(argv=None):
                             sam_temp_file.write(i)
                     except:
                         if args.verbose>1: log.print_warning("failed to save intermediate bam file")
-                        if args.verbose>4: sys.stderr.write("Error when saving the intermediate sam file\n")
+                        if args.verbose>4: log.print_warning("Error when saving the intermediate sam file")
                         error_save_intermediate_bam_file = True
 
                     # close the sam file
@@ -1206,7 +1202,7 @@ def main(argv=None):
                         os.fsync(sam_temp_file.fileno())
                         sam_temp_file.close()
                     except:
-                        if args.verbose>4: sys.stderr.write("Error when closing sam file\n")
+                        if args.verbose>4: log.print_warning("Error when closing sam file")
                         if not error_save_intermediate_bam_file:
                             if args.verbose>1: log.print_warning("ailed to save intermediate bam file")
 
@@ -1225,7 +1221,7 @@ def main(argv=None):
                                 if args.verbose>1: log.print_warning(stderr_s.decode('ascii'))
                                 sys.exit(1)
                     except:
-                        if args.verbose>4: sys.stderr.write("Error when converting to bam\n")
+                        if args.verbose>4: log.print_warning("Error when converting to bam")
                         if not error_save_intermediate_bam_file:
                             if args.verbose>1: log.print_warning("failed to save intermediate bam file")
 
@@ -1234,7 +1230,7 @@ def main(argv=None):
                         #os.rename(bam_temp_file.name,args.profile_bam_file) # atomic operation
                         shutil.move(bam_temp_file.name,args.profile_bam_file) #It is not atomic if the files are on different filsystems.
                     except:
-                        if args.verbose>4: sys.stderr.write("Error when copying intermediate bam to the final destination\n")
+                        if args.verbose>4: log.print_warning("Error when copying intermediate bam to the final destination")
                         if not error_save_intermediate_bam_file:
                             if args.verbose>1: log.print_warning("failed to save intermediate bam file")
                             if args.verbose>1: log.print_warning("you can find the file here:\n"+bam_temp_file.name)
@@ -1294,11 +1290,11 @@ def main(argv=None):
                 #check what was the filter (-l) used during map_tax
                 for kk in listInputFiles:
                     filter_l_temp = motu_utilities.read_filter_len_from_bam_file(kk)
-                    if args.verbose>5 and filter_l_temp is None: sys.stderr.write("filter from bwa not found\n")
+                    if args.verbose>5 and filter_l_temp is None: log.print_message("filter from bwa not found")
                     if filter_l_temp is not None:
-                        if args.verbose>5: sys.stderr.write("Map_tax used -l "+str(filter_l_temp)+"\n")
+                        if args.verbose>5: log.print_message("Map_tax used -l "+str(filter_l_temp))
                         if args.min_len_align_length < filter_l_temp:
-                            if args.verbose>1: sys.stderr.write("[W::main] Warning: The bam input file was filtered with -l "+str(filter_l_temp)+". If you want to set a lower value for -l, you have to run profile again from the fastq files\n")
+                            if args.verbose>1: log.print_warning("The bam input file was filtered with -l "+str(filter_l_temp)+". If you want to set a lower value for -l, you have to run profile again from the fastq files")
 
 
 
@@ -1324,13 +1320,13 @@ def main(argv=None):
                 if reads_avg_length < min_len_align:
                     if args.verbose>1: log.print_warning("Average read length ("+str(reads_avg_length)+") is lower than the -l filter ("+str(min_len_align)+"). We suggest to decrease the value of -l")
 
-            if args.verbose>3: sys.stderr.write("[main] Minimum alignment length: "+str(min_len_align)+" (average read length: "+str(reads_avg_length)+")\n")
+            if args.verbose>3: log.print_warning("[main] Minimum alignment length: "+str(min_len_align)+" (average read length: "+str(reads_avg_length)+")")
 
             # set min clipped length
-            if args.verbose>4: sys.stderr.write("[main] Selecting the clipped length:...")
+            if args.verbose>4: log.print_warning("[main] Selecting the clipped length:...")
             #minClippedAlignLength = max(args.min_clip_length,min_len_align)
             minClippedAlignLength = min_len_align
-            if args.verbose>4: sys.stderr.write(str(minClippedAlignLength)+"\n")
+            if args.verbose>4: log.print_warning(str(minClippedAlignLength)+"\n")
 
 
 
@@ -1418,8 +1414,7 @@ def main(argv=None):
             mgc_table_header = ""
             infile = args.motu_read_counts_file
             if not os.path.isfile(infile):
-                sys.stderr.write("[E::main] Error: "+infile+': No such file.\n')
-                sys.exit(1)
+                log.print_error(infile+': No such file')
 
         if args.CAMI_output != "no_CAMI":
             print_CAMI.calculate_abundance(infile, LGs_map, LGs_map_l, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, profile_mode,mOTU_counts,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,version_tool,CAMI_file,args.CAMI_output,renormalise_cami,args.remove_strain_cami,args.remove_cami_comments)
