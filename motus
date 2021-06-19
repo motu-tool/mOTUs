@@ -1701,7 +1701,7 @@ def main(argv=None):
             log.print_message("member genes\n")
 
             log.print_message("Reads can either map preferably to one MGC ('Unique' mappers), or map to many")
-            log.print_message("MGCs fromdifferent species ('Multiple' mappers)\n")
+            log.print_message("MGCs from different species ('Multiple' mappers)\n")
 
         version_information_map_read,mOTU_counts = map_motu.run_mOTUs_v2_mapping(listInputFiles, database_dir, database_prefix, sample_name, multThreshold, winnerThreshold, loserThreshold, minClippedAlignLength, output, msam_script, args.type_output,args.verbose,profile_mode,all_sam_lines,return_dictionary, args.min_perc_id,min_len_align,args.min_perc_align)
 
