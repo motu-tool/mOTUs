@@ -1160,6 +1160,10 @@ def main(argv=None):
 
             if args.profile_bam_file is not None: # save bam file -----------------------
                 if is_tool("samtools"):
+                    if args.verbose>2:
+                        log.print_message("")
+                        log.print_message("Save bam file produced by bwa (provided with -I)")
+
                     start_time_save_bam = time.time()
                     error_save_intermediate_bam_file = False
 
@@ -1167,7 +1171,7 @@ def main(argv=None):
                     try:
                         h_file = open(header_file,'r')
                     except:
-                        log.print_error("error loading file: "+header_file+"\n[E::map_db] Try to download again the motus profiler")
+                        log.print_error("error loading file: "+header_file+"\nTry to download again the motus profiler")
 
                     # create the temp sam file with the result
                     try:
@@ -1192,7 +1196,7 @@ def main(argv=None):
                         for i in all_sam_lines:
                             sam_temp_file.write(i)
                     except:
-                        if args.verbose>1: log.print_warning("failed to save intermediate bam file")
+                        if args.verbose>1: log.print_warning("failed to save intermediate sam file")
                         if args.verbose>4: log.print_warning("Error when saving the intermediate sam file")
                         error_save_intermediate_bam_file = True
 
@@ -1204,9 +1208,10 @@ def main(argv=None):
                     except:
                         if args.verbose>4: log.print_warning("Error when closing sam file")
                         if not error_save_intermediate_bam_file:
-                            if args.verbose>1: log.print_warning("ailed to save intermediate bam file")
+                            if args.verbose>1: log.print_warning("failed to save intermediate sam file")
 
                     # convert to bam
+                    created_bam_file = False
                     try:
                         bam_temp_file = tempfile.NamedTemporaryFile(delete=False, mode="w")
                         os.chmod(bam_temp_file.name, 0o644)
@@ -1219,27 +1224,26 @@ def main(argv=None):
                             if not error_save_intermediate_bam_file:
                                 if args.verbose>1: log.print_warning("failed to save intermediate bam file")
                                 if args.verbose>1: log.print_warning(stderr_s.decode('ascii'))
-                                sys.exit(1)
+                        created_bam_file = True
                     except:
+                        created_bam_file = False
                         if args.verbose>4: log.print_warning("Error when converting to bam")
                         if not error_save_intermediate_bam_file:
                             if args.verbose>1: log.print_warning("failed to save intermediate bam file")
 
                     # move the temp file to the final destination
-                    try:
-                        #os.rename(bam_temp_file.name,args.profile_bam_file) # atomic operation
-                        shutil.move(bam_temp_file.name,args.profile_bam_file) #It is not atomic if the files are on different filsystems.
-                    except:
-                        if args.verbose>4: log.print_warning("Error when copying intermediate bam to the final destination")
-                        if not error_save_intermediate_bam_file:
-                            if args.verbose>1: log.print_warning("failed to save intermediate bam file")
-                            if args.verbose>1: log.print_warning("you can find the file here:\n"+bam_temp_file.name)
+                    if created_bam_file:
+                        try:
+                            #os.rename(bam_temp_file.name,args.profile_bam_file) # atomic operation
+                            shutil.move(bam_temp_file.name,args.profile_bam_file) #It is not atomic if the files are on different filsystems.
+                        except:
+                            if args.verbose>4: log.print_warning("Error when copying intermediate bam to the final destination")
+                            if not error_save_intermediate_bam_file:
+                                if args.verbose>1: log.print_warning("failed to save intermediate bam file")
+                                if args.verbose>1: log.print_warning("you can find the file here:\n"+bam_temp_file.name)
 
                     # remove the temporary sam file
                     os.remove(sam_temp_file.name)
-
-                    if args.verbose>2: sys.stderr.write("[main] (Save bam file produced by bwa) "+str("{0:.2f}".format(time.time() - start_time_save_bam))+" sec\n")
-
 
 
                 else:
@@ -1375,7 +1379,9 @@ def main(argv=None):
                     if args.verbose>1: log.print_warning("failed to save the intermediate mgc table")
                     if args.verbose>1: log.print_warning("you can find the file here:\n"+mgc_temp_file.name)
 
-                if args.verbose>2: sys.stderr.write("[main] (Save mgc abundance table) " + str("{0:.2f}".format(time.time() - start_time_save_motu))+" sec\n")
+                if args.verbose>2:
+                    log.print_message("")
+                    log.print_message("Save mgc abundance table (provided with -M)")
 
             if args.verbose>2:
                 time_after_map_genes = time.time()
