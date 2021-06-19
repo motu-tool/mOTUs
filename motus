@@ -91,7 +91,7 @@ DATABASE_prefix = DATABASE.split("/")[-1]
 
 # check if setup.py has been ran already ---------------------------------------
 if not(os.path.isdir(DATABASE)): # here we check db_mOTU exactly, because want to see if it was installed
-    sys.stderr.write("Error: database has not been downloaded. Run setup.py before using the motus profiler")
+    sys.stderr.write("Error: database has not been downloaded. Run setup.py before using the motus profiler\n")
     sys.exit(1)
 
 #-------------------------------------------------------------------------------
@@ -106,7 +106,7 @@ try:
             versions[l[0]] = l[1]
     location.close()
 except:
-    sys.stderr.write("Error loading file: "+path_info_version+"\nTry to download again the motus profiler")
+    sys.stderr.write("Error loading file: "+path_info_version+"\nTry to download again the motus profiler\n")
     sys.exit(1)
 
 version_tool = versions["motus"]
@@ -118,10 +118,10 @@ try:
     if os.path.isdir(relative_path+'bin'):
         sys.path.insert(0, relative_path+'bin')
     else:
-        sys.stderr.write("Error: "+relative_path+"bin directory is missing.\nDownload the motus profiler again")
+        sys.stderr.write("Error: "+relative_path+"bin directory is missing.\nDownload the motus profiler again\n")
         sys.exit(1)
 except:
-    sys.stderr.write("Error: "+relative_path+"bin directory is missing.\nDownload the motus profiler again")
+    sys.stderr.write("Error: "+relative_path+"bin directory is missing.\nDownload the motus profiler again\n")
     sys.exit(1)
 
 # add the log ------------
@@ -134,7 +134,7 @@ if do_not_use_colour:
     try:
         import UTIL_log as log
     except:
-        sys.stderr.write("Error: fail to load the script: "+relative_path+"bin/UTIL_log.py\nDownload the motus profiler again")
+        sys.stderr.write("Error: fail to load the script: "+relative_path+"bin/UTIL_log.py\nDownload the motus profiler again\n")
         sys.exit(1)
 else:
     try:
@@ -144,7 +144,7 @@ else:
         try:
             import UTIL_log as log
         except:
-            sys.stderr.write("Error: fail to load the script: "+relative_path+"bin/UTIL_log.py\nDownload the motus profiler again")
+            sys.stderr.write("Error: fail to load the script: "+relative_path+"bin/UTIL_log.py\nDownload the motus profiler again\n")
             sys.exit(1)
 
 
@@ -678,12 +678,26 @@ def main(argv=None):
 
 
 
+
+
+
+
+
+
+
+
     # --------------------------------------------------------------------------
     #                                  SNVCALL
     # Begin edit hans 8.3.2018
     # I leave all settings here. They might need to be put to a different location later.
     # --------------------------------------------------------------------------
     if args.command == 'snv_call':
+        initial_start_time = time.time()
+        if args.verbose>2:
+            log.print_log("Calculate SNVs")
+            log.print_message("SNP distances between samples are calculated with metaSNV.")
+            log.print_message("Please cite: Costea et al. metaSNV: A tool for metagenomic strain level analysis. Plos one, 2017.\n")
+
         if args.directory_append is None:
             log.print_error("-d is missing")
         if args.output == "":
@@ -691,7 +705,6 @@ def main(argv=None):
         # set threads to 1
         args.threads = 1
 
-        if (args.verbose>2): sys.stderr.write("[main] Begin metaSNV\n")
     # --------------------------------------------------------------------------
     #                       Settings/Params
     # --------------------------------------------------------------------------
@@ -715,7 +728,7 @@ def main(argv=None):
         if os.path.exists(outdir):
             log.print_error("The output directory already exists: "+outdir+" Existing. Delete and restart")
         msnv_log_file = os.path.abspath(os.path.join(outdir, 'metaSNV.log'))
-        if (args.verbose>=2): sys.stderr.write("[main] metaSNV stderr/stdout log file: %s\n" % (msnv_log_file))
+        if (args.verbose>=2): log.print_message("metaSNV log file saved in: " + msnv_log_file)
     # --------------------------------------------------------------------------
     #                           create sample_list file
     # --------------------------------------------------------------------------
@@ -838,12 +851,27 @@ def main(argv=None):
             log.print_warning("The result is empty")
 
 
-        if (args.verbose>=2): sys.stderr.write("[main] End metaSNV\n")
+        # end
+        if args.verbose>2:
+            log.print_message("")
+            log.print_log("Finished computation")
+            log.print_log("Total time: "+ str("{0:.2f}".format(time.time() - initial_start_time)) + " sec")
+
+
         mlf.close()
         sys.exit(0)
     # --------------------------------------------------------------------------
     #                                  END snv_call
     # --------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
 
 
     #set database of sequences
@@ -1142,7 +1170,7 @@ def main(argv=None):
 
                 # end map_SNV
                 if args.verbose>2:
-                    log.print_message("\n")
+                    log.print_message("")
                     log.print_log("Finished computation")
                     log.print_log("Total time: "+ str("{0:.2f}".format(time.time() - initial_start_time)) + " sec")
 
