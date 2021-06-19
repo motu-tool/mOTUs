@@ -1401,7 +1401,7 @@ def main(argv=None):
             log.print_message("At least "+str(args.map_lgs_cutoff)+" (-g) MGCs are required to have reads mapping to them to consider a mOTU.\n")
 
         if args.motu_read_counts_file is not None:# we load the mOTU read count table
-            if args.verbose>2:sys.stderr.write("[main] Load the mgc table and compute the profile\n")
+            if args.verbose>2: log.print_message("Load the mgc table and compute the profile\n")
 
         database_dir = DATABASE+"/"
         LGs_map = database_dir+DATABASE_prefix+"_MAP_MGCs_to_mOTUs.tsv"
@@ -1424,6 +1424,8 @@ def main(argv=None):
             if not os.path.isfile(infile):
                 log.print_error(infile+': No such file')
 
+        if args.verbose>2: log.print_message("Create taxonomy profile")
+
         if args.CAMI_output != "no_CAMI":
             print_CAMI.calculate_abundance(infile, LGs_map, LGs_map_l, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, profile_mode,mOTU_counts,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,version_tool,CAMI_file,args.CAMI_output,renormalise_cami,args.remove_strain_cami,args.remove_cami_comments)
         else:
@@ -1436,7 +1438,7 @@ def main(argv=None):
 
         # end
         if args.verbose>2:
-            log.print_message("\n")
+            log.print_message("")
             log.print_log("Finished computation")
             log.print_log("Total time: "+ str("{0:.2f}".format(time.time() - initial_start_time)) + " sec")
 
@@ -1599,17 +1601,10 @@ def main(argv=None):
     # --------------------------------------------------------------------------
     if args.command == 'calc_mgc':
         if args.verbose>2:
-            log.print_log("Aggregate inserts by marker gene cluster (MGC)")
-            log.print_message("Gene sequences with high similarity were clustered into marker gene clusters (MGCs).")
-            log.print_message("Marker genes clusters are quantified by insert alignments on their member genes.\n")
+            log.print_log("Load mapped reads")
+            log.print_message("Load sam lines created with map_tax.\n")
 
-            log.print_message("Reads can either map preferably to one MGC ('Unique' mappers), or map to many MGCs from")
-            log.print_message("different species ('Multiple' mappers).\n")
-        if args.verbose>2:
-            sys.stderr.write("[main]  CALC_MGC -----------\n")
-            sys.stderr.write("[main] Load sam/bam files and inizialize the parametrs for calc_mgc\n")
-        if args.verbose>2:
-            initial_start_time = time.time()
+        initial_start_time = time.time()
 
         if (args.listInputFiles is None):
             log.print_error("Please provide at least one input file")
@@ -1631,9 +1626,9 @@ def main(argv=None):
         #check what was the filter (-l) used during map_tax
         for kk in listInputFiles:
             filter_l_temp = motu_utilities.read_filter_len_from_bam_file(kk)
-            if args.verbose>5 and filter_l_temp is None: sys.stderr.write("filter from bwa not found\n")
+            if args.verbose>5 and filter_l_temp is None: log.print_message("filter from bwa not found")
             if filter_l_temp is not None:
-                if args.verbose>5: sys.stderr.write("Map_tax used -l "+str(filter_l_temp)+"\n")
+                if args.verbose>5: log.print_message("Map_tax used -l "+str(filter_l_temp))
                 if args.min_len_align_length < filter_l_temp:
                     if args.verbose>1: log.print_warning("the bam input file was filtered with -l "+str(filter_l_temp)+". If you want to set a lower value for -l, you have to run profile again from the fastq files")
 
@@ -1658,16 +1653,22 @@ def main(argv=None):
             if reads_avg_length < min_len_align:
                 if args.verbose>1: log.print_warning("Average read length ("+str(reads_avg_length)+") is lower than the -l filter ("+str(min_len_align)+"). We suggest to decrease the value of -l")
 
-        if args.verbose>2: sys.stderr.write("[main] Minimum alignment length: "+str(min_len_align)+" (average read length: "+str(reads_avg_length)+")\n")
+        if args.verbose>2: log.print_message("Minimum alignment length: "+str(min_len_align)+" (average read length: "+str(reads_avg_length)+")\n")
 
         # set min clipped length
-        if args.verbose>4: sys.stderr.write(" [calc_mgc] Selecting the clipped length:...")
+        if args.verbose>4: log.print_message("Selecting the clipped length:...")
         #minClippedAlignLength = max(args.min_clip_length,min_len_align)
         minClippedAlignLength = min_len_align
-        if args.verbose>4: sys.stderr.write(str(minClippedAlignLength)+"\n")
+        if args.verbose>4: log.print_message(str(minClippedAlignLength)+"\n")
 
 
+        if args.verbose>2:
+            log.print_log("Aggregate inserts by marker gene cluster (MGC)")
+            log.print_message("Gene sequences with high similarity were clustered into marker gene clusters (MGCs).")
+            log.print_message("Marker genes clusters are quantified by insert alignments on their member genes.\n")
 
+            log.print_message("Reads can either map preferably to one MGC ('Unique' mappers), or map to many MGCs from")
+            log.print_message("different species ('Multiple' mappers).\n")
 
         version_information_map_read,mOTU_counts = map_motu.run_mOTUs_v2_mapping(listInputFiles, database_dir, database_prefix, sample_name, multThreshold, winnerThreshold, loserThreshold, minClippedAlignLength, output, msam_script, args.type_output,args.verbose,profile_mode,all_sam_lines,return_dictionary, args.min_perc_id,min_len_align,args.min_perc_align)
 
@@ -1684,7 +1685,9 @@ def main(argv=None):
             outfile = tempfile.NamedTemporaryFile(delete=False, mode="w")
             os.chmod(outfile.name, 0o644)
             #outfile = open(args.output, "w")
-            if args.verbose>2: sys.stderr.write("[main] Saving mgc abundance table\n")
+            if args.verbose>2:
+                log.print_message("")
+                log.print_message("Save mgc abundance table")
         else:
             outfile = sys.stdout
 
@@ -1711,8 +1714,13 @@ def main(argv=None):
                 log.print_error("you can find the file here:\n"+outfile.name, exit = False)
                 sys.exit(1)
 
+
+        # end
         if args.verbose>2:
-            sys.stderr.write("[main] Total time calc_mgc: " + str("{0:.2f}".format(time.time() - initial_start_time))+" sec\n")
+            log.print_message("")
+            log.print_log("Finished computation")
+            log.print_log("Total time: "+ str("{0:.2f}".format(time.time() - initial_start_time)) + " sec")
+
 
 
 
@@ -1728,8 +1736,12 @@ def main(argv=None):
     if args.command == 'calc_motu':
         initial_start_time = time.time()
         if args.verbose>2:
-            sys.stderr.write("[main]  CALC_MOTU -----------\n")
-            initial_start_time = time.time()
+            log.print_log("Calculate mOTUs read counts")
+            log.print_message("Each mOTU species is composed of 6 to 10 MGCs.")
+            log.print_message("The final mOTU insert count is obtained as the median of its MGC read counts.\n")
+
+            log.print_message("At least "+str(args.map_lgs_cutoff)+" (-g) MGCs are required to have reads mapping to them to consider a mOTU.\n")
+
         if (args.listInputFiles is None):
             log.print_error("Please provide at least one input file")
 
@@ -1750,7 +1762,7 @@ def main(argv=None):
         if not os.path.isfile(infile):
             log.print_error(infile+': No such file')
 
-        if args.verbose>2: sys.stderr.write(" [calc_motu] (Create taxonomy profile)\n")
+        if args.verbose>2: log.print_message("Create taxonomy profile")
 
         if args.CAMI_output != "no_CAMI":
             print_CAMI.calculate_abundance(infile, LGs_map, LGs_map_l, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, profile_mode,mOTU_counts,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,version_tool,CAMI_file,args.CAMI_output,renormalise_cami,args.remove_strain_cami,args.remove_cami_comments)
@@ -1760,8 +1772,19 @@ def main(argv=None):
             else:
                 map_lgs.calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy,mOTULG_taxonomy, args.output, args.map_lgs_cutoff, args.onlySpecI, sample_name, args.taxonomic_level, args.BIOM_output, profile_mode,mOTU_counts, args.print_NCBI_id, args.print_rel_ab,mgc_table_header,version_map_lgs,version_tool,args.verbose,motu_call,git_commit_id,args.print_full_rank,args.print_long_names,short_name_file,version_tool)
 
+
+        # end
         if args.verbose>2:
-            sys.stderr.write("[main] Total time calc_motu: " + str("{0:.2f}".format(time.time() - initial_start_time))+" sec\n")
+            log.print_message("")
+            log.print_log("Finished computation")
+            log.print_log("Total time: "+ str("{0:.2f}".format(time.time() - initial_start_time)) + " sec")
+
+
+
+
+
+
+
 
 
     # --------------------------------------------------------------------------

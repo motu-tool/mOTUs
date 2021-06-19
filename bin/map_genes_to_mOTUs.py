@@ -1190,9 +1190,6 @@ def run_mOTUs_v2_mapping(listInputFiles, databaseDir, databasePrefix, sampleName
                 if (cont == 1): sys.stderr.write("[E::calc_mgc] Error. "+inputFile+': No such file.\n')
                 if (cont > 1): sys.stderr.write("[E::calc_mgc] Error. Input file number "+str(cont)+" ("+inputFile+'): No such file.\n')
                 sys.exit(1)
-            else:
-                if not (inputFile.endswith(".bam") or inputFile.endswith(".sam")):
-                    if verbose>=2: sys.stderr.write("[W::calc_mgc] Warning. File "+inputFile+" does not have extension \".bam\" or \".sam\" \n")
 
 
     geneLocationFileName = os.path.sep.join([databaseDir, databasePrefix + "_padding_coordinates_NR.tsv"])
