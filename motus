@@ -1283,7 +1283,7 @@ def main(argv=None):
                 time_after_bwa = time.time()
                 log.print_message("")
                 log.print_message("Total time for mapping reads: " + str("{0:.2f}".format(time_after_bwa - initial_start_time))+" sec")
-                log.print_message("\n")
+                log.print_message("")
 
 
 #-------# map genes ------------------------------------------------------------
@@ -1417,7 +1417,7 @@ def main(argv=None):
                 time_after_map_genes = time.time()
                 log.print_message("")
                 log.print_message("Total time to calculate the MGCs: " + str("{0:.2f}".format(time_after_map_genes - time_after_bwa))+" sec")
-                log.print_message("\n")
+                log.print_message("")
 
 
 #-------# create LGs -----------------------------------------------------------
@@ -1856,6 +1856,7 @@ def main(argv=None):
         append.append_profilings(args.directory_append, args.listInputFiles, args.output, args.verbose, args.BIOM_output,version_append,motu_call,version_tool, environments_to_merge, public_profiles, public_profiles_envo, log)
 
         if args.verbose>2:
+            log.print_message("")
             log.print_log("Finished computation")
             log.print_log("Total time: "+ str("{0:.2f}".format(time.time() - initial_start_time))+" sec")
 
