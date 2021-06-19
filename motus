@@ -213,7 +213,7 @@ def run_bwa_multiple_cores(forward_reads, reverse_reads, single_reads, reference
 
 def prepare_output_bwa(output,outPutIsBam,header_file,all_sam_lines,str_end_header,verbose,str_info_min_len,str_perc_id,str_min_perc_query):
 
-    if not(is_tool_and_return0("samtools")) and outPutIsBam:
+    if not(is_tool("samtools")) and outPutIsBam:
         log.print_warning("samtools is not in the path. Saving .sam format instead of .bam format")
         outPutIsBam = False
 
@@ -1110,11 +1110,14 @@ def main(argv=None):
                     os.chmod(outfile_bam.name, 0o644)
 
 
+
+                log.print_message("Sort bam file")
+
                 convertCMD = "samtools view -b -Sh "+temp_file.name + " |  samtools sort - "
                 if args.verbose>4: log.print_message("call for sorting: samtools view -b -Sh "+temp_file.name + " |  samtools sort - ")
                 try:
-                    if is_tool_and_return0("samtools"):
-                        convert_cmd = subprocess.call(convertCMD, stdout=outfile_bam, shell=True)
+                    if is_tool("samtools"):
+                        convert_cmd = subprocess.call(convertCMD, stdout=outfile_bam, shell=True) # NOTE: even if samtools fails for "dyld: Library not loaded: @rpathdyld: Library not loaded: @rpath/libcrypto.1.0.0.dylib", it doesnt return an error
                     else:
                         log.print_error("samtools is not in the path")
                 except:
@@ -1137,11 +1140,12 @@ def main(argv=None):
                         log.print_error("failed to save the final bam/sam file",exit = True)
                         log.print_error("you can find the file here:\n"+outfile_bam.name)
 
-                # print info
-                time_final_SNV = time.time()
+                # end map_SNV
                 if args.verbose>2:
-                    log.print_message("sort bam file: " + str("{0:.2f}".format(time_final_SNV - time_after_unique))+" sec\n")
-                    log.print_message("Total time: " + str("{0:.2f}".format(time_final_SNV - initial_start_time))+" sec\n")
+                    log.print_message("\n")
+                    log.print_log("Finished computation")
+                    log.print_log("Total time: "+ str("{0:.2f}".format(time.time() - initial_start_time)) + " sec")
+
 
                 return 0 #map_snv is finished, so we can exit
 
@@ -1157,7 +1161,7 @@ def main(argv=None):
             first_script_header = "map_tax "+versions["runBWA"]+" | gene database: "+version_db+" | "+str(reads_avg_length)
 
             if args.profile_bam_file is not None: # save bam file -----------------------
-                if is_tool_and_return0("samtools"):
+                if is_tool("samtools"):
                     if args.verbose>2:
                         log.print_message("")
                         log.print_message("Save bam file produced by bwa (provided with -I)")
@@ -1594,6 +1598,13 @@ def main(argv=None):
     #                                MAP mOTU
     # --------------------------------------------------------------------------
     if args.command == 'calc_mgc':
+        if args.verbose>2:
+            log.print_log("Aggregate inserts by marker gene cluster (MGC)")
+            log.print_message("Gene sequences with high similarity were clustered into marker gene clusters (MGCs).")
+            log.print_message("Marker genes clusters are quantified by insert alignments on their member genes.\n")
+
+            log.print_message("Reads can either map preferably to one MGC ('Unique' mappers), or map to many MGCs from")
+            log.print_message("different species ('Multiple' mappers).\n")
         if args.verbose>2:
             sys.stderr.write("[main]  CALC_MGC -----------\n")
             sys.stderr.write("[main] Load sam/bam files and inizialize the parametrs for calc_mgc\n")
