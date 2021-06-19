@@ -213,7 +213,7 @@ def run_bwa_multiple_cores(forward_reads, reverse_reads, single_reads, reference
 
 def prepare_output_bwa(output,outPutIsBam,header_file,all_sam_lines,str_end_header,verbose,str_info_min_len,str_perc_id,str_min_perc_query):
 
-    if not(is_tool("samtools")) and outPutIsBam:
+    if not(is_tool_and_return0("samtools")) and outPutIsBam:
         log.print_warning("samtools is not in the path. Saving .sam format instead of .bam format")
         outPutIsBam = False
 
@@ -319,6 +319,21 @@ def is_tool(name):
             return False
     return True
 
+def is_tool_and_return0(name):
+    try:
+        devnull = open(os.devnull)
+        popenCMD = shlex.split(name)
+        child = subprocess.Popen(popenCMD, stdout=devnull)
+        streamdata = child.communicate()
+        rc = child.wait()
+        if rc == 0:
+            return True
+        else:
+            return False
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            return False
+    return True
 
 # ------------------------------------------------------------------------------
 # MAIN
@@ -873,13 +888,11 @@ def main(argv=None):
             initial_start_time = time.time()
             time_after_bwa = time.time() # for now we initialize it, so that if we skip bwa, then we use the initial time
             time_after_map_genes = time.time() # for now we initialize it, so that if we skip calc_mgc, then we use the initial time
-            if args.command == 'profile' and (args.listInputFiles is None and args.motu_read_counts_file is None):
+            if (args.command == 'profile' and (args.listInputFiles is None and args.motu_read_counts_file is None)) or args.command == 'map_snv':
                 log.print_log("Align reads to marker gene sequences")
                 log.print_message("Reads are aligned (by bwa) to marker gene sequences in the reference database. Reads are filtered for:")
                 log.print_message(" - similarity to the reference gene (>97%), and")
                 log.print_message(" - length of the alignment (at least "+str(args.min_len_align_length)+" nucleotides, -l option)")
-            if args.command == 'map_snv':
-                log.print_log("MAP SNV")
 
         # check that there is at least one file with reads
         if (args.forwardReads is None) and (args.reverseReads is None) and (args.singleReads is None) and (args.listInputFiles is None) and (args.motu_read_counts_file is None):
@@ -1028,19 +1041,20 @@ def main(argv=None):
 
                 start_time_metaSNV = time.time()
                 if args.verbose>3:
-                    sys.stderr.write("[main] -- After calling bwa there are "+str(len(all_sam_lines))+" sam lines\n")
+                    log.print_message("[main] -- After calling bwa there are "+str(len(all_sam_lines))+" sam lines\n")
                 if args.verbose>2:
-                    sys.stderr.write("[main] process the sam/bam file for the snv calling\n")
+                    log.print_message("")
+                    log.print_message("Process the bam file for the snv calling")
 
                 # First: PE filtering
                 # coordinates for the padding of the genes are different for centroids
                 dictReference2geneLocation = DATABASE+"/"+DATABASE_prefix+"_padding_coordinates_CEN.tsv"
                 if args.verbose>3:
-                    sys.stderr.write("[main] -- File with gene padding coordinates: "+dictReference2geneLocation+"\n")
+                    log.print_message("[main] -- File with gene padding coordinates: "+dictReference2geneLocation)
 
                 all_sam_lines_pe_filtered = PEfiltering.parseBWA_SAMoutput(all_sam_lines, dictReference2geneLocation)
                 if args.verbose>3:
-                    sys.stderr.write("[main] -- After calling PE filtering there are "+str(len(all_sam_lines_pe_filtered))+" sam lines\n")
+                    log.print_message("[main] -- After calling PE filtering there are "+str(len(all_sam_lines_pe_filtered))+" sam lines")
 
                 # Second: keep only uniq mappers
                 sam_lines_uniques = dict()
@@ -1058,11 +1072,10 @@ def main(argv=None):
 
                 if args.verbose>2:
                     time_after_unique = time.time()
-                    sys.stderr.write(" [map_snv] select only reads that map uniquely: ")
-                    sys.stderr.write(str("{0:.2f}".format(time_after_unique - start_time_metaSNV))+" sec\n")
+                    log.print_message("Select only reads that map uniquely")
 
                 if args.verbose>3:
-                    sys.stderr.write("[main] -- After selecting reads that map uniquely there are "+str(len(all_sam_lines_pe_filtered))+" sam lines\n")
+                    log.print_message("[main] -- After selecting reads that map uniquely there are "+str(len(all_sam_lines_pe_filtered))+" sam lines\n")
 
 
 
@@ -1086,7 +1099,7 @@ def main(argv=None):
                 except:
                     log.print_error("error saving the intermediate sam file, used for sorting")
 
-                if args.verbose>4: sys.stderr.write("   [man_snv] saving intermediate sam file in "+temp_file.name + "\n")
+                if args.verbose>4: log.print_message("   [man_snv] saving intermediate sam file in "+temp_file.name + "\n")
 
                 # take stdout of samtools view and go through sort
                 if args.output == "":
@@ -1100,7 +1113,7 @@ def main(argv=None):
                 convertCMD = "samtools view -b -Sh "+temp_file.name + " |  samtools sort - "
                 if args.verbose>4: log.print_message("call for sorting: samtools view -b -Sh "+temp_file.name + " |  samtools sort - ")
                 try:
-                    if is_tool("samtools"):
+                    if is_tool_and_return0("samtools"):
                         convert_cmd = subprocess.call(convertCMD, stdout=outfile_bam, shell=True)
                     else:
                         log.print_error("samtools is not in the path")
@@ -1127,8 +1140,8 @@ def main(argv=None):
                 # print info
                 time_final_SNV = time.time()
                 if args.verbose>2:
-                    sys.stderr.write(" [map_snv] sort bam file: " + str("{0:.2f}".format(time_final_SNV - time_after_unique))+" sec\n")
-                    sys.stderr.write("[main] Total time: " + str("{0:.2f}".format(time_final_SNV - initial_start_time))+" sec\n")
+                    log.print_message("sort bam file: " + str("{0:.2f}".format(time_final_SNV - time_after_unique))+" sec\n")
+                    log.print_message("Total time: " + str("{0:.2f}".format(time_final_SNV - initial_start_time))+" sec\n")
 
                 return 0 #map_snv is finished, so we can exit
 
@@ -1144,7 +1157,7 @@ def main(argv=None):
             first_script_header = "map_tax "+versions["runBWA"]+" | gene database: "+version_db+" | "+str(reads_avg_length)
 
             if args.profile_bam_file is not None: # save bam file -----------------------
-                if is_tool("samtools"):
+                if is_tool_and_return0("samtools"):
                     if args.verbose>2:
                         log.print_message("")
                         log.print_message("Save bam file produced by bwa (provided with -I)")

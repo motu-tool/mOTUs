@@ -229,7 +229,7 @@ def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, o
             else:
                 sam_header.append(line)
 
-        if verbose>2: sys.stderr.write(" [map_db](map forward reads) " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
+        if verbose>2: sys.stderr.write("     map forward reads: " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
 
         # reverse -----
         if verbose>2: start_time = time.time()
@@ -243,12 +243,12 @@ def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, o
                 line = line.replace("\t", orientation+"\t", 1)
                 mapped_sam_lines.append(line)
 
-        if verbose>2: sys.stderr.write(" [map_db](map reverse reads) " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
+        if verbose>2: sys.stderr.write("     map reverse reads: " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
 
         # sort for and rev
         if verbose>2: start_time = time.time()
         mapped_sam_lines.sort()
-        if verbose>2: sys.stderr.write(" [map_db](sort reads) " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
+        if verbose>2: sys.stderr.write("     sort alignments: " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
 
 
     # computation single -------------------------------------------------------
@@ -266,7 +266,7 @@ def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, o
                 if (forwardReads==""): # if the header has not been printed already, then we print the header
                     sam_header.append(line)
 
-        if verbose>2: sys.stderr.write(" [map_db](map single reads) " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
+        if verbose>2: sys.stderr.write("     map single reads: " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
 
     # if we are running this as profile mode, then we return the list of the sam lines
     # without the header.
