@@ -696,7 +696,7 @@ def main(argv=None):
         if args.verbose>2:
             log.print_log("Calculate SNVs")
             log.print_message("SNP distances between samples are calculated with metaSNV.")
-            log.print_message("Please cite: Costea et al. metaSNV: A tool for metagenomic strain level analysis. Plos one, 2017.\n")
+            log.print_message("(Costea et al. metaSNV: A tool for metagenomic strain level analysis. Plos one, 2017)\n")
 
         if args.directory_append is None:
             log.print_error("-d is missing")
