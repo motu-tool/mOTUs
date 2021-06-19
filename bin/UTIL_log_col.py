@@ -127,7 +127,7 @@ def print_menu_profile():
     sys.stderr.write("   "+colour("-n ","blue_bold")+" STR          sample name "+colour("['unnamed sample']","magenta")+"\n")
     sys.stderr.write("   "+colour("-i ","blue_bold")+" FILE[,FILE]  provide sam or bam input file(s)\n")
     sys.stderr.write("   "+colour("-m ","blue_bold")+" FILE         provide a mgc reads count file\n")
-    sys.stderr.write("   "+colour("-db ","blue_bold")+" DIR          provide a database directory\n\n")
+    sys.stderr.write("   "+colour("-db ","blue_bold")+"DIR          provide a database directory\n\n")
     sys.stderr.write(colour("Output options:\n","bold"))
     sys.stderr.write("   "+colour("-o ","blue_bold")+" FILE         output file name "+colour("[stdout]","magenta")+"\n")
     sys.stderr.write("   "+colour("-I ","blue_bold")+" FILE         save the result of bwa in bam format (intermediate step)\n")
