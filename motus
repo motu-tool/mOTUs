@@ -668,12 +668,12 @@ def main(argv=None):
 
     # check if CAMI output interfer with other parameters ----------------------
     if (args.CAMI_output != "no_CAMI") and args.BIOM_output:
-        log.print_error("cannot print result with both -B and -C.")
+        log.print_error("cannot print result with both -B and -C")
     # check other output options
     if (args.CAMI_output != "no_CAMI") and args.print_all_taxa:
-        log.print_error("cannot print result with both -A and -C.")
+        log.print_error("cannot print result with both -A and -C")
     if args.BIOM_output and args.print_all_taxa:
-        log.print_error("cannot print result with both -A and -B.")
+        log.print_error("cannot print result with both -A and -B")
 
 
 
@@ -695,7 +695,7 @@ def main(argv=None):
         initial_start_time = time.time()
         if args.verbose>2:
             log.print_log("Calculate SNVs")
-            log.print_message("SNP distances between samples are calculated with metaSNV.")
+            log.print_message("SNP distances between samples are calculated with metaSNV")
             log.print_message("(Costea et al. metaSNV: A tool for metagenomic strain level analysis. Plos one, 2017)\n")
 
         if args.directory_append is None:
@@ -742,7 +742,7 @@ def main(argv=None):
         bamfiles = [os.path.abspath(p) for p in glob.glob(os.path.join(bamdir, '*bam'))]
 
         if len(bamfiles) == 0:
-            log.print_error("No BAM files found in the input folder.")
+            log.print_error("No BAM files found in the input folder")
         with open(sample_file, 'w') as handle:
             for bamfile in bamfiles:
                 handle.write(bamfile + '\n')
@@ -751,7 +751,7 @@ def main(argv=None):
     #                           metaSNV
     # --------------------------------------------------------------------------
         if args.verbose>=4:
-            sys.stderr.write("[main] Executing metaSNV main routine.\n")
+            sys.stderr.write("[main] Executing metaSNV main routine\n")
 
 
         metaSNV_command = 'metaSNV.py %s %s %s --db_ann %s --threads %d --n_splits %d' % (outdir, sample_file, reference, annotation, args.threads, args.threads)
@@ -765,7 +765,7 @@ def main(argv=None):
         mlf.write(stdout.decode('ascii') + '\n')
         mlf.write(stderr.decode('ascii') + '\n')
         if p.returncode:
-            log.print_error("metaSNV finished with an error.", exit = False)
+            log.print_error("metaSNV finished with an error", exit = False)
             log.print_error(str(stderr), exit = False)
             log.print_error(str(stdout), exit = False)
             mlf.close()
@@ -774,7 +774,7 @@ def main(argv=None):
     #                                  FILTER
     # --------------------------------------------------------------------------
         if args.verbose>=4:
-            sys.stderr.write("[main] Executing metaSNV filter routine.\n")
+            sys.stderr.write("[main] Executing metaSNV filter routine\n")
             # params = '-m 5 -d 10 -b 80 -p 0.9'
         metaSNVFilter_command = 'python '+relative_path+'bin/metaSNV_Filtering_2.0.py %s -m %d -d %f -b %f -p %f -c %f --n_threads %d' %(outdir, fm, fd, fb, fp, fc, args.threads)
         if args.verbose>=4:
@@ -786,7 +786,7 @@ def main(argv=None):
         mlf.write(stdout.decode('ascii') + '\n')
         mlf.write(stderr.decode('ascii') + '\n')
         if p.returncode:
-            log.print_error("metaSNV finished with an error.", exit = False)
+            log.print_error("metaSNV finished with an error", exit = False)
             log.print_error(str(stderr), exit = False)
             log.print_error(str(stdout), exit = False)
             mlf.close()
@@ -795,7 +795,7 @@ def main(argv=None):
     #                                  REMOVE PADDING
     # --------------------------------------------------------------------------
         if args.verbose>=4:
-            sys.stderr.write("[main] Executing metaSNV remove padded routine.\n")
+            sys.stderr.write("[main] Executing metaSNV remove padded routine\n")
         metaSNVRMPadded_command = 'bash '+relative_path+'bin/motus.remove.padded.sh %s/filtered%s/' % (outdir, paramsdir)
         if args.verbose>=4:
             sys.stderr.write("[main] Command: %s\n" % metaSNVRMPadded_command)
@@ -806,7 +806,7 @@ def main(argv=None):
         mlf.write(stdout.decode('ascii') + '\n')
         mlf.write(stderr.decode('ascii') + '\n')
         if p.returncode:
-            log.print_error("metaSNVRMPadded finished with an error.", exit = False)
+            log.print_error("metaSNVRMPadded finished with an error", exit = False)
             log.print_error(str(stderr), exit = False)
             log.print_error(str(stdout), exit = False)
             mlf.close()
@@ -815,7 +815,7 @@ def main(argv=None):
     #                                  DISTANCE
     # --------------------------------------------------------------------------
         if args.verbose>=4:
-            sys.stderr.write("[main] Executing metaSNV distance routine.\n")
+            sys.stderr.write("[main] Executing metaSNV distance routine\n")
         metaSNVDist_command = 'python '+relative_path+'bin/metaSNV_DistDiv.py --filt %s/filtered%s --dist --n_threads %d' % (outdir, paramsdir, args.threads)
         if args.verbose>=4:
             sys.stderr.write("[main] Command: %s\n" % metaSNVDist_command)
@@ -826,7 +826,7 @@ def main(argv=None):
         mlf.write(stdout.decode('ascii') + '\n')
         mlf.write(stderr.decode('ascii') + '\n')
         if p.returncode:
-            log.print_error("metaSNVDist finished with an error.", exit = False)
+            log.print_error("metaSNVDist finished with an error", exit = False)
             log.print_error(str(stderr), exit = False)
             log.print_error(str(stdout), exit = False)
             mlf.close()
@@ -918,16 +918,17 @@ def main(argv=None):
             time_after_map_genes = time.time() # for now we initialize it, so that if we skip calc_mgc, then we use the initial time
             if (args.command == 'profile' and (args.listInputFiles is None and args.motu_read_counts_file is None)) or args.command == 'map_snv':
                 log.print_log("Align reads to marker gene sequences")
-                log.print_message("Reads are aligned (by bwa) to marker gene sequences in the reference database. Reads are filtered for:")
+                log.print_message("Reads are aligned (by bwa) to marker gene sequences in the reference database")
+                log.print_message("Reads are filtered for:")
                 log.print_message(" - similarity to the reference gene (>97%), and")
                 log.print_message(" - length of the alignment (at least "+str(args.min_len_align_length)+" nucleotides, -l option)")
 
         # check that there is at least one file with reads
         if (args.forwardReads is None) and (args.reverseReads is None) and (args.singleReads is None) and (args.listInputFiles is None) and (args.motu_read_counts_file is None):
-            log.print_error("input is missing. Please provide -f,-r or -s or -i or -m.")
+            log.print_error("input is missing. Please provide -f,-r or -s or -i or -m")
         # check that for and rev reads are present togehter
         if ((args.forwardReads is not None) and (args.reverseReads is None) and (args.listInputFiles is None) and (args.motu_read_counts_file is None)):
-            log.print_error("reverse reads (-r) missing.")
+            log.print_error("reverse reads (-r) missing")
         if ((args.forwardReads is None) and (args.reverseReads is not None) and (args.listInputFiles is None) and (args.motu_read_counts_file is None)):
             log.print_error("forward reads (-f) missing")
         # if we have -i bam/sam file, then we ignore the reads input
@@ -957,7 +958,7 @@ def main(argv=None):
             # ----check input: check number of files for forw and rev --------------
             if (args.forwardReads is not None):
                 if len(forw) != len(reve):
-                    log.print_error("number of files for forward reads ("+str(len(forw))+") is different from number of files for reverse reads ("+str(len(reve))+").")
+                    log.print_error("number of files for forward reads ("+str(len(forw))+") is different from number of files for reverse reads ("+str(len(reve))+")")
 
             # ----check if use multicores and prepere data for multicores ----------
             if args.number_of_cores > 1:
@@ -1291,11 +1292,12 @@ def main(argv=None):
 
             if args.verbose>2:
                 log.print_log("Aggregate inserts by marker gene cluster (MGC)")
-                log.print_message("Gene sequences with high similarity were clustered into marker gene clusters (MGCs).")
-                log.print_message("Marker genes clusters are quantified by insert alignments on their member genes.\n")
+                log.print_message("Gene sequences with high similarity were clustered into marker gene clusters")
+                log.print_message("(MGCs). Marker genes clusters are quantified by insert alignments on their")
+                log.print_message("member genes\n")
 
-                log.print_message("Reads can either map preferably to one MGC ('Unique' mappers), or map to many MGCs from")
-                log.print_message("different species ('Multiple' mappers).\n")
+                log.print_message("Reads can either map preferably to one MGC ('Unique' mappers), or map to many")
+                log.print_message("MGCs from different species ('Multiple' mappers)\n")
 
             if (args.listInputFiles is not None):
                 if args.verbose>2:
@@ -1423,10 +1425,11 @@ def main(argv=None):
 #-------# create LGs -----------------------------------------------------------
         if args.verbose>2:
             log.print_log("Calculate mOTUs read counts")
-            log.print_message("Each mOTU species is composed of 6 to 10 MGCs.")
-            log.print_message("The final mOTU insert count is obtained as the median of its MGC read counts.\n")
+            log.print_message("Each mOTU species is composed of 6 to 10 MGCs")
+            log.print_message("The final mOTU insert count is obtained as the median of its MGC read counts\n")
 
-            log.print_message("At least "+str(args.map_lgs_cutoff)+" (-g) MGCs are required to have reads mapping to them to consider a mOTU.\n")
+            log.print_message("At least "+str(args.map_lgs_cutoff)+" (-g) MGCs are required to have reads mapping to them to consider")
+            log.print_message("a mOTU\n")
 
         if args.motu_read_counts_file is not None:# we load the mOTU read count table
             if args.verbose>2: log.print_message("Load the mgc table and compute the profile\n")
@@ -1487,7 +1490,8 @@ def main(argv=None):
 
         if args.verbose>2:
             log.print_log("Align reads to marker gene sequences")
-            log.print_message("Reads are aligned (by bwa) to marker gene sequences in the reference database. Reads are filtered for:")
+            log.print_message("Reads are aligned (by bwa) to marker gene sequences in the reference database")
+            log.print_message("Reads are filtered for:")
             log.print_message(" - similarity to the reference gene (>97%), and")
             log.print_message(" - length of the alignment (at least "+str(args.min_len_align_length)+" nucleotides, -l option)")
 
@@ -1630,7 +1634,7 @@ def main(argv=None):
     if args.command == 'calc_mgc':
         if args.verbose>2:
             log.print_log("Load mapped reads")
-            log.print_message("Load sam lines created with map_tax.\n")
+            log.print_message("Load sam lines created with map_tax\n")
 
         initial_start_time = time.time()
 
@@ -1692,11 +1696,12 @@ def main(argv=None):
 
         if args.verbose>2:
             log.print_log("Aggregate inserts by marker gene cluster (MGC)")
-            log.print_message("Gene sequences with high similarity were clustered into marker gene clusters (MGCs).")
-            log.print_message("Marker genes clusters are quantified by insert alignments on their member genes.\n")
+            log.print_message("Gene sequences with high similarity were clustered into marker gene clusters")
+            log.print_message("(MGCs). Marker genes clusters are quantified by insert alignments on their")
+            log.print_message("member genes\n")
 
-            log.print_message("Reads can either map preferably to one MGC ('Unique' mappers), or map to many MGCs from")
-            log.print_message("different species ('Multiple' mappers).\n")
+            log.print_message("Reads can either map preferably to one MGC ('Unique' mappers), or map to many")
+            log.print_message("MGCs fromdifferent species ('Multiple' mappers)\n")
 
         version_information_map_read,mOTU_counts = map_motu.run_mOTUs_v2_mapping(listInputFiles, database_dir, database_prefix, sample_name, multThreshold, winnerThreshold, loserThreshold, minClippedAlignLength, output, msam_script, args.type_output,args.verbose,profile_mode,all_sam_lines,return_dictionary, args.min_perc_id,min_len_align,args.min_perc_align)
 
@@ -1765,10 +1770,11 @@ def main(argv=None):
         initial_start_time = time.time()
         if args.verbose>2:
             log.print_log("Calculate mOTUs read counts")
-            log.print_message("Each mOTU species is composed of 6 to 10 MGCs.")
-            log.print_message("The final mOTU insert count is obtained as the median of its MGC read counts.\n")
+            log.print_message("Each mOTU species is composed of 6 to 10 MGCs")
+            log.print_message("The final mOTU insert count is obtained as the median of its MGC read counts\n")
 
-            log.print_message("At least "+str(args.map_lgs_cutoff)+" (-g) MGCs are required to have reads mapping to them to consider a mOTU.\n")
+            log.print_message("At least "+str(args.map_lgs_cutoff)+" (-g) MGCs are required to have reads mapping to them to consider")
+            log.print_message("a mOTU\n")
 
         if (args.listInputFiles is None):
             log.print_error("Please provide at least one input file")
