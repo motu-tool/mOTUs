@@ -214,20 +214,18 @@ def run_bwa_multiple_cores(forward_reads, reverse_reads, single_reads, reference
 def prepare_output_bwa(output,outPutIsBam,header_file,all_sam_lines,str_end_header,verbose,str_info_min_len,str_perc_id,str_min_perc_query):
 
     if not(is_tool("samtools")) and outPutIsBam:
-        sys.stderr.write(" [E::map_db] Error: samtools is not in the path. Saving .sam format instead of .bam format\n")
+        log.print_warning("samtools is not in the path. Saving .sam format instead of .bam format")
         outPutIsBam = False
-
-
-    error_save_intermediate_bam_file = False
 
     # load the header
     try:
         h_file = open(header_file,'r')
     except:
-        sys.stderr.write("[E::map_db] Error loading file: "+header_file+"\n[E::map_db] Try to download again the motus profiler\n\n")
-        sys.exit(1)
+        log.print_error("error loading file: "+header_file+"\nTry to download again the motus profiler")
 
     # create the temp sam file with the result
+    log.print_message("")
+    log.print_message("Create sam file")
     try:
         if output != "" or (output == "" and outPutIsBam):
             sam_temp_file = tempfile.NamedTemporaryFile(delete=False, mode="w")
@@ -235,7 +233,7 @@ def prepare_output_bwa(output,outPutIsBam,header_file,all_sam_lines,str_end_head
         else:
             sam_temp_file = sys.stdout
 
-        if verbose>4: sys.stderr.write("  \n[map_db] saving intermediate sam file in "+sam_temp_file.name + "\n")
+        if verbose>4: log.print_message("  \n[map_db] saving intermediate sam file in "+sam_temp_file.name)
 
         sam_temp_file.write(str_end_header)
         sam_temp_file.write(str_info_min_len)
@@ -247,24 +245,19 @@ def prepare_output_bwa(output,outPutIsBam,header_file,all_sam_lines,str_end_head
         for i in all_sam_lines:
             sam_temp_file.write(i)
     except:
-        sys.stderr.write(" [W::map_db] Warning: failed to save intermediate sam file\n")
-        if verbose>4: sys.stderr.write("Error when saving the intermediate sam file\n")
-        error_save_intermediate_bam_file = True
-        sys.exit(1)
+        log.print_error("failed to save intermediate sam file")
 
     # close the sam file
     if output == "" and (not outPutIsBam):
         return 0
+        # it went to stdout, so we can close already
     else:
         try:
             sam_temp_file.flush()
             os.fsync(sam_temp_file.fileno())
             sam_temp_file.close()
         except:
-            if verbose>4: sys.stderr.write("Error when closing sam file\n")
-            if not error_save_intermediate_bam_file:
-                sys.stderr.write(" [W::map_db] Warning: failed to save intermediate bam file\n")
-            sys.exit(1)
+            log.print_error("failed to save intermediate sam file")
 
     #IF WE RETURN SAM
     if not(outPutIsBam):
@@ -273,15 +266,14 @@ def prepare_output_bwa(output,outPutIsBam,header_file,all_sam_lines,str_end_head
             #os.rename(bam_temp_file.name,args.profile_bam_file) # atomic operation
             shutil.move(sam_temp_file.name,output) #It is not atomic if the files are on different filsystems.
         except:
-            if verbose>4: sys.stderr.write("Error when copying intermediate sam to the final destination\n")
-            if not error_save_intermediate_bam_file:
-                sys.stderr.write("[E::map_db] Error: failed to save the sam file\n")
-                sys.stderr.write("[E::map_db] you can find the file here:\n"+sam_temp_file.name+"\n")
-                sys.exit(1)
+            if verbose>4: log.print_error("Error when copying intermediate sam to the final destination")
+            log.print_error("failed to save the sam file",exit = False)
+            log.print_error("You can find the file here:\n"+sam_temp_file.name)
         return 0
 
 
     #IF WE RETURN BAM
+    log.print_message("Convert sam file to bam file")
     try:
         if output != "":
             bam_temp_file = tempfile.NamedTemporaryFile(delete=False, mode="w")
@@ -294,15 +286,10 @@ def prepare_output_bwa(output,outPutIsBam,header_file,all_sam_lines,str_end_head
 
         stdout_s,stderr_s = convert_cmd.communicate()
         if convert_cmd.returncode:
-            if not error_save_intermediate_bam_file:
-                sys.stderr.write("[E::map_db] Error: failed to save intermediate bam file\n")
-                sys.stderr.write(stderr_s.decode('ascii'))
-                sys.exit(1)
+            log.print_error("failed to save intermediate bam file",exit = False)
+            log.print_error(stderr_s.decode('ascii'))
     except:
-        if verbose>4: sys.stderr.write("Error when converting to bam\n")
-        if not error_save_intermediate_bam_file:
-            sys.stderr.write(" [W::map_db] Warning: failed to save intermediate bam file\n")
-        sys.exit(1)
+        log.print_error("Error while converting sam to bam file")
 
     # move the temp file to the final destination
     if output != "":
@@ -310,10 +297,8 @@ def prepare_output_bwa(output,outPutIsBam,header_file,all_sam_lines,str_end_head
             #os.rename(bam_temp_file.name,args.profile_bam_file) # atomic operation
             shutil.move(bam_temp_file.name,output) #It is not atomic if the files are on different filsystems.
         except:
-            if verbose>4: sys.stderr.write("Error when copying intermediate bam to the final destination\n")
-            if not error_save_intermediate_bam_file:
-                sys.stderr.write("[E::map_db] Error: failed to save intermediate bam file\n")
-                sys.stderr.write("[E::map_db] you can find the file here:\n"+bam_temp_file.name+"\n")
+            if verbose>4: log.print_error("Error when copying intermediate bam to the final destination\n")
+            log.print_error("failed to save intermediate bam file\nYou can find the file here:\n"+bam_temp_file.name,exit = True)
             # remove the temporary sam file
             os.remove(sam_temp_file.name)
             sys.exit(1)
@@ -892,7 +877,7 @@ def main(argv=None):
                 log.print_log("Align reads to marker gene sequences")
                 log.print_message("Reads are aligned (by bwa) to marker gene sequences in the reference database. Reads are filtered for:")
                 log.print_message(" - similarity to the reference gene (>97%), and")
-                log.print_message(" - length of the alignment ("+str(args.min_len_align_length)+" nucleotides, -l option)")
+                log.print_message(" - length of the alignment (at least "+str(args.min_len_align_length)+" nucleotides, -l option)")
             if args.command == 'map_snv':
                 log.print_log("MAP SNV")
 
@@ -1453,7 +1438,11 @@ def main(argv=None):
     # --------------------------------------------------------------------------
     if args.command == 'map_tax':
 
-        if args.verbose>2: sys.stderr.write("[main]  MAP_TAX -----------\n")
+        if args.verbose>2:
+            log.print_log("Align reads to marker gene sequences")
+            log.print_message("Reads are aligned (by bwa) to marker gene sequences in the reference database. Reads are filtered for:")
+            log.print_message(" - similarity to the reference gene (>97%), and")
+            log.print_message(" - length of the alignment (at least "+str(args.min_len_align_length)+" nucleotides, -l option)")
 
         if args.verbose>2:
             initial_start_time = time.time()
@@ -1478,7 +1467,7 @@ def main(argv=None):
         if (args.reverseReads is not None): reve = args.reverseReads.split(",")
 
         number_of_lanes = max(len(singles),len(forw),len(reve))
-        if args.verbose > 2: sys.stderr.write("[main] Number of detected lanes: "+str(number_of_lanes)+"\n")
+        if args.verbose > 2: log.print_message("\n   Number of detected lanes: "+str(number_of_lanes)+"\n")
 
         # ----check input: check number of files for forw and rev --------------
         if (args.forwardReads is not None):
@@ -1507,7 +1496,7 @@ def main(argv=None):
         all_sam_lines = list()
         avg_length_reads = list()
         for i in range(number_of_lanes):
-            if args.verbose>2: sys.stderr.write("[main] Run bwa on lane "+str(i+1)+"\n")
+            if args.verbose>2: log.print_message_time("Run bwa on lane "+str(i+1))
 
             forward_reads = ""
             reverse_reads = ""
@@ -1557,9 +1546,6 @@ def main(argv=None):
 
 
         # print output -------------------------------------------------------
-        if args.verbose>2:
-            if args.output != "":
-                sys.stderr.write("[main] Saving sam/bam file\n")
 
         # calculate average length of the reads
         reads_avg_length = int(sum(avg_length_reads) / float(len(avg_length_reads)))
@@ -1572,9 +1558,12 @@ def main(argv=None):
 
         prepare_output_bwa(args.output,args.outPutIsBam,header_file,all_sam_lines,str_end_header,args.verbose,str_info_min_len,str_perc_id,str_min_perc_query)
 
+        # end
         if args.verbose>2:
-            time_after_bwa = time.time()
-            sys.stderr.write("[main] Total time map_tax: " + str("{0:.2f}".format(time_after_bwa - initial_start_time))+" sec\n")
+            log.print_message("")
+            log.print_log("Finished computation")
+            log.print_log("Total time: "+ str("{0:.2f}".format(time.time() - initial_start_time)) + " sec")
+
 
 
 
