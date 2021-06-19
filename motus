@@ -91,7 +91,7 @@ DATABASE_prefix = DATABASE.split("/")[-1]
 
 # check if setup.py has been ran already ---------------------------------------
 if not(os.path.isdir(DATABASE)): # here we check db_mOTU exactly, because want to see if it was installed
-    sys.stderr.write("[E::main] Error: database has not been downloaded. Run setup.py before using the motus profiler\n\n")
+    sys.stderr.write("Error: database has not been downloaded. Run setup.py before using the motus profiler")
     sys.exit(1)
 
 #-------------------------------------------------------------------------------
@@ -106,7 +106,7 @@ try:
             versions[l[0]] = l[1]
     location.close()
 except:
-    sys.stderr.write("[E::main] Error loading file: "+path_info_version+"\n[E::main] Try to download again the motus profiler\n\n")
+    sys.stderr.write("Error loading file: "+path_info_version+"\nTry to download again the motus profiler")
     sys.exit(1)
 
 version_tool = versions["motus"]
@@ -118,10 +118,10 @@ try:
     if os.path.isdir(relative_path+'bin'):
         sys.path.insert(0, relative_path+'bin')
     else:
-        sys.stderr.write("[E::main] Error: "+relative_path+"bin directory is missing.\n[E::main] Download the motus profiler again\n\n")
+        sys.stderr.write("Error: "+relative_path+"bin directory is missing.\nDownload the motus profiler again")
         sys.exit(1)
 except:
-    sys.stderr.write("[E::main] Error: "+relative_path+"bin directory is missing.\n[E::main] Download the motus profiler again\n\n")
+    sys.stderr.write("Error: "+relative_path+"bin directory is missing.\nDownload the motus profiler again")
     sys.exit(1)
 
 # add the log ------------
@@ -134,7 +134,7 @@ if do_not_use_colour:
     try:
         import UTIL_log as log
     except:
-        sys.stderr.write("[E::main] Error: fail to load the script: "+relative_path+"bin/UTIL_log.py\n[E::main] Download the motus profiler again\n\n")
+        sys.stderr.write("Error: fail to load the script: "+relative_path+"bin/UTIL_log.py\nDownload the motus profiler again")
         sys.exit(1)
 else:
     try:
@@ -144,55 +144,55 @@ else:
         try:
             import UTIL_log as log
         except:
-            sys.stderr.write("[E::main] Error: fail to load the script: "+relative_path+"bin/UTIL_log.py\n[E::main] Download the motus profiler again\n\n")
+            sys.stderr.write("Error: fail to load the script: "+relative_path+"bin/UTIL_log.py\nDownload the motus profiler again")
             sys.exit(1)
 
 
 try:
     import map_genes_to_mOTUs as map_motu
 except:
-    sys.stderr.write("[E::main] Error: fail to load the script: "+relative_path+"bin/map_genes_to_mOTUs.py\n[E::main] Download the motus profiler again\n\n")
-    sys.exit(1)
+    log.print_error("fail to load the script: "+relative_path+"bin/map_genes_to_mOTUs.py\nDownload the motus profiler again")
+
 try:
     import runBWA as runbwa
 except ImportError:
-    sys.stderr.write("[E::main] Error: fail to load the script: "+relative_path+"bin/runBWA.py\n[E::main] Download the motus profiler again\n\n")
-    sys.exit(1)
+    log.print_error("fail to load the script: "+relative_path+"bin/runBWA.py\nDownload the motus profiler again")
+
 try:
     import runBWA_for_snv as runbwa_snv
 except ImportError:
-    sys.stderr.write("[E::main] Error: fail to load the script: "+relative_path+"bin/runBWA_for_snv.py\n[E::main] Download the motus profiler again\n\n")
-    sys.exit(1)
+    log.print_error("fail to load the script: "+relative_path+"bin/runBWA_for_snv.py\nDownload the motus profiler again")
+
 try:
     import map_mOTUs_to_LGs as map_lgs
 except:
-    sys.stderr.write("[E::main] Error: fail to load the script: "+relative_path+"bin/map_mOTUs_to_LGs.py\n[E::main] Download the motus profiler again\n\n")
-    sys.exit(1)
+    log.print_error("fail to load the script: "+relative_path+"bin/map_mOTUs_to_LGs.py\nDownload the motus profiler again")
+
 try:
     import append
 except:
-    sys.stderr.write("[E::main] Error: fail to load the script: "+relative_path+"bin/append.py\n[E::main] Download the motus profiler again\n\n")
-    sys.exit(1)
+    log.print_error("fail to load the script: "+relative_path+"bin/append.py\nDownload the motus profiler again")
+
 try:
     import msamtools_python as filter_sam
 except:
-    sys.stderr.write("[E::main] Error: fail to load the script: "+relative_path+"bin/msamtools_python.py\n[E::main] Download the motus profiler again\n\n")
-    sys.exit(1)
+    log.print_error("fail to load the script: "+relative_path+"bin/msamtools_python.py\nDownload the motus profiler again")
+
 try:
     import motu_utilities
 except:
-    sys.stderr.write("[E::main] Error: fail to load the script: "+relative_path+"bin/motu_utilities.py\n[E::main] Download the motus profiler again\n\n")
-    sys.exit(1)
+    log.print_error("fail to load the script: "+relative_path+"bin/motu_utilities.py\nDownload the motus profiler again")
+
 try:
     import PEfiltering
 except:
-    sys.stderr.write("[E::main] Error: fail to load the script: "+relative_path+"bin/PEfiltering.py\n[E::main] Download the motus profiler again\n\n")
-    sys.exit(1)
+    log.print_error("fail to load the script: "+relative_path+"bin/PEfiltering.py\nDownload the motus profiler again")
+
 try:
     import print_CAMI as print_CAMI
 except:
-    sys.stderr.write("[E::main] Error: fail to load the script: "+relative_path+"bin/print_CAMI.py\n[E::main] Download the motus profiler again\n\n")
-    sys.exit(1)
+    log.print_error("fail to load the script: "+relative_path+"bin/print_CAMI.py\nDownload the motus profiler again")
+
 
 # ------------------------------------------------------------------------------
 #       print the help informations
