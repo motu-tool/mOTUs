@@ -1835,7 +1835,10 @@ def main(argv=None):
             log.print_error("too many inputs (-i and -d)")
 
         if (args.listInputFiles is not None):
-            if args.verbose>2: log.print_message_execution("Merge all the files in the list of input")
+            if args.verbose>2:
+                log.print_message_execution("Merge multiple mOTUs profiles into a taxonomy table, where rows are mOTUs and")
+                log.print_message_execution("columns are samples")
+                log.print_message_execution("")
 
         if args.directory_append is not None:
             if args.verbose>2: log.print_message("Merge all the files in the input directory")

@@ -41,7 +41,7 @@ def append_A_option(list_files_raw, output, verbose, BIOM_output, directory):
 
 
     if BIOM_output:
-        if verbose>=2: sys.stderr.write("[W::merge] Warning: -B not supported when the profiles were created with -A\n")
+        if verbose>=2: log.print_warning("-B not supported when the profiles were created with -A")
     # read all files to find the sample names
     sample_names = "#mOTUs2_clade"
     samples_clades = dict()
@@ -50,19 +50,16 @@ def append_A_option(list_files_raw, output, verbose, BIOM_output, directory):
         try:
             location = open(f,'r')
         except:
-            sys.stderr.write("[E::merge] Error: failed to read "+f+"\n")
-            sys.exit(1)
+            log.print_error("failed to read "+f)
         # check header --
         try:
             header = location.readline().rstrip()
             header_vals = header.split("\t")
             if len(header_vals) != 2 or header_vals[0] != "#mOTUs2_clade":
-                sys.stderr.write("[E::merge] Error: Header not correct in : "+f+"\n")
-                sys.exit(1)
+                log.print_error("header not correct in : "+f)
             sample_names = sample_names + "\t" + header_vals[1]
         except:
-            sys.stderr.write("[E::merge] Error: failed to check header in : "+f+"\n")
-            sys.exit(1)
+            log.print_error("failed to check header in : "+f)
 
         # go through all the lines --
         all_clades = dict()
@@ -71,9 +68,7 @@ def append_A_option(list_files_raw, output, verbose, BIOM_output, directory):
             # we will not check
             vals = l.rstrip().split("\t")
             if len(vals) != 2:
-                if verbose>4: sys.stderr.write("Error with: "+l+"\n")
-                sys.stderr.write("[E::merge] Error with file: "+f+"\n")
-                sys.exit(1)
+                log.print_error("Error with file: "+f)
             # add vals to the dictionary
             all_clades[vals[0]] = vals[1]
 
@@ -120,21 +115,18 @@ def append_A_option(list_files_raw, output, verbose, BIOM_output, directory):
         outfile.write(lines_print[c] + "\n")
 
     if output != "":
-        if verbose>2: sys.stderr.write("   Saving the merged profiles\n")
+        if verbose>2: log.print_message("Saving the merged profiles")
         try:
             outfile.flush()
             os.fsync(outfile.fileno())
             outfile.close()
         except:
-            sys.stderr.write("[E::main] Error: failed to save the merged profiles\n")
-            sys.exit(1)
+            log.print_error("failed to save the merged profiles")
         try:
             #os.rename(outfile.name,output) # atomic operation
             shutil.move(outfile.name,output) #It is not atomic if the files are on different filsystems.
         except:
-            sys.stderr.write("[E::merge] Error: failed to save the merged profiles\n")
-            sys.stderr.write("[E::merge] you can find the file here:\n"+outfile.name+"\n")
-            sys.exit(1)
+            log.print_error("failed to save the merged profiles\nyou can find the file here:\n"+outfile.name)
 
 
 # ------------------------------------------------------------------------------
@@ -154,7 +146,7 @@ def memory_map_public_profiles(verbose, environments_to_merge, public_profiles, 
                 samples_2_use.add(sample)
             else:
                 continue
-    if verbose > 2: sys.stderr.write(f"\n   Selected {len(samples_2_use)} public samples for merging\n")
+    if verbose > 2: log.print_message("Selected "+str(len(samples_2_use))+" public samples for merging")
 
     with gzip.open(public_profiles, 'rt') as handle:
         handle.readline()
@@ -178,10 +170,10 @@ def memory_map_public_profiles(verbose, environments_to_merge, public_profiles, 
                 if sample:
                     sample_2_counts[sample].append(count)
             if len(motus) % 1000 == 0:
-                if verbose > 3: sys.stderr.write(f"\r [merge] ({len(motus)} of 33,571 mOTUs extracted)")
-        if verbose > 3: sys.stderr.write(f"\r [merge] ({len(motus)} of 33,571 mOTUs extracted)\n")
+                if verbose > 3: log.print_message("("+str(len(motus))+" of 33,571 mOTUs extracted)")
+        if verbose > 3: log.print_message("[merge] ("+str(len(motus))+" of 33,571 mOTUs extracted)")
 
-        if verbose > 3: sys.stderr.write(f" [merge] (Creating {len(samples_2_use)} temp mOTUs profiles)\n")
+        if verbose > 3: log.print_message("[merge] (Creating "+str(len(samples_2_use))+" temp mOTUs profiles)")
 
         temp_files = []
         for cnt, (sample, counts) in enumerate(sample_2_counts.items(), 1):
@@ -191,8 +183,8 @@ def memory_map_public_profiles(verbose, environments_to_merge, public_profiles, 
                 tmp_file.write(f'{motu}\t{count}\n')
             tmp_file.close()
             temp_files.append(tmp_file.name)
-            if verbose > 3: sys.stderr.write(f"\r [merge] (Wrote {cnt}/{len(sample_2_counts)} public profiles to disk")
-        if verbose > 3: sys.stderr.write(f"\r [merge] (Wrote {cnt}/{len(sample_2_counts)} public profiles to disk\n")
+            if verbose > 3: log.print_message("[merge] (Wrote "+str(cnt)+"/"+str(len(sample_2_counts))+" public profiles to disk")
+        if verbose > 3: log.print_message("[merge] (Wrote "+str(cnt)+"/"+str(len(sample_2_counts))+" public profiles to disk")
 
     return temp_files
 
@@ -205,8 +197,7 @@ def append_profilings(directory, list_files, output, verbose, BIOM_output,versio
     log = log_
     #--------------------------- save files ------------------------------------
     if directory is None and list_files is None:
-        sys.stderr.write("[E::merge] Error: both -d and -i are empty")
-        sys.exit(1)
+        log.print_error("both -d and -i are empty")
 
     if list_files is not None:
         list_files = list_files.split(",")
@@ -216,32 +207,30 @@ def append_profilings(directory, list_files, output, verbose, BIOM_output,versio
         try:
             list_files = [directory+f for f in os.listdir(directory)] #list_files = os.listdir(directory)
         except:
-            sys.stderr.write("[E::merge] Error: failed to open directory: "+directory+"\n")
-            sys.exit(1)
+            log.print_error("failed to open directory: "+directory)
         list_files = sorted(list_files)
         first_file = list_files[0]#first_file = directory+list_files[0]
 
-    if verbose>2: sys.stderr.write("   Number of detected files: " +str(len(list_files))+"\n")
+    if verbose>2: log.print_message("Number of detected files: " +str(len(list_files)))
 
     if len(environments_to_merge) > 0:
         list_files_public = memory_map_public_profiles(verbose, environments_to_merge, public_profiles, public_profiles_envo)
         list_files = list_files + list_files_public
-        if verbose > 2: sys.stderr.write("   Number of detected files including public profiles: " + str(len(list_files)) + "\n")
+        if verbose > 2: log.print_message("Number of detected files including public profiles: " + str(len(list_files)))
 
     # first file to get informations
-    if verbose>=5: sys.stderr.write("[merge] Opening file: "+first_file+"\n")
+    if verbose>=5: log.print_message("[merge] Opening file: "+first_file+"\n")
     try:
         location = open(first_file,'r')
     except:
-        sys.stderr.write("[E::merge] Error: failed to read "+first_file+"\n")
-        sys.exit(1)
+        log.print_error("failed to read "+first_file)
 
 
 
     try:
         header_execution = location.readline()
     except:
-        sys.stderr.write("[E::merge] Error: failed to parse "+first_file+"\n")
+        log.print_error("failed to parse "+first_file, exit = False)
         location.close()
         sys.exit(1)
     # check if the samples are from the -A option --------------------------
@@ -255,14 +244,12 @@ def append_profilings(directory, list_files, output, verbose, BIOM_output,versio
     try:
         # check if there are errors in the header ------------------------------
         if header_execution[0:5] != "# git":
-            if verbose > 5: sys.stderr.write("[E::merge] Error reading the first file - first line\n")
-            sys.stderr.write("[E::merge] Error. truncated file: "+first_file+"\n")
-            sys.exit(1)
+            if verbose > 5: log.print_message("[E::merge] Error reading the first file - first line")
+            log.print_error("truncated file: "+first_file)
 
         header_call = location.readline()
         if header_call[0:6] != "# call":
-            sys.stderr.write("[E::merge] Error. truncated file: "+first_file+"\n")
-            sys.exit(1)
+            log.print_error("truncated file: "+first_file)
 
         header_sample_name = location.readline().split('\t')
         len_info = len(header_sample_name) - 1
@@ -275,9 +262,8 @@ def append_profilings(directory, list_files, output, verbose, BIOM_output,versio
             taxa_id.append(name)
         location.close()
     except:
-        if verbose > 5: sys.stderr.write("[E::merge] Error reading the first file\n")
-        sys.stderr.write("[E::merge] Error: failed to parse "+first_file+"\n")
-        sys.exit(1)
+        if verbose > 5: log.print_message("[E::merge] Error reading the first file")
+        log.print_error("failed to parse "+first_file)
 
     # create array
     array_c = cArray(len(list_files),len(taxa_id))
@@ -292,47 +278,41 @@ def append_profilings(directory, list_files, output, verbose, BIOM_output,versio
         #     file_name = directory+i
         # else:
         #     file_name = i
-        if verbose > 3: sys.stderr.write(f"\r [merge] ({nof} of {len(list_files)} mOTUs files processed)")
+        if verbose > 3: log.print_message(" [merge] ("+str(nof)+" of "+str(len(list_files))+" mOTUs files processed)")
         try:
             location = open(file_name,'r')
         except:
-            sys.stderr.write("[E::merge] Error. failed to read "+file_name+"\n")
-            sys.exit(1)
+            log.print_error("failed to read "+file_name)
 
         # check the header/headers
         try:
             header_execution = location.readline().rstrip()
             if header_execution[0:5] != "# git":
-                sys.stderr.write("[E::merge] Error. truncated file: "+file_name+"\n")
-                sys.exit(1)
+                log.print_error("truncated file: "+file_name)
             else:
                 all_info_version[cont_files] = header_execution
 
             header_call = location.readline()
             if header_call[0:6] != "# call":
-                sys.stderr.write("[E::merge] Error. truncated file: "+file_name+"\n")
-                sys.exit(1)
+                log.print_error("truncated file: "+file_name)
 
             # third header is the name
             header_3 = location.readline().rstrip().split('\t')
             if len(header_3) != len_info + 1:
-                sys.stderr.write("[E::merge] Error: Different number of columns in file "+file_name+"\n")
-                sys.exit(1)
+                log.print_error("Different number of columns in file "+file_name)
             else:
                 header_sample_name = header_3[len(header_3)-1]
 
         except:
-            if verbose > 5: sys.stderr.write("[E::merge] Error parsing file\n")
-            sys.stderr.write("[E::merge] Error: failed to parse "+file_name+"\n")
-            sys.exit(1)
+            if verbose > 5: log.print_message("[E::merge] Error parsing file")
+            log.print_error("failed to parse "+file_name)
 
         headers = headers+header_sample_name+"\t"
         cont = 0
         for line in location:
             l = line.rstrip().split('\t')
             if len(l) != len_info + 1:
-                sys.stderr.write("[E::merge] Error: Inconsistent number of columns in file "+file_name+"\n")
-                sys.exit(1)
+                log.print_error("inconsistent number of columns in file "+file_name)
 
             # find the name
             name = "\t".join(l[0:len_info])
@@ -341,12 +321,10 @@ def append_profilings(directory, list_files, output, verbose, BIOM_output,versio
                 array_c[cont][cont_files] = l[len_info]
                 cont += 1
             else:
-                sys.stderr.write("[E::merge] Error: The taxa ids are different:\n")
-                sys.stderr.write(i+": "+name+" -- "+taxa_id[cont]+"\n")
-                sys.exit(1)
+                log.print_error("The taxa ids are different:\n"+i+": "+name+" -- "+taxa_id[cont])
         cont_files += 1
         location.close()
-    if verbose > 3: sys.stderr.write(f"\r [merge] ({nof} of {len(list_files)} mOTUs files processed)")
+    if verbose > 3: log.print_message("[merge] ("+str(nof)+" of "+str(len(list_files))+" mOTUs files processed)")
     headers = headers[0:-1]
 
     # ---------------------- check the information of the version --------------
@@ -354,9 +332,9 @@ def append_profilings(directory, list_files, output, verbose, BIOM_output,versio
         info_version_uniq = list(set(all_info_version.values()))
         if len(info_version_uniq) != 1:
             if verbose>=2:
-                sys.stderr.write("[W::merge] Warning: The profiles that you are merging were analysed with different parameters:\n")
+                log.print_warning("The profiles that you are merging were analysed with different parameters:")
                 for u in info_version_uniq:
-                    sys.stderr.write(u+"\n")
+                    log.print_message(u)
 
 
 
@@ -459,21 +437,18 @@ def append_profilings(directory, list_files, output, verbose, BIOM_output,versio
 
 
     if output != "":
-        if verbose>2: sys.stderr.write("   Saving the merged profiles\n")
+        if verbose>2: log.print_message("Saving the merged profiles")
         try:
             outfile.flush()
             os.fsync(outfile.fileno())
             outfile.close()
         except:
-            sys.stderr.write("[E::main] Error: failed to save the merged profiles\n")
-            sys.exit(1)
+            log.print_error("failed to save the merged profiles")
         try:
             #os.rename(outfile.name,output) # atomic operation
             shutil.move(outfile.name,output) #It is not atomic if the files are on different filsystems.
         except:
-            sys.stderr.write("[E::merge] Error: failed to save the merged profiles\n")
-            sys.stderr.write("[E::merge] you can find the file here:\n"+outfile.name+"\n")
-            sys.exit(1)
+            log.print_error("failed to save the merged profiles\nyou can find the file here:\n"+outfile.name)
 
 
 
@@ -495,7 +470,7 @@ def main(argv=None):
     #-------------------------------- check input ------------------------------
     # check that there is at least one file with reads
     if (args.directory==""):
-        sys.stderr.write("[E::merge] Error: insert the directory value.\n")
+        log.print_error("-d is empty")
         sys.exit(1)
 
     if args.directory is not None:
