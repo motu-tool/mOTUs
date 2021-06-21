@@ -298,10 +298,10 @@ def prepare_output_bwa(output,outPutIsBam,header_file,all_sam_lines,str_end_head
             shutil.move(bam_temp_file.name,output) #It is not atomic if the files are on different filsystems.
         except:
             if verbose>4: log.print_error("Error when copying intermediate bam to the final destination\n")
-            log.print_error("failed to save intermediate bam file\nYou can find the file here:\n"+bam_temp_file.name,exit = True)
+            log.print_error("failed to save intermediate bam file\nYou can find the file here:\n"+bam_temp_file.name,exit = False)
             # remove the temporary sam file
             os.remove(sam_temp_file.name)
-            sys.exit(1)
+            sys.exit(1) # EXIT
 
     # remove the temporary sam file
     os.remove(sam_temp_file.name)
@@ -737,7 +737,7 @@ def main(argv=None):
 
 
         if args.verbose>=4:
-            sys.stderr.write("[main] Creating sample list file for metaSNV: %s\n" % (sample_file))
+            log.print_message("[main] Creating sample list file for metaSNV: %s\n" % (sample_file))
 
         bamfiles = [os.path.abspath(p) for p in glob.glob(os.path.join(bamdir, '*bam'))]
 
@@ -751,12 +751,12 @@ def main(argv=None):
     #                           metaSNV
     # --------------------------------------------------------------------------
         if args.verbose>=4:
-            sys.stderr.write("[main] Executing metaSNV main routine\n")
+            log.print_message("[main] Executing metaSNV main routine\n")
 
 
         metaSNV_command = 'metaSNV.py %s %s %s --db_ann %s --threads %d --n_splits %d' % (outdir, sample_file, reference, annotation, args.threads, args.threads)
         if args.verbose>=4:
-            sys.stderr.write("[main] Command: %s\n" % metaSNV_command)
+            log.print_message("[main] Command: %s\n" % metaSNV_command)
         metaSNV_popenCMD = shlex.split(metaSNV_command)
         p = subprocess.Popen(metaSNV_popenCMD, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (stdout, stderr) = p.communicate()
@@ -769,16 +769,16 @@ def main(argv=None):
             log.print_error(str(stderr), exit = False)
             log.print_error(str(stdout), exit = False)
             mlf.close()
-            sys.exit(1)
+            sys.exit(1) # EXIT
     # --------------------------------------------------------------------------
     #                                  FILTER
     # --------------------------------------------------------------------------
         if args.verbose>=4:
-            sys.stderr.write("[main] Executing metaSNV filter routine\n")
+            log.print_message("[main] Executing metaSNV filter routine\n")
             # params = '-m 5 -d 10 -b 80 -p 0.9'
         metaSNVFilter_command = 'python '+relative_path+'bin/metaSNV_Filtering_2.0.py %s -m %d -d %f -b %f -p %f -c %f --n_threads %d' %(outdir, fm, fd, fb, fp, fc, args.threads)
         if args.verbose>=4:
-            sys.stderr.write("[main] Command: %s\n" % metaSNVFilter_command)
+            log.print_message("[main] Command: %s\n" % metaSNVFilter_command)
         metaSNVFilter_popenCMD = shlex.split(metaSNVFilter_command)
         p = subprocess.Popen(metaSNVFilter_popenCMD, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (stdout, stderr) = p.communicate()
@@ -790,15 +790,15 @@ def main(argv=None):
             log.print_error(str(stderr), exit = False)
             log.print_error(str(stdout), exit = False)
             mlf.close()
-            sys.exit(1)
+            sys.exit(1) # EXIT
     # --------------------------------------------------------------------------
     #                                  REMOVE PADDING
     # --------------------------------------------------------------------------
         if args.verbose>=4:
-            sys.stderr.write("[main] Executing metaSNV remove padded routine\n")
+            log.print_message("[main] Executing metaSNV remove padded routine\n")
         metaSNVRMPadded_command = 'bash '+relative_path+'bin/motus.remove.padded.sh %s/filtered%s/' % (outdir, paramsdir)
         if args.verbose>=4:
-            sys.stderr.write("[main] Command: %s\n" % metaSNVRMPadded_command)
+            log.print_message("[main] Command: %s\n" % metaSNVRMPadded_command)
         metaSNVRMPadded_popenCMD = shlex.split(metaSNVRMPadded_command)
         p = subprocess.Popen(metaSNVRMPadded_popenCMD, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (stdout, stderr) = p.communicate()
@@ -810,15 +810,15 @@ def main(argv=None):
             log.print_error(str(stderr), exit = False)
             log.print_error(str(stdout), exit = False)
             mlf.close()
-            sys.exit(1)
+            sys.exit(1) # EXIT
     # --------------------------------------------------------------------------
     #                                  DISTANCE
     # --------------------------------------------------------------------------
         if args.verbose>=4:
-            sys.stderr.write("[main] Executing metaSNV distance routine\n")
+            log.print_message("[main] Executing metaSNV distance routine\n")
         metaSNVDist_command = 'python '+relative_path+'bin/metaSNV_DistDiv.py --filt %s/filtered%s --dist --n_threads %d' % (outdir, paramsdir, args.threads)
         if args.verbose>=4:
-            sys.stderr.write("[main] Command: %s\n" % metaSNVDist_command)
+            log.print_message("[main] Command: %s\n" % metaSNVDist_command)
         metaSNVDist_popenCMD = shlex.split(metaSNVDist_command)
         p = subprocess.Popen(metaSNVDist_popenCMD, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (stdout, stderr) = p.communicate()
@@ -830,7 +830,7 @@ def main(argv=None):
             log.print_error(str(stderr), exit = False)
             log.print_error(str(stdout), exit = False)
             mlf.close()
-            sys.exit(1)
+            sys.exit(1) # EXIT
     # --------------------------------------------------------------------------
     #                          KEEP ONLY INTERESTING FILES
     # --------------------------------------------------------------------------
@@ -891,7 +891,7 @@ def main(argv=None):
 
     # db -----------
     version_db = args_db+versions[args_db]
-    if (args.verbose >= 5): sys.stderr.write("[main] Map reads to db "+version_db+"\n")
+    if (args.verbose >= 5): log.print_message("[main] Map reads to db "+version_db+"\n")
     # scripts
     version_map_lgs = "calc_motu "+str(versions["map_mOTUs_to_LGs"])
     version_map_lgs = version_map_lgs + " -k "+args.taxonomic_level
@@ -1110,7 +1110,7 @@ def main(argv=None):
 
                 # Third: samtool sort
                 # samtool sort needs a bam file as input
-                if args.verbose>4: sys.stderr.write("   [map_snv] saving temporary sam file\n")
+                if args.verbose>4: log.print_message("   [map_snv] saving temporary sam file")
                 temp_file = tempfile.NamedTemporaryFile(delete=False, mode="w")
                 try:
                     h_file = open(header_file,'r')
@@ -1166,7 +1166,7 @@ def main(argv=None):
                         #os.rename(outfile_bam.name,args.output) # atomic operation
                         shutil.move(outfile_bam.name,args.output) #It is not atomic if the files are on different filsystems.
                     except:
-                        log.print_error("failed to save the final bam/sam file",exit = True)
+                        log.print_error("failed to save the final bam/sam file",exit = False)
                         log.print_error("you can find the file here:\n"+outfile_bam.name)
 
                 # end map_SNV
@@ -1301,7 +1301,7 @@ def main(argv=None):
 
             if (args.listInputFiles is not None):
                 if args.verbose>2:
-                    sys.stderr.write("[main] Load sam/bam files and inizialize the parametrs for calc_mgc\n")
+                    log.print_message("Load sam/bam files and inizialize the parametrs for calc_mgc\n")
 
 
             # prepare inputs
@@ -1743,9 +1743,7 @@ def main(argv=None):
                 #os.rename(outfile.name,args.output) # atomic operation
                 shutil.move(outfile.name,args.output) #It is not atomic if the files are on different filsystems.
             except:
-                log.print_error("failed to save the intermediate mgc table",exit = False)
-                log.print_error("you can find the file here:\n"+outfile.name, exit = False)
-                sys.exit(1)
+                log.print_error("failed to save the intermediate mgc table\n       You can find the file here:\n"+outfile.name)
 
 
         # end
