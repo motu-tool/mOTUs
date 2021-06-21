@@ -53,20 +53,18 @@ Usage: motus <command> [options]
 
 Command:
  -- Taxonomic profiling
-      profile     Perform a taxonomic profiling (map_tax + calc_mgc + calc_motu)
-      merge       Merge different taxonomic profiles to create a table
+      profile     Perform taxonomic profiling (map_tax + calc_mgc + calc_motu) in a single step
+      merge       Merge several taxonomic profiling results into one table
 
       map_tax     Map reads to the marker gene database
-      calc_mgc    Aggregate reads from the same marker gene cluster (mgc) and
-                  generate mgc abundance table
-      calc_motu   From a mgc abundance table, produce the mOTU abundance table
+      calc_mgc    Calculate marker gene cluster (MGC) abundance
+      calc_motu   Summarize MGC abundances into a mOTU abundance table
 
  -- SNV calling
-      map_snv     Map reads to the centroid marker gene database and create a
-                  bam/sam file for snv calling
-      snv_call    SNV calling using metaSNV
+      map_snv     Map reads to the marker gene database for SNV calling
+      snv_call    Generate SNV profiles (using metaSNV)
 
-Type motus <command> to print the help for a specific command
+Type motus <command> to print the help menu for a specific command
         '''
     return str_msg
 
@@ -84,12 +82,12 @@ def print_menu_profile():
     sys.stderr.write("   -r  FILE[,FILE]  input file(s) for reads in reverse orientation, fastq formatted\n")
     sys.stderr.write("   -s  FILE[,FILE]  input file(s) for reads without mate, fastq formatted\n")
     sys.stderr.write("   -n  STR          sample name\n")
-    sys.stderr.write("   -i  FILE[,FILE]  provide sam or bam input file(s)\n")
+    sys.stderr.write("   -i  FILE[,FILE]  provide SAM or BAM input file(s)\n")
     sys.stderr.write("   -m  FILE         provide a mgc reads count file\n")
     sys.stderr.write("   -db DIR          provide a database directory\n\n")
     sys.stderr.write("Output options:\n")
     sys.stderr.write("   -o  FILE         output file name [stdout]\n")
-    sys.stderr.write("   -I  FILE         save the result of bwa in bam format (intermediate step) [None]\n")
+    sys.stderr.write("   -I  FILE         save the result of BWA in BAM format (intermediate step) [None]\n")
     sys.stderr.write("   -M  FILE         save the mgc reads count (intermediate step) [None]\n")
     sys.stderr.write("   -e               profile only reference species (ref_mOTUs)\n")
     sys.stderr.write("   -c               print result as counts instead of relative abundances\n")
@@ -120,7 +118,7 @@ def print_menu_map_snv():
     sys.stderr.write("   -s  FILE[,FILE]  input file(s) for reads without mate, fastq formatted\n")
     sys.stderr.write("   -db DIR          provide a database directory\n\n")
     sys.stderr.write("Output options:\n")
-    sys.stderr.write("   -o  FILE         output bam file name [stdout]\n\n")
+    sys.stderr.write("   -o  FILE         output BAM file name [stdout]\n\n")
     sys.stderr.write("Algorithm options:\n")
     sys.stderr.write("   -l  INT          min. length of alignment for the reads (number of nucleotides) [75]\n")
     #sys.stderr.write("   -CC INT          number of cores for bwa (max one per lane) [1]\n")
@@ -132,7 +130,7 @@ def print_menu_snv_call():
     sys.stderr.write("\n")
     sys.stderr.write("Usage: motus snv_call -d Directory -o Directory [options]\n\n")
     sys.stderr.write("Input options:\n")
-    sys.stderr.write("   -d  DIR     Call metaSNV on all bam files in the directory. [Mandatory]\n")
+    sys.stderr.write("   -d  DIR     Call metaSNV on all BAM files in the directory. [Mandatory]\n")
     sys.stderr.write("   -fb FLOAT   Coverage breadth: minimal horizontal genome coverage percentage per sample per species. Default=80.0\n")
     sys.stderr.write("   -fd FLOAT   Coverage depth: minimal average vertical genome coverage per sample per species. Default=5.0\n")
     sys.stderr.write("   -fm INT     Minimum number of samples per species. Default=2\n")
@@ -156,7 +154,7 @@ def print_menu_bwa():
     sys.stderr.write("   -db DIR          provide a database directory\n\n")
     sys.stderr.write("Output options:\n")
     sys.stderr.write("   -o  FILE         output file name [stdout]\n")
-    sys.stderr.write("   -b               save the result of bwa in bam format\n\n")
+    sys.stderr.write("   -b               save the result of BWA in BAM format\n\n")
     sys.stderr.write("Algorithm options:\n")
     sys.stderr.write("   -l  INT          min. length of alignment for the reads (number of nucleotides) [75]\n")
     #sys.stderr.write("   -CC INT          number of cores for bwa (max one per lane) [1]\n")
@@ -169,7 +167,7 @@ def print_menu_map_genes():
     sys.stderr.write("Usage: motus calc_mgc [options]\n\n")
     sys.stderr.write("Input options:\n")
     sys.stderr.write("   -n  STR          sample name\n")
-    sys.stderr.write("   -i  FILE[,FILE]  provide a sam or bam input file (or list of files)\n")
+    sys.stderr.write("   -i  FILE[,FILE]  provide a SAM or BAM input file (or list of files) output of motus map_tax\n")
     sys.stderr.write("   -db DIR          provide a database directory\n\n")
     sys.stderr.write("Output options:\n")
     sys.stderr.write("   -o  FILE         output file name [stdout]\n\n")
@@ -186,7 +184,7 @@ def print_menu_map_lgs():
     sys.stderr.write("Usage: motus calc_motu [options]\n\n")
     sys.stderr.write("Input options:\n")
     sys.stderr.write("   -n  STR   sample name\n")
-    sys.stderr.write("   -i  FILE  provide the mgc abundance table\n")
+    sys.stderr.write("   -i  FILE  provide the mgc abundance table (output of motus calc_mgc)\n")
     sys.stderr.write("   -db DIR   provide a database directory\n\n")
     sys.stderr.write("Output options:\n")
     sys.stderr.write("   -o  FILE  output file name [stdout]\n")
@@ -210,11 +208,11 @@ def print_menu_append():
     sys.stderr.write("\n")
     sys.stderr.write("Usage: motus merge [options]\n\n")
     sys.stderr.write("Input options:\n")
-    sys.stderr.write("   -i STR[,STR]  list of mOTU profiles to merge (comma separated)\n")
-    sys.stderr.write("   -d DIR        merge all the files in the directory\n")
-    sys.stderr.write("   -a STR[,STR]  Add public profiles from different environments.\n                 Values: [all, air, bioreactor, bee, cat,\n                 cattle, chicken, dog, fish, freshwater, human, \n                 marine, mouse, pig, sheep, soil, termite, wastewater]\n\n")
+    sys.stderr.write("   -i FILE[,FILE] list of mOTU profiles to merge (comma separated)\n")
+    sys.stderr.write("   -d DIR         merge all the files in the directory DIR\n")
+    sys.stderr.write("   -a STR[,STR]   add pre-computed profiles from different environmental samples\n                  Values: [all, air, bioreactor, bee, cat,\n                  cattle, chicken, dog, fish, freshwater, human,\n                  marine, mouse, pig, sheep, soil, termite, wastewater]\n\n")
     sys.stderr.write("Output options:\n")
-    sys.stderr.write("   -o FILE       output file name [stdout]\n")
-    sys.stderr.write("   -B            print result in BIOM format\n\n")
+    sys.stderr.write("   -o FILE        output file name [stdout]\n")
+    sys.stderr.write("   -B             print result in BIOM format\n\n")
     sys.stderr.write("Algorithm options:\n")
-    sys.stderr.write("   -v INT        verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n\n")
+    sys.stderr.write("   -v INT         verbose level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n\n")

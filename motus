@@ -918,7 +918,7 @@ def main(argv=None):
             time_after_map_genes = time.time() # for now we initialize it, so that if we skip calc_mgc, then we use the initial time
             if (args.command == 'profile' and (args.listInputFiles is None and args.motu_read_counts_file is None)) or args.command == 'map_snv':
                 log.print_log("Align reads to marker gene sequences")
-                log.print_message_execution("Reads are aligned (by bwa) to marker gene sequences in the reference database")
+                log.print_message_execution("Reads are aligned (by BWA) to marker gene sequences in the reference database")
                 log.print_message_execution("Reads are filtered for:")
                 log.print_message_execution(" - similarity to the reference gene (>97%), and")
                 log.print_message_execution(" - length of the alignment (at least "+str(args.min_len_align_length)+" nucleotides, -l option)")
@@ -1490,7 +1490,7 @@ def main(argv=None):
 
         if args.verbose>2:
             log.print_log("Align reads to marker gene sequences")
-            log.print_message_execution("Reads are aligned (by bwa) to marker gene sequences in the reference database")
+            log.print_message_execution("Reads are aligned (by BWA) to marker gene sequences in the reference database")
             log.print_message_execution("Reads are filtered for:")
             log.print_message_execution(" - similarity to the reference gene (>97%), and")
             log.print_message_execution(" - length of the alignment (at least "+str(args.min_len_align_length)+" nucleotides, -l option)")
