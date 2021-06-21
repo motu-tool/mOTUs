@@ -207,7 +207,7 @@ class CapitalisedHelpFormatter(argparse.HelpFormatter):
 # ------------------------------------------------------------------------------
 # function for multiple cores for bwa
 def run_bwa_multiple_cores(forward_reads, reverse_reads, single_reads, reference, threads, output, bamOutput, msam_script, technology, verbose, profile_mode, lane_id, result,default_min_len_align_length_map_tax):
-    result1 = runbwa.runBWAmapping( forward_reads, reverse_reads, single_reads, reference, threads, output, bamOutput, msam_script, technology, verbose, profile_mode, lane_id,default_min_len_align_length_map_tax)
+    result1 = runbwa.runBWAmapping( forward_reads, reverse_reads, single_reads, reference, threads, output, bamOutput, msam_script, technology, verbose, profile_mode, lane_id,default_min_len_align_length_map_tax,log)
     for i in result1:
         result.append(i)
 
@@ -1032,10 +1032,10 @@ def main(argv=None):
                     results_bwa.append(result)
                 else:
                     if args.command == 'profile':
-                        sam_lines_list = runbwa.runBWAmapping( forward_reads, reverse_reads, single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id,default_min_len_align_length_map_tax)
+                        sam_lines_list = runbwa.runBWAmapping( forward_reads, reverse_reads, single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id,default_min_len_align_length_map_tax,log)
                     else: # if it is map_snv
                         if (args.load_sam_lines is None):
-                            sam_lines_list = runbwa_snv.runBWAmapping( forward_reads, reverse_reads, single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id,default_min_len_align_length_map_tax)
+                            sam_lines_list = runbwa_snv.runBWAmapping( forward_reads, reverse_reads, single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id,default_min_len_align_length_map_tax,log)
                         else:
                             sam_lines_list = list()
                     all_sam_lines = all_sam_lines + sam_lines_list
@@ -1582,7 +1582,7 @@ def main(argv=None):
                 processes.append(multiprocessing.Process(target=run_bwa_multiple_cores, args=(forward_reads, reverse_reads, single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id, result,default_min_len_align_length_map_tax)) )
                 results_bwa.append(result)
             else:
-                sam_lines_list = runbwa.runBWAmapping( forward_reads, reverse_reads, single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id,default_min_len_align_length_map_tax)
+                sam_lines_list = runbwa.runBWAmapping( forward_reads, reverse_reads, single_reads, reference, args.threads, output, bamOutput, msam_script, technology, args.verbose, profile_mode, lane_id,default_min_len_align_length_map_tax,log)
                 all_sam_lines = all_sam_lines + sam_lines_list
 
         if multiple_cores:
