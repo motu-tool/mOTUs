@@ -1371,7 +1371,7 @@ def main(argv=None):
                 all_sam_lines_input_map_motu = filter_sam.run_all_lines((args.min_perc_id/100),min_len_align,args.min_perc_align,all_sam_lines)
 
 
-            version_information_map_read,mOTU_counts = map_motu.run_mOTUs_v2_mapping(listInputFiles, database_dir, database_prefix, sample_name, multThreshold, winnerThreshold, loserThreshold, minClippedAlignLength, output, msam_script, args.type_output,args.verbose,profile_mode,all_sam_lines_input_map_motu,return_dictionary, args.min_perc_id,min_len_align,args.min_perc_align)
+            version_information_map_read,mOTU_counts = map_motu.run_mOTUs_v2_mapping(listInputFiles, database_dir, database_prefix, sample_name, multThreshold, winnerThreshold, loserThreshold, minClippedAlignLength, output, msam_script, args.type_output,args.verbose,profile_mode,all_sam_lines_input_map_motu,return_dictionary, args.min_perc_id,min_len_align,args.min_perc_align,log)
 
             # header for mgc table ----------------
             mgc_table_header = "# "
@@ -1703,7 +1703,7 @@ def main(argv=None):
             log.print_message_execution("Reads can either map preferably to one MGC ('Unique' mappers), or map to many")
             log.print_message_execution("MGCs from different species ('Multiple' mappers)\n")
 
-        version_information_map_read,mOTU_counts = map_motu.run_mOTUs_v2_mapping(listInputFiles, database_dir, database_prefix, sample_name, multThreshold, winnerThreshold, loserThreshold, minClippedAlignLength, output, msam_script, args.type_output,args.verbose,profile_mode,all_sam_lines,return_dictionary, args.min_perc_id,min_len_align,args.min_perc_align)
+        version_information_map_read,mOTU_counts = map_motu.run_mOTUs_v2_mapping(listInputFiles, database_dir, database_prefix, sample_name, multThreshold, winnerThreshold, loserThreshold, minClippedAlignLength, output, msam_script, args.type_output,args.verbose,profile_mode,all_sam_lines,return_dictionary, args.min_perc_id,min_len_align,args.min_perc_align,log)
 
         # header for mgc table ----------------
         mgc_table_header = "# "
