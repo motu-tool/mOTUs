@@ -695,8 +695,8 @@ def main(argv=None):
         initial_start_time = time.time()
         if args.verbose>2:
             log.print_log("Calculate SNVs")
-            log.print_message("SNP distances between samples are calculated with metaSNV")
-            log.print_message("(Costea et al. metaSNV: A tool for metagenomic strain level analysis. Plos one, 2017)\n")
+            log.print_message_execution("SNP distances between samples are calculated with metaSNV")
+            log.print_message_execution("(Costea et al. metaSNV: A tool for metagenomic strain level analysis. Plos one, 2017)\n")
 
         if args.directory_append is None:
             log.print_error("-d is missing")
@@ -918,10 +918,10 @@ def main(argv=None):
             time_after_map_genes = time.time() # for now we initialize it, so that if we skip calc_mgc, then we use the initial time
             if (args.command == 'profile' and (args.listInputFiles is None and args.motu_read_counts_file is None)) or args.command == 'map_snv':
                 log.print_log("Align reads to marker gene sequences")
-                log.print_message("Reads are aligned (by bwa) to marker gene sequences in the reference database")
-                log.print_message("Reads are filtered for:")
-                log.print_message(" - similarity to the reference gene (>97%), and")
-                log.print_message(" - length of the alignment (at least "+str(args.min_len_align_length)+" nucleotides, -l option)")
+                log.print_message_execution("Reads are aligned (by bwa) to marker gene sequences in the reference database")
+                log.print_message_execution("Reads are filtered for:")
+                log.print_message_execution(" - similarity to the reference gene (>97%), and")
+                log.print_message_execution(" - length of the alignment (at least "+str(args.min_len_align_length)+" nucleotides, -l option)")
 
         # check that there is at least one file with reads
         if (args.forwardReads is None) and (args.reverseReads is None) and (args.singleReads is None) and (args.listInputFiles is None) and (args.motu_read_counts_file is None):
@@ -1292,12 +1292,12 @@ def main(argv=None):
 
             if args.verbose>2:
                 log.print_log("Aggregate inserts by marker gene cluster (MGC)")
-                log.print_message("Gene sequences with high similarity were clustered into marker gene clusters")
-                log.print_message("(MGCs). Marker genes clusters are quantified by insert alignments on their")
-                log.print_message("member genes\n")
+                log.print_message_execution("Gene sequences with high similarity were clustered into marker gene clusters")
+                log.print_message_execution("(MGCs). Marker genes clusters are quantified by insert alignments on their")
+                log.print_message_execution("member genes\n")
 
-                log.print_message("Reads can either map preferably to one MGC ('Unique' mappers), or map to many")
-                log.print_message("MGCs from different species ('Multiple' mappers)\n")
+                log.print_message_execution("Reads can either map preferably to one MGC ('Unique' mappers), or map to many")
+                log.print_message_execution("MGCs from different species ('Multiple' mappers)\n")
 
             if (args.listInputFiles is not None):
                 if args.verbose>2:
@@ -1425,8 +1425,8 @@ def main(argv=None):
 #-------# create LGs -----------------------------------------------------------
         if args.verbose>2:
             log.print_log("Calculate mOTUs read counts")
-            log.print_message("Each mOTU species is composed of 6 to 10 MGCs")
-            log.print_message("The final mOTU insert count is obtained as the median of its MGC read counts\n")
+            log.print_message_execution("Each mOTU species is composed of 6 to 10 MGCs")
+            log.print_message_execution("The final mOTU insert count is obtained as the median of its MGC read counts\n")
 
             log.print_message("At least "+str(args.map_lgs_cutoff)+" (-g) MGCs are required to have reads mapping to them to consider")
             log.print_message("a mOTU\n")
@@ -1490,10 +1490,10 @@ def main(argv=None):
 
         if args.verbose>2:
             log.print_log("Align reads to marker gene sequences")
-            log.print_message("Reads are aligned (by bwa) to marker gene sequences in the reference database")
-            log.print_message("Reads are filtered for:")
-            log.print_message(" - similarity to the reference gene (>97%), and")
-            log.print_message(" - length of the alignment (at least "+str(args.min_len_align_length)+" nucleotides, -l option)")
+            log.print_message_execution("Reads are aligned (by bwa) to marker gene sequences in the reference database")
+            log.print_message_execution("Reads are filtered for:")
+            log.print_message_execution(" - similarity to the reference gene (>97%), and")
+            log.print_message_execution(" - length of the alignment (at least "+str(args.min_len_align_length)+" nucleotides, -l option)")
 
         if args.verbose>2:
             initial_start_time = time.time()
@@ -1696,12 +1696,12 @@ def main(argv=None):
 
         if args.verbose>2:
             log.print_log("Aggregate inserts by marker gene cluster (MGC)")
-            log.print_message("Gene sequences with high similarity were clustered into marker gene clusters")
-            log.print_message("(MGCs). Marker genes clusters are quantified by insert alignments on their")
-            log.print_message("member genes\n")
+            log.print_message_execution("Gene sequences with high similarity were clustered into marker gene clusters")
+            log.print_message_execution("(MGCs). Marker genes clusters are quantified by insert alignments on their")
+            log.print_message_execution("member genes\n")
 
-            log.print_message("Reads can either map preferably to one MGC ('Unique' mappers), or map to many")
-            log.print_message("MGCs from different species ('Multiple' mappers)\n")
+            log.print_message_execution("Reads can either map preferably to one MGC ('Unique' mappers), or map to many")
+            log.print_message_execution("MGCs from different species ('Multiple' mappers)\n")
 
         version_information_map_read,mOTU_counts = map_motu.run_mOTUs_v2_mapping(listInputFiles, database_dir, database_prefix, sample_name, multThreshold, winnerThreshold, loserThreshold, minClippedAlignLength, output, msam_script, args.type_output,args.verbose,profile_mode,all_sam_lines,return_dictionary, args.min_perc_id,min_len_align,args.min_perc_align)
 
@@ -1768,8 +1768,8 @@ def main(argv=None):
         initial_start_time = time.time()
         if args.verbose>2:
             log.print_log("Calculate mOTUs read counts")
-            log.print_message("Each mOTU species is composed of 6 to 10 MGCs")
-            log.print_message("The final mOTU insert count is obtained as the median of its MGC read counts\n")
+            log.print_message_execution("Each mOTU species is composed of 6 to 10 MGCs")
+            log.print_message_execution("The final mOTU insert count is obtained as the median of its MGC read counts\n")
 
             log.print_message("At least "+str(args.map_lgs_cutoff)+" (-g) MGCs are required to have reads mapping to them to consider")
             log.print_message("a mOTU\n")
@@ -1835,7 +1835,7 @@ def main(argv=None):
             log.print_error("too many inputs (-i and -d)")
 
         if (args.listInputFiles is not None):
-            if args.verbose>2: log.print_message("Merge all the files in the list of input")
+            if args.verbose>2: log.print_message_execution("Merge all the files in the list of input")
 
         if args.directory_append is not None:
             if args.verbose>2: log.print_message("Merge all the files in the input directory")

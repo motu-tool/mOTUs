@@ -64,6 +64,10 @@ def print_message_time(text):
     sys.stderr.write("   "+colour(get_timestamp(),"bold")+" "+text+"\n")
     sys.stderr.flush()
 
+def print_message_execution(text):
+    sys.stderr.write("   "+colour(text,"cyan")+"\n")
+    sys.stderr.flush()
+
 def print_error(text, exit = True):
     sys.stderr.write(colour("Error: ","red_bold")+colour(text,"red")+"\n")
     sys.stderr.flush()

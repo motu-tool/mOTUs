@@ -13,6 +13,10 @@ def print_message(text):
     sys.stderr.write("   "+text+"\n")
     sys.stderr.flush()
 
+def print_message_execution(text):
+    sys.stderr.write("   "+text+"\n")
+    sys.stderr.flush()
+
 def print_message_time(text):
     sys.stderr.write("  "+get_timestamp()+" "+text+"\n")
     sys.stderr.flush()
