@@ -16,6 +16,8 @@ import subprocess
 import errno
 import gzip
 
+log = ""
+
 # ------------------------------------------------------------------------------
 # function to check if a specific tool exists
 # ------------------------------------------------------------------------------
@@ -39,8 +41,7 @@ def readSAMfile(strSAMfilename):
         DEVNULL = open(os.devnull, 'wb')
 
     if not os.path.isfile(strSAMfilename):
-        sys.stderr.write("[E::main] Error: "+strSAMfilename+': No such file.\n')
-        sys.exit(1)
+        log.print_error(strSAMfilename+': No such file')
 
     #we can understand if it is SAM or BAM reading the first line:
     # in the new version of samtools it is detected automatically if we have a bam or sam file
@@ -48,8 +49,7 @@ def readSAMfile(strSAMfilename):
     try:
         location = open(strSAMfilename,'r')
     except:
-        sys.stderr.write("[E::main] Error: failed to load "+strSAMfilename+'\n')
-        sys.exit(1)
+        log.print_error("failed to load "+strSAMfilename)
     try:
         first_line = location.readline()
     except UnicodeDecodeError:
@@ -72,13 +72,12 @@ def readSAMfile(strSAMfilename):
         for k in stderr_s:
             stderr_samtool.append(k)
         if len(stderr_samtool) != 0:
-            sys.stderr.write("[E::calc_mgc] Error from samtools view for file "+strSAMfilename+":\n")
+            log.print_error("Error from samtools view for file "+strSAMfilename+":", exit = False)
             subprocess.call(samtools_popenCMD,stdout=DEVNULL)
             sys.exit(1)
         samtools_cmd = subprocess.Popen(samtools_popenCMD,stdout=subprocess.PIPE,)
     else:
-        sys.stderr.write("[E::calc_mgc] Error: samtools is not in the path. Cannot load the files.\n")
-        sys.exit(1)
+        log.print_error("samtools is not in the path. Cannot load the files")
 
     output = samtools_cmd.stdout
     return(output)
@@ -88,20 +87,22 @@ def readSAMfile(strSAMfilename):
 # print error in the fasta file
 # ------------------------------------------------------------------------------
 def print_error_fasta(message,cont,fastq_file):
-    sys.stderr.write("[E::main] Error: file "+fastq_file+" is not a fastq file\n")
-    sys.stderr.write("[E::main] Line "+str(cont)+": "+message+"\n")
-    sys.exit(1)
+    log.print_error("file "+fastq_file+" is not a fastq file", exit = False)
+    log.print_error("Line "+str(cont)+": "+message)
 
 # ------------------------------------------------------------------------------
 # function to check if the input is a fastq file and check the average length of
 # the first 10,000 reads
 # ------------------------------------------------------------------------------
-def is_fastq(fastq_file,verbose):
+def is_fastq(fastq_file,verbose,log_):
+    # set up log
+    global log
+    log = log_
+    # ----------------------
     n_lines_head = 10000
 
     if not os.path.isfile(fastq_file):
-        sys.stderr.write("[E::main] Error: "+fastq_file+': No such file.\n')
-        sys.exit(1)
+        log.print_error(fastq_file+': No such file')
 
     try:
         zippedInput = False
@@ -118,18 +119,14 @@ def is_fastq(fastq_file,verbose):
                 with open(fastq_file) as filef:
                     head = list(islice(filef, n_lines_head))
             except:
-                sys.stderr.write("[E::main] Error loading file: "+fastq_file+"\n")
-                sys.exit(1)
+                log.print_error("Error loading file: "+fastq_file)
     except:
-        sys.stderr.write("[E::main] Error. Cannot load the file "+fastq_file+"\n")
-        sys.stderr.write("[E::main] Supported file are zipped .gz or .bz2, or plain text\n")
-        sys.exit(1)
+        log.print_error("Cannot load the file "+fastq_file+". Supported file are zipped .gz or .bz2, or plain text")
 
 
     # check min length of fastq file:
     if len(head) < 4:
-        sys.stderr.write("[E::main] Error: file "+fastq_file+" is not a fastq file\n")
-        sys.exit(1)
+        log.print_error("file "+fastq_file+" is not a fastq file")
 
     # go through the lines in head
     all_lengths = list()
@@ -162,11 +159,10 @@ def is_fastq(fastq_file,verbose):
             cont_line = 1
 
     if len(all_lengths) < 1:
-        sys.stderr.write("[E::main] Error: file "+fastq_file+" is not a fastq file\n")
-        sys.exit(1)
+        log.print_error("file "+fastq_file+" is not a fastq file")
 
     if (all(x == all_lengths[0] for x in all_lengths)) and len(all_lengths) > 1:
-        if verbose>=2: sys.stderr.write("[W::main] Warning: file "+fastq_file+". The length of the first "+str(len(all_lengths))+" reads is "+str(all_lengths[0])+". It is suggested to quality control the reads before profiling\n")
+        if verbose>=2: log.print_warning("file "+fastq_file+". The length of the first "+str(len(all_lengths))+" reads is "+str(all_lengths[0])+". It is suggested to quality control the reads before profiling")
 
 
     avg_length = sum(all_lengths) / float(len(all_lengths))
@@ -175,12 +171,15 @@ def is_fastq(fastq_file,verbose):
 # ------------------------------------------------------------------------------
 # check number of reads in the fastq files
 # ------------------------------------------------------------------------------
-def print_n_reads(fastq_file_list,verbose):
+def print_n_reads(fastq_file_list,verbose,log_):
+    # set up log
+    global log
+    log = log_
+    # ----------------------
     tot_n_reads = 0
     for fastq_file in fastq_file_list:
         if not os.path.isfile(fastq_file):
-            sys.stderr.write("[E::main] Error: "+fastq_file+': No such file.\n')
-            sys.exit(1)
+            log.print_error(fastq_file+': No such file')
 
         try:
             zippedInput = False
@@ -199,17 +198,19 @@ def print_n_reads(fastq_file_list,verbose):
                 if line.startswith("@"):
                     tot_n_reads = tot_n_reads + 1
         except:
-            sys.stderr.write("[E::main] Error. Cannot load the file "+fastq_file+"\n")
-            sys.stderr.write("[E::main] Supported file are zipped .gz or .bz2, or plain text\n")
-            sys.exit(1)
+            log.print_error("Cannot load the file "+fastq_file+". Supported file are zipped .gz or .bz2, or plain text")
 
-    sys.stderr.write("[main] Total number of reads from "+str(len(fastq_file_list))+" fastq file(s): "+str(tot_n_reads)+"\n")
+    log.print_message("Total number of reads from "+str(len(fastq_file_list))+" fastq file(s): "+str(tot_n_reads))
 
 
 # ------------------------------------------------------------------------------
 # read the length from a bam/sam file
 # ------------------------------------------------------------------------------
-def read_length_from_bam_file(SAM_BAM_file):
+def read_length_from_bam_file(SAM_BAM_file,log_):
+    # set up log
+    global log
+    log = log_
+    # ----------------------
     samLines = readSAMfile(SAM_BAM_file)
     try:
         for strSamline in samLines:
@@ -231,7 +232,12 @@ def read_length_from_bam_file(SAM_BAM_file):
 # ------------------------------------------------------------------------------
 # find the -l filter that was used to filter in map_tax (default is 45) from a bam/sam file
 # ------------------------------------------------------------------------------
-def read_filter_len_from_bam_file(SAM_BAM_file):
+def read_filter_len_from_bam_file(SAM_BAM_file,log_):
+    # set up log
+    global log
+    log = log_
+    # ----------------------
+
     samLines = readSAMfile(SAM_BAM_file)
     try:
         for strSamline in samLines:
@@ -249,11 +255,15 @@ def read_filter_len_from_bam_file(SAM_BAM_file):
 # ------------------------------------------------------------------------------
 # split a CAMI .gz file into two .gz files
 # ------------------------------------------------------------------------------
-def split_cami_file(cami_file,verbose):
+def split_cami_file(cami_file,verbose, log_):
+    # set up log
+    global log
+    log = log_
+    # ----------------------
+
     # check that file exists
     if not os.path.isfile(cami_file):
-        sys.stderr.write("Error: file "+cami_file+" not found\n")
-        sys.exit(1)
+        log.print_error("file "+cami_file+" not found")
 
     # read file, split it and write it as .gz ----------------------------------
     # create file name for the results

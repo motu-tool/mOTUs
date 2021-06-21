@@ -417,7 +417,7 @@ def main(argv=None):
     # hidden command: split fastq file from CAMI -------------------------------
     if args.command == 'util':
         if args.cami_file_to_split:
-            motu_utilities.split_cami_file(args.cami_file_to_split,args.verbose)
+            motu_utilities.split_cami_file(args.cami_file_to_split,args.verbose,log)
 
 
     # print menus ----------------------------------------------------------------
@@ -990,7 +990,7 @@ def main(argv=None):
                     list_files_check = list_files_check + forw
                 if (args.singleReads is not None):
                     list_files_check = list_files_check + singles
-                motu_utilities.print_n_reads(list_files_check,args.verbose)
+                motu_utilities.print_n_reads(list_files_check,args.verbose,log)
 
 
             for i in range(number_of_lanes):
@@ -1017,11 +1017,11 @@ def main(argv=None):
 
                 # check that the files are fastq and get the average reads length
                 if forward_reads != "":
-                    avg_length_reads.append(motu_utilities.is_fastq(forward_reads,args.verbose))
+                    avg_length_reads.append(motu_utilities.is_fastq(forward_reads,args.verbose,log))
                 if reverse_reads != "":
-                    avg_length_reads.append(motu_utilities.is_fastq(reverse_reads,args.verbose))
+                    avg_length_reads.append(motu_utilities.is_fastq(reverse_reads,args.verbose,log))
                 if single_reads != "":
-                    avg_length_reads.append(motu_utilities.is_fastq(single_reads,args.verbose))
+                    avg_length_reads.append(motu_utilities.is_fastq(single_reads,args.verbose,log))
 
 
 
@@ -1325,7 +1325,7 @@ def main(argv=None):
                 all_sam_lines_input_map_motu = ""
                 #check what was the filter (-l) used during map_tax
                 for kk in listInputFiles:
-                    filter_l_temp = motu_utilities.read_filter_len_from_bam_file(kk)
+                    filter_l_temp = motu_utilities.read_filter_len_from_bam_file(kk,log)
                     if args.verbose>5 and filter_l_temp is None: log.print_message("filter from bwa not found")
                     if filter_l_temp is not None:
                         if args.verbose>5: log.print_message("Map_tax used -l "+str(filter_l_temp))
@@ -1337,7 +1337,7 @@ def main(argv=None):
                 # we have to check what is the average length of the reads
                 all_length_avg = list()
                 for kk in listInputFiles:
-                    l_temp = motu_utilities.read_length_from_bam_file(kk)
+                    l_temp = motu_utilities.read_length_from_bam_file(kk,log)
                     if l_temp is None:
                         if args.verbose>1: log.print_warning("Cannot find the average read length for the file: "+kk)
                     else:
@@ -1570,11 +1570,11 @@ def main(argv=None):
 
             # check that the files are fastq and get the average reads length
             if forward_reads != "":
-                avg_length_reads.append(motu_utilities.is_fastq(forward_reads,args.verbose))
+                avg_length_reads.append(motu_utilities.is_fastq(forward_reads,args.verbose,log))
             if reverse_reads != "":
-                avg_length_reads.append(motu_utilities.is_fastq(reverse_reads,args.verbose))
+                avg_length_reads.append(motu_utilities.is_fastq(reverse_reads,args.verbose,log))
             if single_reads != "":
-                avg_length_reads.append(motu_utilities.is_fastq(single_reads,args.verbose))
+                avg_length_reads.append(motu_utilities.is_fastq(single_reads,args.verbose,log))
 
             if multiple_cores:
                 manager = multiprocessing.Manager()
@@ -1657,7 +1657,7 @@ def main(argv=None):
 
         #check what was the filter (-l) used during map_tax
         for kk in listInputFiles:
-            filter_l_temp = motu_utilities.read_filter_len_from_bam_file(kk)
+            filter_l_temp = motu_utilities.read_filter_len_from_bam_file(kk,log)
             if args.verbose>5 and filter_l_temp is None: log.print_message("filter from bwa not found")
             if filter_l_temp is not None:
                 if args.verbose>5: log.print_message("Map_tax used -l "+str(filter_l_temp))
@@ -1668,7 +1668,7 @@ def main(argv=None):
         # we have to check what is the average length of the reads
         all_length_avg = list()
         for kk in listInputFiles:
-            l_temp = motu_utilities.read_length_from_bam_file(kk)
+            l_temp = motu_utilities.read_length_from_bam_file(kk,log)
             if l_temp is None:
                 if args.verbose>1: log.print_warning("Cannot find the average read length for the file: "+kk)
             else:
