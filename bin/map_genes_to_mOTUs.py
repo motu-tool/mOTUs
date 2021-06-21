@@ -1249,13 +1249,13 @@ def run_mOTUs_v2_mapping(listInputFiles, databaseDir, databasePrefix, sampleName
     if verbose>3:
         if len(listInputFiles) == 1: errstr = "1 sam/bam file"
         if len(listInputFiles) > 1: errstr = str(len(listInputFiles))+ " files"
-        log.print_message("[calc_mgc](parse " + errstr + ") "+ str("{0:.2f}".format(time.time() - start_time))+" sec")
+        log.print_message("[calc_mgc](parse " + errstr + ") "+ str("{0:.2f}".format(time.time() - start_time))+" s")
 
     if verbose>2: start_time = time.time()
     if not(return_dictionary):
         get_mOTU_abundances(dictGene2counts, dictGene2basecount, listMultipleMappers, dictGene2mOTUs, dictGene2Lengths, nonUniqueMultThreshold, winnerThreshold, loserThreshold, sampleName, output, type_output, profile_mode, return_dictionary,verbose)
     else:
         dict_temp = get_mOTU_abundances(dictGene2counts, dictGene2basecount, listMultipleMappers, dictGene2mOTUs, dictGene2Lengths, nonUniqueMultThreshold, winnerThreshold, loserThreshold, sampleName, output, type_output, profile_mode, return_dictionary,verbose)
-    if verbose>3: log.print_message("[calc_mgc](get mgc abundances) " + str("{0:.2f}".format(time.time() - start_time))+" sec")
+    if verbose>3: log.print_message("[calc_mgc](get mgc abundances) " + str("{0:.2f}".format(time.time() - start_time))+" s")
 
     if (return_dictionary): return version_information_map_read[0],dict_temp

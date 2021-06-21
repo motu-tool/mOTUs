@@ -855,7 +855,7 @@ def main(argv=None):
         if args.verbose>2:
             log.print_message("")
             log.print_log("Finished computation")
-            log.print_log("Total time: "+ str("{0:.2f}".format(time.time() - initial_start_time)) + " sec")
+            log.print_log("Total time: "+ str("{0:.2f}".format(time.time() - initial_start_time)) + " s")
 
 
         mlf.close()
@@ -1173,7 +1173,7 @@ def main(argv=None):
                 if args.verbose>2:
                     log.print_message("")
                     log.print_log("Finished computation")
-                    log.print_log("Total time: "+ str("{0:.2f}".format(time.time() - initial_start_time)) + " sec")
+                    log.print_log("Total time: "+ str("{0:.2f}".format(time.time() - initial_start_time)) + " s")
 
 
                 return 0 #map_snv is finished, so we can exit
@@ -1283,7 +1283,7 @@ def main(argv=None):
             if args.verbose>2:
                 time_after_bwa = time.time()
                 log.print_message("")
-                log.print_message("Total time for mapping reads: " + str("{0:.2f}".format(time_after_bwa - initial_start_time))+" sec")
+                log.print_message("Total time for mapping reads: " + str("{0:.2f}".format(time_after_bwa - initial_start_time))+" s")
                 log.print_message("")
 
 
@@ -1418,7 +1418,7 @@ def main(argv=None):
             if args.verbose>2:
                 time_after_map_genes = time.time()
                 log.print_message("")
-                log.print_message("Total time to calculate the MGCs: " + str("{0:.2f}".format(time_after_map_genes - time_after_bwa))+" sec")
+                log.print_message("Total time to calculate the MGCs: " + str("{0:.2f}".format(time_after_map_genes - time_after_bwa))+" s")
                 log.print_message("")
 
 
@@ -1471,7 +1471,7 @@ def main(argv=None):
         if args.verbose>2:
             log.print_message("")
             log.print_log("Finished computation")
-            log.print_log("Total time: "+ str("{0:.2f}".format(time.time() - initial_start_time)) + " sec")
+            log.print_log("Total time: "+ str("{0:.2f}".format(time.time() - initial_start_time)) + " s")
 
 
 
@@ -1613,7 +1613,7 @@ def main(argv=None):
         if args.verbose>2:
             log.print_message("")
             log.print_log("Finished computation")
-            log.print_log("Total time: "+ str("{0:.2f}".format(time.time() - initial_start_time)) + " sec")
+            log.print_log("Total time: "+ str("{0:.2f}".format(time.time() - initial_start_time)) + " s")
 
 
 
@@ -1750,7 +1750,7 @@ def main(argv=None):
         if args.verbose>2:
             log.print_message("")
             log.print_log("Finished computation")
-            log.print_log("Total time: "+ str("{0:.2f}".format(time.time() - initial_start_time)) + " sec")
+            log.print_log("Total time: "+ str("{0:.2f}".format(time.time() - initial_start_time)) + " s")
 
 
 
@@ -1809,7 +1809,7 @@ def main(argv=None):
         if args.verbose>2:
             log.print_message("")
             log.print_log("Finished computation")
-            log.print_log("Total time: "+ str("{0:.2f}".format(time.time() - initial_start_time)) + " sec")
+            log.print_log("Total time: "+ str("{0:.2f}".format(time.time() - initial_start_time)) + " s")
 
 
 
@@ -1865,7 +1865,7 @@ def main(argv=None):
         if args.verbose>2:
             log.print_message("")
             log.print_log("Finished computation")
-            log.print_log("Total time: "+ str("{0:.2f}".format(time.time() - initial_start_time))+" sec")
+            log.print_log("Total time: "+ str("{0:.2f}".format(time.time() - initial_start_time))+" s")
 
 
     return 0        # success

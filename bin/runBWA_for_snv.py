@@ -214,7 +214,7 @@ def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, o
             else:
                 sam_header.append(line)
 
-        if verbose>2: log.print_message("  map forward reads: " + str("{0:.2f}".format(time.time() - start_time))+" sec")
+        if verbose>2: log.print_message("  map forward reads: " + str("{0:.2f}".format(time.time() - start_time))+" s")
 
         # reverse -----
         if verbose>2: start_time = time.time()
@@ -228,12 +228,12 @@ def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, o
                 line = line.replace("\t", orientation+"\t", 1)
                 mapped_sam_lines.append(line)
 
-        if verbose>2: log.print_message("  map reverse reads: " + str("{0:.2f}".format(time.time() - start_time))+" sec")
+        if verbose>2: log.print_message("  map reverse reads: " + str("{0:.2f}".format(time.time() - start_time))+" s")
 
         # sort for and rev
         if verbose>2: start_time = time.time()
         mapped_sam_lines.sort()
-        if verbose>2: log.print_message("  sort alignments: " + str("{0:.2f}".format(time.time() - start_time))+" sec")
+        if verbose>2: log.print_message("  sort alignments: " + str("{0:.2f}".format(time.time() - start_time))+" s")
 
 
     # computation single -------------------------------------------------------
@@ -251,7 +251,7 @@ def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, o
                 if (forwardReads==""): # if the header has not been printed already, then we print the header
                     sam_header.append(line)
 
-        if verbose>2: log.print_message("  map single reads: " + str("{0:.2f}".format(time.time() - start_time))+" sec")
+        if verbose>2: log.print_message("  map unpaired reads: " + str("{0:.2f}".format(time.time() - start_time))+" s")
 
     # if we are running this as profile mode, then we return the list of the sam lines
     # without the header.
