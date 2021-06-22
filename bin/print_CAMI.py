@@ -9,6 +9,7 @@ import tempfile
 import shutil
 import datetime
 
+log = ""
 
 def save_file_to_dict(file_r,col_key,col_value,header,divide_with_tab,skip_not_profilable):
     # skip_not_profilable, if it's True, we dont save in the dictionary if col_key = "not_profilable"
@@ -30,8 +31,7 @@ def save_file_to_dict(file_r,col_key,col_value,header,divide_with_tab,skip_not_p
                     res_dict[l[col_key]] = l[col_value]
         location.close()
     except:
-        sys.stderr.write("[E::calc_motu] Error loading file: "+file_r+"\n[E::calc_motu] Try to download again the motus profiler\n\n")
-        sys.exit(1)
+        log.print_error("Error loading file: "+file_r+"\nTry to download again the motus profiler")
 
     if header:
         return header_res,res_dict
@@ -50,8 +50,7 @@ def save_file_to_dict_two_headers(file_r,col_key,col_value,header,remove_first_v
             header_res1 = location.readline().rstrip()
             header_res2 = location.readline().rstrip()
     except:
-        sys.stderr.write("[E::calc_motu] Error loading file: "+file_r+"\n")
-        sys.exit(1)
+        log.print_error("Error loading file: "+file_r)
 
     res_dict = dict()
     for line in location:
@@ -64,9 +63,7 @@ def save_file_to_dict_two_headers(file_r,col_key,col_value,header,remove_first_v
             else:
                 res_dict[l[col_key]] = l[col_value]
         except:
-            sys.stderr.write("[E::calc_motu] Error with input file: "+file_r+"\n")
-            sys.stderr.write("[E::calc_motu] truncated file\n")
-            sys.exit(1)
+            log.print_error("Error with input file (truncated file): "+file_r)
 
     location.close()
     if header:
@@ -74,7 +71,12 @@ def save_file_to_dict_two_headers(file_r,col_key,col_value,header,remove_first_v
     else:
         return res_dict
 
-def calculate_abundance(infile, LGs_map, LGs_map_l, output, cutoff, onlySpecI, sampleName, profile_mode,input_for_profile, mgc_table_header,version_map_lgs,motu_version_tool,verbose,motu_call,git_commit_id,version_tool,CAMI_file,type_output,renormalise_cami,remove_strain_cami,remove_cami_comments):
+def calculate_abundance(infile, LGs_map, LGs_map_l, output, cutoff, onlySpecI, sampleName, profile_mode,input_for_profile, mgc_table_header,version_map_lgs,motu_version_tool,verbose,motu_call,git_commit_id,version_tool,CAMI_file,type_output,renormalise_cami,remove_strain_cami,remove_cami_comments, log_):
+
+    # set up log
+    global log
+    log = log_
+    # ----------------------
 
     # load the CAMI annotation for the mOTUs
     CAMI_annotation = dict()
@@ -86,8 +88,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, output, cutoff, onlySpecI, s
             vals = line.rstrip().split("\t")
             CAMI_annotation[vals[0]] = vals[1:]
     except:
-        sys.stderr.write("[E::calc_motu] Error loading CAMI taxonomy file\n")
-        sys.exit(1)
+        log.print_error("Error loading CAMI taxonomy file")
 
 
     # load the mOTU read counts (output from map_genes_to_mOTUs.py)
@@ -102,7 +103,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, output, cutoff, onlySpecI, s
 
     # check that the header from the mgc_table is correct
     if len(mgc_table_header.split(" | ")) != 4:
-        if verbose>1: sys.stderr.write(" [W::calc_motu] Warning: couldn't find any header in the mgc table\n")
+        if verbose>1: log.print_warning("could not find any header in the mgc table")
         mgc_table_header = "# map_tax unknown | gene database: unknown | 100 | calc_mgc unknown"
 
 
@@ -127,8 +128,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, output, cutoff, onlySpecI, s
             list_LGs.append(l[0])
         location.close()
     except:
-        sys.stderr.write("[E::calc_motu] Error loading file: "+LGs_map_l+"\n[E::calc_motu] Try to download again the motus profiler\n\n")
-        sys.exit(1)
+        log.print_error("Error loading file: "+LGs_map_l+"\nTry to download again the motus profiler")
 
     # check that the mgc_table is correct --------------------------------------
     error_flag_mgc_table = False
@@ -142,20 +142,19 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, output, cutoff, onlySpecI, s
 
     if len(mOTUs_ab) == 0:
         all_wrong = False
-        if verbose>1: sys.stderr.write(" [W::calc_motu] Warning: The mgc table is empty\n")
+        if verbose>1: log.print_warning("The mgc table is empty")
 
 
     if all_wrong:
         if profile_mode:
-            sys.stderr.write("[E::calc_motu] Error: the mgc table does not contain information of the mgc\n")
+            log.print_error("the mgc table does not contain information of the mgc")
         else:
-            sys.stderr.write("[E::calc_motu] Error in file "+infile+":\n[E::calc_motu] the mgc table does not contain information of the mgc\n")
-        sys.exit(1)
+            log.print_error("Error in file "+infile+":\nthe mgc table does not contain information of the mgc")
 
     if (not all_wrong) and (error_flag_mgc_table):
         for k in mOTUs_ab:
             if not (k in mOTUs_LGs):
-                sys.stderr.write(" [W::calc_motu] Warning: \'"+k+"\' not a mgc. Ignore the line\n")
+                log.print_warning("\'"+k+"\' not a mgc. Ignore the line")
 
 
 
@@ -235,7 +234,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, output, cutoff, onlySpecI, s
     else:
         for j in list_LGs:
             rel_ab_LGs_rel[j] = 0
-        if verbose>1: sys.stderr.write(" [W::calc_motu] Warning: The relative abundance is 0 for all the mOTUs\n")
+        if verbose>1: log.print_warning("The relative abundance is 0 for all mOTUs")
 
     # keep only specI
     if onlySpecI:
@@ -395,12 +394,9 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, output, cutoff, onlySpecI, s
             os.fsync(outfile.fileno())
             outfile.close()
         except:
-            sys.stderr.write("[E::main] Error: failed to save the profile\n")
-            sys.exit(1)
+            log.print_error("failed to save the profile")
         try:
             #os.rename(outfile.name,output) # atomic operation
             shutil.move(outfile.name,output) #It is not atomic if the files are on different filsystems.
         except:
-            sys.stderr.write("[E::main] Error: failed to save the profile\n")
-            sys.stderr.write("[E::main] you can find the file here:\n"+outfile.name+"\n")
-            sys.exit(1)
+            log.print_error("failed to save the profile. You can find the file here:\n"+outfile.name)

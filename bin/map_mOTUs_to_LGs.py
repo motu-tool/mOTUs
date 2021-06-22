@@ -9,6 +9,8 @@ import tempfile
 import shutil
 import datetime
 
+log = ""
+
 # function for rounding as python 3 does:
 #  - return an integer
 #  - py3round(0.5) = 0
@@ -39,8 +41,7 @@ def save_file_to_dict(file_r,col_key,col_value,header,divide_with_tab,skip_not_p
                     res_dict[l[col_key]] = l[col_value]
         location.close()
     except:
-        sys.stderr.write("[E::calc_motu] Error loading file: "+file_r+"\n[E::calc_motu] Try to download again the motus profiler\n\n")
-        sys.exit(1)
+        log.print_error("Error loading file: "+file_r+"\nTry to download again the motus profiler")
 
     if header:
         return header_res,res_dict
@@ -84,8 +85,7 @@ def save_file_to_dict_full_rank(file_r,col_key,col_value,header,skip_not_profila
 
         location.close()
     except:
-        sys.stderr.write("[E::calc_motu] Error loading file: "+file_r+"\n[E::calc_motu] Try to download again the motus profiler\n\n")
-        sys.exit(1)
+        log.print_error("Error loading file: "+file_r+"\nTry to download again the motus profiler")
 
     if header:
         return header_res,res_dict
@@ -101,8 +101,7 @@ def save_file_to_dict_two_headers(file_r,col_key,col_value,header,remove_first_v
             header_res1 = location.readline().rstrip()
             header_res2 = location.readline().rstrip()
     except:
-        sys.stderr.write("[E::calc_motu] Error loading file: "+file_r+"\n")
-        sys.exit(1)
+        log.print_error("Error loading file: "+file_r)
 
     res_dict = dict()
     for line in location:
@@ -115,9 +114,7 @@ def save_file_to_dict_two_headers(file_r,col_key,col_value,header,remove_first_v
             else:
                 res_dict[l[col_key]] = l[col_value]
         except:
-            sys.stderr.write("[E::calc_motu] Error with input file: "+file_r+"\n")
-            sys.stderr.write("[E::calc_motu] truncated file\n")
-            sys.exit(1)
+            log.print_error("Error with input file (truncated file): "+file_r)
 
     location.close()
     if header:
@@ -125,7 +122,12 @@ def save_file_to_dict_two_headers(file_r,col_key,col_value,header,remove_first_v
     else:
         return res_dict
 
-def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxonomy, output, cutoff, onlySpecI, sampleName, taxonomic_level, BIOM_output, profile_mode,input_for_profile, print_NCBI_id, print_rel_ab,mgc_table_header,version_map_lgs,motu_version_tool,verbose,motu_call,git_commit_id,print_full_rank,print_full_name,short_names_file,version_tool):
+def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxonomy, output, cutoff, onlySpecI, sampleName, taxonomic_level, BIOM_output, profile_mode,input_for_profile, print_NCBI_id, print_rel_ab,mgc_table_header,version_map_lgs,motu_version_tool,verbose,motu_call,git_commit_id,print_full_rank,print_full_name,short_names_file,version_tool,log_):
+
+    # set up log
+    global log
+    log = log_
+    # ----------------------
 
     if print_full_rank:
         print_full_name = True
@@ -161,7 +163,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
 
     # check that the header from the mgc_table is correct
     if len(mgc_table_header.split(" | ")) != 4:
-        if verbose>1: sys.stderr.write(" [W::calc_motu] Warning: couldn't find any header in the mgc table\n")
+        if verbose>1: log.print_warning("could not find any header in the mgc table")
         mgc_table_header = "# map_tax unknown | gene database: unknown | 100 | calc_mgc unknown"
 
 
@@ -186,8 +188,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
             list_LGs.append(l[0])
         location.close()
     except:
-        sys.stderr.write("[E::calc_motu] Error loading file: "+LGs_map_l+"\n[E::calc_motu] Try to download again the motus profiler\n\n")
-        sys.exit(1)
+        log.print_error("Error loading file: "+LGs_map_l+"\nTry to download again the motus profiler")
 
     # check that the mgc_table is correct --------------------------------------
     error_flag_mgc_table = False
@@ -201,20 +202,19 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
 
     if len(mOTUs_ab) == 0:
         all_wrong = False
-        if verbose>1: sys.stderr.write(" [W::calc_motu] Warning: The mgc table is empty\n")
+        if verbose>1: log.print_warning("The mgc table is empty")
 
 
     if all_wrong:
         if profile_mode:
-            sys.stderr.write("[E::calc_motu] Error: the mgc table does not contain information of the mgc\n")
+            log.print_error("the mgc table does not contain information of the mgc")
         else:
-            sys.stderr.write("[E::calc_motu] Error in file "+infile+":\n[E::calc_motu] the mgc table does not contain information of the mgc\n")
-        sys.exit(1)
+            log.print_error("Error in file "+infile+": the mgc table does not contain information of the mgc")
 
     if (not all_wrong) and (error_flag_mgc_table):
         for k in mOTUs_ab:
             if not (k in mOTUs_LGs):
-                sys.stderr.write(" [W::calc_motu] Warning: \'"+k+"\' not a mgc. Ignore the line\n")
+                log.print_warning("\'"+k+"\' not a mgc. Ignore the line")
 
 
 
@@ -295,7 +295,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
         else:
             for j in list_LGs:
                 rel_ab_LGs_rel[j] = 0
-            if verbose>1: sys.stderr.write(" [W::calc_motu] Warning: The relative abundance is 0 for all the mOTUs\n")
+            if verbose>1: log.print_warning("the relative abundance is 0 for all the mOTUs\n")
     else: # if we dont print the rel. ab.
         base_coverage_flag = False
         if re.search("base.coverage", mgc_table_header):
@@ -323,6 +323,28 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
                 else:
                     rel_ab_LGs_rel[j] = rel_ab_LGs_rel_temp[j]
         rel_ab_LGs_rel['unassigned'] = value_minus1
+
+
+    # print number of different mOTUs type -------------------------------------
+    n_ref_m = 0
+    n_meta_m = 0
+    n_ext_m = 0
+    for motu in rel_ab_LGs_rel:
+        if motu != "unassigned":
+            type_c = motu.split("_")[0]
+            if type_c == "ref":
+                if rel_ab_LGs_rel[motu] > 0:
+                    n_ref_m = n_ref_m + 1
+            if type_c == "meta":
+                if rel_ab_LGs_rel[motu] > 0:
+                    n_meta_m = n_meta_m + 1
+            if type_c == "ext":
+                if rel_ab_LGs_rel[motu] > 0:
+                    n_ext_m = n_ext_m + 1
+    if verbose>2: log.print_message("  Number of ref-mOTUs:  " + str(n_ref_m))
+    if verbose>2: log.print_message("  Number of meta-mOTUs: " + str(n_meta_m))
+    if verbose>2: log.print_message("  Number of ext-mOTUs:  " + str(n_ext_m))
+
 
     # general print
     if output != "":
@@ -413,7 +435,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
                     else: list_vals.append("[{0:.10f}]]\n".format(rel_ab_LGs_rel[j])) #BIOMvals - FLOAT
 
             else: # if it not in anyone (it should not happen)
-                if verbose>1: sys.stderr.write(" [W::calc_motu] Warning: find mOTU "+j+" that is not present in the taxonomy\n")
+                if verbose>1: log.print_warning("mOTU "+j+" not present in the taxonomy")
 
     # print short name - deafult ----------------
     if taxonomic_level == "mOTU" and (not (print_full_name)):
@@ -449,7 +471,7 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
                 else: name = "{0}\t{1:.10f}\n".format(name, rel_ab_LGs_rel[j]) # value - FLOAT (10digits)
                 outfile.write(name)
             else: # if it not in anyone (it should not happen)
-                if verbose>1: sys.stderr.write(" [W::calc_motu] Warning: find mOTU "+j+" that is not present in the taxonomy\n")
+                if verbose>1: log.print_warning("mOTU "+j+" not present in the taxonomy")
 
 
     # print result FOR NOT SPECIES LEVEL =======================================
@@ -546,15 +568,12 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
             os.fsync(outfile.fileno())
             outfile.close()
         except:
-            sys.stderr.write("[E::main] Error: failed to save the profile\n")
-            sys.exit(1)
+            log.print_error("failed to save the profile")
         try:
             #os.rename(outfile.name,output) # atomic operation
             shutil.move(outfile.name,output) #It is not atomic if the files are on different filsystems.
         except:
-            sys.stderr.write("[E::main] Error: failed to save the profile\n")
-            sys.stderr.write("[E::main] you can find the file here:\n"+outfile.name+"\n")
-            sys.exit(1)
+            log.print_error("failed to save the profile\nyou can find the file here:\n"+outfile.name)
 
 
 
@@ -566,7 +585,12 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
 
 
 
-def calculate_abundance_one_level (infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxonomy, output, cutoff, onlySpecI, sampleName, taxonomic_level, BIOM_output, profile_mode,input_for_profile, print_NCBI_id, print_rel_ab,mgc_table_header,version_map_lgs,motu_version_tool,verbose,motu_call,git_commit_id,print_full_rank,print_full_name,short_names_file,version_tool):
+def calculate_abundance_one_level (infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxonomy, output, cutoff, onlySpecI, sampleName, taxonomic_level, BIOM_output, profile_mode,input_for_profile, print_NCBI_id, print_rel_ab,mgc_table_header,version_map_lgs,motu_version_tool,verbose,motu_call,git_commit_id,print_full_rank,print_full_name,short_names_file,version_tool, log_):
+
+    # set up log
+    global log
+    log = log_
+    # ----------------------
 
     # load data ----------------------------------------------------------------
     # load the taxonomy for the specI - first always map at the species level
@@ -609,8 +633,7 @@ def calculate_abundance_one_level (infile, LGs_map, LGs_map_l, specI_taxonomy, m
             list_LGs.append(l[0])
         location.close()
     except:
-        sys.stderr.write("[E::calc_motu] Error loading file: "+LGs_map_l+"\n[E::calc_motu] Try to download again the motus profiler\n\n")
-        sys.exit(1)
+        log.print_error("Error loading file: "+LGs_map_l+"\nTry to download again the motus profiler")
 
     # check that the mgc_table is correct --------------------------------------
     error_flag_mgc_table = False
@@ -624,20 +647,19 @@ def calculate_abundance_one_level (infile, LGs_map, LGs_map_l, specI_taxonomy, m
 
     if len(mOTUs_ab) == 0:
         all_wrong = False
-        if verbose>1: sys.stderr.write(" [W::calc_motu] Warning: The mgc table is empty\n")
+        if verbose>1: log.print_warning("the mgc table is empty")
 
 
     if all_wrong:
         if profile_mode:
-            sys.stderr.write("[E::calc_motu] Error: the mgc table does not contain information of the mgc\n")
+            log.print_error("the mgc table does not contain information of the mgc")
         else:
-            sys.stderr.write("[E::calc_motu] Error in file "+infile+":\n[E::calc_motu] the mgc table does not contain information of the mgc\n")
-        sys.exit(1)
+            log.print_error("Error in file "+infile+":\nthe mgc table does not contain information of the mgc")
 
     if (not all_wrong) and (error_flag_mgc_table):
         for k in mOTUs_ab:
             if not (k in mOTUs_LGs):
-                sys.stderr.write(" [W::calc_motu] Warning: \'"+k+"\' not a mgc. Ignore the line\n")
+                log.print_warning("\'"+k+"\' not a mgc. Ignore the line")
 
 
 
@@ -718,7 +740,7 @@ def calculate_abundance_one_level (infile, LGs_map, LGs_map_l, specI_taxonomy, m
         else:
             for j in list_LGs:
                 rel_ab_LGs_rel[j] = 0
-            if verbose>1: sys.stderr.write(" [W::calc_motu] Warning: The relative abundance is 0 for all the mOTUs\n")
+            if verbose>1: log.print_warning("the relative abundance is 0 for all the mOTUs")
     else: # if we dont print the rel. ab.
         base_coverage_flag = False
         if re.search("base.coverage", mgc_table_header):
@@ -778,7 +800,7 @@ def calculate_abundance_one_level (infile, LGs_map, LGs_map_l, specI_taxonomy, m
             elif j == "unassigned": # -1
                 dummy = "dummy"
             else: # if it not in anyone (it should not happen)
-                if verbose>1: sys.stderr.write(" [W::calc_motu] Warning: find mOTU "+j+" that is not present in the taxonomy\n")
+                if verbose>1: log.print_warning("mOTU "+j+" is not present in the taxonomy")
 
     # print short name - deafult ----------------
     if taxonomic_level == "mOTU" and (not (print_full_name)):
@@ -811,7 +833,7 @@ def calculate_abundance_one_level (infile, LGs_map, LGs_map_l, specI_taxonomy, m
             elif j == "unassigned": # -1
                 dummy = "dummy"
             else: # if it not in anyone (it should not happen)
-                if verbose>1: sys.stderr.write(" [W::calc_motu] Warning: find mOTU "+j+" that is not present in the taxonomy\n")
+                if verbose>1: log.print_warning("mOTU "+j+" not present in the taxonomy")
 
 
     # print result FOR NOT SPECIES LEVEL =======================================
@@ -886,15 +908,12 @@ def calculate_abundance_all (infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_
             os.fsync(outfile.fileno())
             outfile.close()
         except:
-            sys.stderr.write("[E::main] Error: failed to save the profile\n")
-            sys.exit(1)
+            log.print_error("failed to save the profile")
         try:
             #os.rename(outfile.name,output) # atomic operation
             shutil.move(outfile.name,output) #It is not atomic if the files are on different filsystems.
         except:
-            sys.stderr.write("[E::main] Error: failed to save the profile\n")
-            sys.stderr.write("[E::main] you can find the file here:\n"+outfile.name+"\n")
-            sys.exit(1)
+            log.print_error("failed to save the profile. You can find the file here:\n"+outfile.name)
 
 
 
@@ -928,9 +947,6 @@ def main(argv=None):
     specI_taxonomy = args.databaseDir+"specI.taxonomy"
     mOTULG_taxonomy = args.databaseDir+"mOTULG.taxonomy"
 
-    if (args.cutoff > 10) or (args.cutoff < 1):
-        sys.stderr.write("[E::calc_motu] Error: cutoff should be between 1 and 10.\n")
-        sys.exit(1)
 
     profile_mode = False # when using motu profile, this is set to True
     input_for_profile = ""

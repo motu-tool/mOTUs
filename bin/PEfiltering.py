@@ -108,7 +108,7 @@ def calculateOverlap(dictSAMline, dictReference2geneLocation):
             dictSAMline["overlapCount"].append((geneName,overlapCount))
 
         elif(overlap and overlapCount == 0):
-            sys.stderr.write("Overlap of 0?\n")
+            sys.stderr.write("Overlap of 0 detected\n")
             dictSAMline["overlap"] = False
         else:
             dictSAMline["overlap"] = False

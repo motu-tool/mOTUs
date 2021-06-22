@@ -12,6 +12,8 @@ import subprocess
 import tempfile
 import shutil
 
+log = ""
+
 #function that detect the python version
 def python_version():
     if(sys.version_info >= (3,0,0)):
@@ -58,16 +60,13 @@ def printDictToFile(dictData, header, outfileName, return_dictionary):
             os.fsync(outfile.fileno())
             outfile.close()
         except:
-            sys.stderr.write("[E::main] Error: failed to save the profile\n")
-            sys.exit(1)
+            log.print_error("failed to save the profile")
 
         try:
             #os.rename(outfile.name,outfileName) # atomic operation
             shutil.move(outfile.name,outfileName) #It is not atomic if the files are on different filsystems.
         except:
-            sys.stderr.write("[E::calc_motu] Error: failed to save the intermediate mgc table\n")
-            sys.stderr.write("[E::calc_motu] you can find the file here:\n"+outfile.name+"\n")
-            sys.exit(1)
+            log.print_error("failed to save the intermediate mgc table\nyou can find the file here:\n"+outfile.name)
 
     else: # print to stdout
         if (header):
@@ -99,8 +98,7 @@ def getReferenceDict(geneLocationFileName):
 
             dictReference2geneLocation[strGeneName].append(geneInfoTuple)
     except:
-        sys.stderr.write("[E::calc_mgc] Error loading file: "+geneLocationFileName+"\n[E::calc_mgc] Try to download again the motus profiler\n\n")
-        sys.exit(1)
+        log.print_error("Error loading file: "+geneLocationFileName+"\nTry to download again the motus profiler")
 
     return(dictReference2geneLocation)
 
@@ -122,8 +120,7 @@ def getGene2mOTUdict(gene2mOTUfileName):
 
             dictGene2mOTUs[strGeneName] = str_mOTU
     except:
-        sys.stderr.write("[E::calc_mgc] Error loading file: "+gene2mOTUfileName+"\n[E::calc_mgc] Try to download again the motus profiler\n\n")
-        sys.exit(1)
+        log.print_error("Error loading file: "+gene2mOTUfileName+"\nTry to download again the motus profiler")
     return(dictGene2mOTUs)
 
 
@@ -146,8 +143,7 @@ def parse2columnFile_int(infileName):
 
             dictIn[strColumn_1_entry] = strColumn_2_entry
     except:
-        sys.stderr.write("[E::calc_mgc] Error loading file: "+infileName+"\n[E::calc_mgc] Try to download again the motus profiler\n\n")
-        sys.exit(1)
+        log.print_error("Error loading file: "+infileName+"\nTry to download again the motus profiler")
 
 
     return(dictIn)
@@ -168,8 +164,7 @@ def readSAMfile(strSAMfilename, msamPercID, msamminLength, msam_script, msamOver
     try:
         location = open(strSAMfilename,'r')
     except:
-        sys.stderr.write("[E::calc_mgc] Error: failed to open "+strSAMfilename+"\n")
-        sys.exit(1)
+        log.print_error("failed to open "+strSAMfilename)
     try:
         first_line = location.readline()
     except UnicodeDecodeError:
@@ -192,13 +187,12 @@ def readSAMfile(strSAMfilename, msamPercID, msamminLength, msam_script, msamOver
         for k in stderr_s:
             stderr_samtool.append(k)
         if len(stderr_samtool) != 0:
-            sys.stderr.write("[E::calc_mgc] Error from samtools view for file "+strSAMfilename+":\n")
+            log.print_error("Error from samtools view for file "+strSAMfilename+":", exit = False)
             subprocess.call(samtools_popenCMD,stdout=DEVNULL)
             sys.exit(1)
         samtools_cmd = subprocess.Popen(samtools_popenCMD,stdout=subprocess.PIPE,)
     else:
-        sys.stderr.write("[E::calc_mgc] Error: samtools is not in the path. Cannot load the files\n")
-        sys.exit(1)
+        log.print_error("samtools is not in the path. Cannot load the files")
 
 
     msamtoolsCMD = "python {0} {1:.10f} {2} {3} None".format(msam_script, msamPercID/100, msamminLength, msamOverlap)
@@ -452,7 +446,7 @@ def calculateOverlap(dictSAMline, dictReference2geneLocation):
             dictSAMline["overlapCount"].append((geneName,overlapCount))
 
         elif(overlap and overlapCount == 0):
-            sys.stderr.write("[W::calc_mgc] Warning: Overlap of 0?\n")
+            log.print_warning("Overlap of 0 detected")
             dictSAMline["overlap"] = False
         else:
             dictSAMline["overlap"] = False
@@ -472,7 +466,7 @@ def filterInsert_getBestAlignmentPer_mOTU(listInsertSAMdicts, dictGene2mOTUs, ve
         if (currRefname in dictGene2mOTUs):
             mOTUname = dictGene2mOTUs[currRefname]
         else:
-            if verbose>=2: sys.stderr.write("[W::calc_mgc] Warning: "+str(currRefname) + " has no mOTU information\n")
+            if verbose>=2: log.print_warning(str(currRefname) + " has no mOTU information")
 
         if (mOTUname == "no_mOTU"):
             mOTUname = currRefname
@@ -584,7 +578,7 @@ def filterInsert(listInsertSAMdicts, dictGene2mOTUs,verbose):
         if (insertName == ""):
             insertName = currInsert
         if (insertName != currInsert):
-            if verbose>=2: sys.stderr.write("[W::calc_mgc] Warning: filterInsert received alignments from different inserts. Please check your code. Violating inserts: " + insertName + " " + currInsert + "\n")
+            if verbose>=2: log.print_warning("filterInsert received alignments from different inserts. Please check your code. Violating inserts: " + insertName + " " + currInsert)
 
         if (dictSAMflag["firstRead"]):
             listInsertSAMdicts_firstRead.append(dictSAMline)
@@ -597,7 +591,7 @@ def filterInsert(listInsertSAMdicts, dictGene2mOTUs,verbose):
             unsignedReadFound = True
 
     if (signedReadFound and unsignedReadFound):
-        if verbose>=2: sys.stderr.write("[W::calc_mgc] Warning: Found signed (forward and reverse) and unsigned (not forward and reverse) reads for following insert: " + insertName +"\n")
+        if verbose>=2: log.print_warning("Found signed (forward and reverse) and unsigned (not forward and reverse) reads for following insert: " + insertName)
 
     #execute this loop to establish preferential treatment of inserts for which both reads map to the same mOTU/cluster
     #this keeps only the strongest hit per mOTU and replaces the refname with the mOTU name
@@ -720,7 +714,7 @@ def parseBWA_SAMoutput(samLines, dictGene2counts, dictGene2basecount, dictRefere
 
         dictSAMline = parseSamLine(strSamline)
         if dictSAMline is None:
-            sys.stderr.write("[calc_mgc] Warning. Skip line: "+strSamline+"\n")
+            log.print_warning("Skip line: "+strSamline)
             continue
         dictSAMflag = parseSAMflag(dictSAMline["samflag"])
         alignmentScore = parseSAMAlignmentScore(dictSAMline["saminfo"])
@@ -872,7 +866,7 @@ def get_mOTU_abundances(dictUniqueInsertCounts, dictUniqueBaseCounts, listMultip
         if (geneName in dictGene2mOTUs):
             mOTUname = dictGene2mOTUs[geneName]
         else:
-            sys.stderr.write("[W::calc_mgc] Warning: "+geneName+' not in the map gens->mOTUs\n')
+            log.print_warning(geneName+' not in the map gens->MGCs')
 
         currInsertCount = dictUniqueInsertCounts[geneName]
         currInsertCoverage = float(currInsertCount)/float(geneLength)
@@ -913,7 +907,7 @@ def get_mOTU_abundances(dictUniqueInsertCounts, dictUniqueBaseCounts, listMultip
             if (geneName in dictGene2mOTUs):
                 mOTUname = dictGene2mOTUs[geneName]
             else:
-                sys.stderr.write("[W::calc_mgc] Warning: "+geneName+' not in the map genes -> mOTU\n')
+                log.print_warning(geneName+' not in the map genes -> MGCs\n')
             setmOTUnames.add(mOTUname)
 
             dict_curr_mOTU_insert_count[mOTUname] += 1
@@ -1052,7 +1046,7 @@ def get_mOTU_abundances(dictUniqueInsertCounts, dictUniqueBaseCounts, listMultip
                 dictmOTU_bases_coverage[mOTUname] += (dict_curr_mOTU_base_coverage[mOTUname]/float(dict_curr_mOTU_insert_count[mOTUname]))*coverage_prop_bases
 
         else:
-            if verbose>=2: sys.stderr.write("[W::calc_mgc] Warning: Could not find any mOTU for multiple mapper: " + str(listMultipleMappers_insert) + '\n')
+            if verbose>=2: log.print_warning("Could not find any mOTU for multiple mapper: " + str(listMultipleMappers_insert))
 
     totalCount_insert = 0
     totalCoverage_insert = 0.0
@@ -1106,13 +1100,14 @@ def get_mOTU_abundances(dictUniqueInsertCounts, dictUniqueBaseCounts, listMultip
         #sys.stderr.write("Multiple Mappers (both ends mapping to same ref): " + str(mmCount_p) + '\n')
         #print("mmCount_sp: " + str(mmCount_sp))
 
-    if verbose>4:
-        sys.stderr.write(" [calc_mgc] UniqueCounts: " + str(uniqueInsertCount) + '\n')
-        sys.stderr.write(" [calc_mgc] TotalCounts: " + str(totalInsertCount) + '\n')
-        sys.stderr.write(" [calc_mgc] Ignored multiple mapper without unique hit: " + str(ignoreMMInsertCount) + '\n')
-
-        sys.stderr.write(" [calc_mgc] Multiple Mappers (both ends mapping to different refs):  " + str(mmCount_s) + '\n')
-        sys.stderr.write(" [calc_mgc] Multiple Mappers (both ends mapping to same ref): " + str(mmCount_p) + '\n')
+    if verbose>2:
+        log.print_message("Total number of inserts: " + str(int(totalInsertCount)))
+        log.print_message("  - Unique mappers: " + str(int(uniqueInsertCount)))
+        log.print_message("  - Multiple mappers: " + str(mmCount_s + mmCount_p))
+        if verbose>3:
+            log.print_message("      - Multiple mappers (paired ends mapping to different MGCs):  " + str(mmCount_s))
+            log.print_message("      - Multiple mappers (paired ends mapping to the same MGC): " + str(mmCount_p))
+        log.print_message("  - Ignored multiple mapper without unique hit: " + str(ignoreMMInsertCount))
 
     if type_output == 'insert.raw_counts':
         if return_dictionary:
@@ -1170,14 +1165,20 @@ def get_mOTU_abundances(dictUniqueInsertCounts, dictUniqueBaseCounts, listMultip
 #functions still needed:
 #get_and_check_mOTU_db
 
-def run_mOTUs_v2_mapping(listInputFiles, databaseDir, databasePrefix, sampleName, nonUniqueMultThreshold, winnerThreshold, loserThreshold, minClippedAlignLength, output, msam_script, type_output, verbose, profile_mode, input_sam_file_for_profile, return_dictionary,min_perc_id,min_len_align,min_perc_align):
+def run_mOTUs_v2_mapping(listInputFiles, databaseDir, databasePrefix, sampleName, nonUniqueMultThreshold, winnerThreshold, loserThreshold, minClippedAlignLength, output, msam_script, type_output, verbose, profile_mode, input_sam_file_for_profile, return_dictionary,min_perc_id,min_len_align,min_perc_align, log_):
+
+    # set up log
+    global log
+    log = log_
+    # ----------------------
+
     if verbose>2: start_time = time.time()
     #constants
     minAlignLength = min_len_align
     minPercID = min_perc_id
     msamOverlap = min_perc_align
 
-    if verbose >= 5: sys.stderr.write(" [calc_mgc] Filter in calc_mgc: MIN_PERC_ID:"+str(min_perc_id)+" MIN_LENGTH_ALIGN: "+str(min_len_align)+" MIN_PERC_COVER: "+str(min_perc_align)+" \n")
+    if verbose >= 5: log.print_message("[calc_mgc] Filter in calc_mgc: MIN_PERC_ID:"+str(min_perc_id)+" MIN_LENGTH_ALIGN: "+str(min_len_align)+" MIN_PERC_COVER: "+str(min_perc_align))
 
 
     ## check that the input files exists
@@ -1186,12 +1187,9 @@ def run_mOTUs_v2_mapping(listInputFiles, databaseDir, databasePrefix, sampleName
         for inputFile in listInputFiles:
             cont = cont + 1
             if not os.path.isfile(inputFile):
-                if (cont == 1): sys.stderr.write("[E::calc_mgc] Error. "+inputFile+': No such file.\n')
-                if (cont > 1): sys.stderr.write("[E::calc_mgc] Error. Input file number "+str(cont)+" ("+inputFile+'): No such file.\n')
+                if (cont == 1): log.print_error(inputFile+': No such file')
+                if (cont > 1): log.print_error("Input file number "+str(cont)+" ("+inputFile+'): No such file')
                 sys.exit(1)
-            else:
-                if not (inputFile.endswith(".bam") or inputFile.endswith(".sam")):
-                    if verbose>=2: sys.stderr.write("[W::calc_mgc] Warning. File "+inputFile+" does not have extension \".bam\" or \".sam\" \n")
 
 
     geneLocationFileName = os.path.sep.join([databaseDir, databasePrefix + "_padding_coordinates_NR.tsv"])
@@ -1230,9 +1228,9 @@ def run_mOTUs_v2_mapping(listInputFiles, databaseDir, databasePrefix, sampleName
                 if len(k_info) != 3:
                     error_flag_not_correct_header = True
                 if first_info[0] != k_info[0]:
-                    if verbose>1: sys.stderr.write(" [W::calc_mgc] Warning: reads mapped with different version of the tool ("+first_info[0]+","+k_info[0]+")\n")
+                    if verbose>1: log.print_warning("reads mapped with different version of the tool ("+first_info[0]+","+k_info[0]+")")
                 if first_info[1] != k_info[1]:
-                    if verbose>1: sys.stderr.write(" [W::calc_mgc] Warning: reads mapped with different version of the database ("+first_info[1]+","+k_info[1]+")\n")
+                    if verbose>1: log.print_warning("reads mapped with different version of the database ("+first_info[1]+","+k_info[1]+")")
         except:
             error_flag_not_correct_header = True
 
@@ -1240,7 +1238,7 @@ def run_mOTUs_v2_mapping(listInputFiles, databaseDir, databasePrefix, sampleName
             error_flag_not_correct_header = True
 
         if error_flag_not_correct_header:
-            if verbose>1: sys.stderr.write(" [W::calc_mgc] Warning: couldn't find any header in the sam/bam file(s)\n")
+            if verbose>1: log.print_warning("couldn't find any header in the sam/bam file(s)")
             version_information_map_read[0] = "map_tax unknown | gene database: unknown | 100"
         else:
             version_information_map_read[0] = all_infor_map_reads[0]
@@ -1248,68 +1246,16 @@ def run_mOTUs_v2_mapping(listInputFiles, databaseDir, databasePrefix, sampleName
         samLines = input_sam_file_for_profile
         parseBWA_SAMoutput(samLines, dictGene2counts, dictGene2basecount, dictReference2geneLocation, listMultipleMappers, minAlignLength, minClippedAlignLength, minPercID, dictGene2mOTUs, profile_mode,verbose,version_information_map_read)
 
-    if verbose>2:
+    if verbose>3:
         if len(listInputFiles) == 1: errstr = "1 sam/bam file"
         if len(listInputFiles) > 1: errstr = str(len(listInputFiles))+ " files"
-        sys.stderr.write(" [calc_mgc](parse " + errstr + ") "+ str("{0:.2f}".format(time.time() - start_time))+" sec\n")
+        log.print_message("[calc_mgc](parse " + errstr + ") "+ str("{0:.2f}".format(time.time() - start_time))+" s")
 
     if verbose>2: start_time = time.time()
     if not(return_dictionary):
         get_mOTU_abundances(dictGene2counts, dictGene2basecount, listMultipleMappers, dictGene2mOTUs, dictGene2Lengths, nonUniqueMultThreshold, winnerThreshold, loserThreshold, sampleName, output, type_output, profile_mode, return_dictionary,verbose)
     else:
         dict_temp = get_mOTU_abundances(dictGene2counts, dictGene2basecount, listMultipleMappers, dictGene2mOTUs, dictGene2Lengths, nonUniqueMultThreshold, winnerThreshold, loserThreshold, sampleName, output, type_output, profile_mode, return_dictionary,verbose)
-    if verbose>2: sys.stderr.write(" [calc_mgc](get mgc abundances) " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
+    if verbose>3: log.print_message("[calc_mgc](get mgc abundances) " + str("{0:.2f}".format(time.time() - start_time))+" s")
 
     if (return_dictionary): return version_information_map_read[0],dict_temp
-
-
-def main(argv=None):
-
-    parser = argparse.ArgumentParser(description='This program calculates mOTU abundances for one sample', add_help=True)
-    parser.add_argument('--inputFile', '-i', action="store", dest='listInputFiles', default="", help='name of input file(s); sam or bam formatted files. If it is a list: insert all files separated by a comma')
-    parser.add_argument('--databaseDir', '-d', action="store", dest='databaseDir', default=".", help='name of database directory')
-    parser.add_argument('--databasePrefix', '-p', action="store", dest='databasePrefix', default="mOTU.v2b", help='name of database (prefix)')
-    parser.add_argument('--output', '-o', action="store", dest='output', default="", help='name of output file, if not present is stdout')
-    parser.add_argument('--type', '-y', action="store", dest='type_output', default='bases.coverage', help='type of output that you want to print',choices=['base.coverage','bases.raw_counts','bases.scaled','insert.coverage','insert.raw_counts','insert.scaled_counts','uniq.bases.coverage','uniq.bases.raw_counts','uniq.insert.coverage','uniq.insert.raw_counts','all'])
-    parser.add_argument('--sampleName', '-sn', action="store", dest='sampleName', default="", help='sample name for the current mapping')
-    parser.add_argument('--multThreshold', '-m',action="store", dest='multThreshold', type=int, default=3, help='Threshold that regulates when a read should be discarded if it maps to over x mOTUs that don\'t have any unique alignments.')
-    parser.add_argument('--winnerThreshold', '-w',action="store", dest='winnerThreshold', type=float, default=0.95, help='Threshold that regulates when a multiple mapper should be completely assigned to the highest unique abundance (relative abundance among all references hit by this insert).')
-    parser.add_argument('--loserThreshold', '-l',action="store", dest='loserThreshold', type=float, default=0.01, help='Threshold that regulates when a multiple mapper should be removed if the unique abundance is less than this (relative abundance among all references hit by this insert).')
-    parser.add_argument('--minClippedAlignLength', '-a',action="store", dest='minClippedAlignLength', type=int, default=60, help='Minimum alignment length for clipped reads (local alignments).')
-    parser.add_argument('-v', action='store', type=int, default=3, dest='verbose', help='Verbose levels')
-    args = parser.parse_args()
-
-    if (args.listInputFiles == ""):
-        sys.stderr.write("[E::calc_mgc] Error: Please provide at least one input file.\n")
-        sys.exit(1)
-
-    # find the position of msamtools_python.py
-    # we expect to find it in the same directory as runBWA.py
-    path_mOTUs = os.path.realpath(__file__)
-    path_array = path_mOTUs.split("/")
-    relative_path = "/".join(path_array[0:-1])
-    msam_script = relative_path+"/msamtools_python.py"
-
-    # if sample name is not provided, then we select the name that was given to the input file
-    if args.sampleName == '':
-        args.sampleName = 'temp'
-
-
-    # check that with all there is also output - for now you cannot select 'all'
-    if args.type_output == 'all' and args.output == "":
-        sys.stderr.write("[E::calc_mgc] Error: --output not present. \nWhen --type is equal to 'all', you must insert also --output\n")
-        sys.exit(1)
-
-    # convert --inputFile that is a string to a list
-    listInputFiles = args.listInputFiles.split(",")
-
-    profile_mode = False # when using motu profile, this is set to True
-    input_sam_file_for_profile = "" # use for motu profile
-    return_dictionary = False
-
-    run_mOTUs_v2_mapping(listInputFiles, args.databaseDir, args.databasePrefix, args.sampleName, args.multThreshold, args.winnerThreshold, args.loserThreshold, args.minClippedAlignLength, args.output, msam_script, args.type_output,args.verbose,profile_mode,input_sam_file_for_profile,return_dictionary,97,45,45)
-    return 0        # success
-
-if __name__ == '__main__':
-    status = main()
-    sys.exit(status)

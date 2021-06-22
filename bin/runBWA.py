@@ -15,6 +15,12 @@ import subprocess
 import re
 import errno
 
+log = ""
+
+# ------------------------------------------------------------------------------
+# global variables
+tot_num_reads = set()
+num_filt_reads = set()
 
 # ------------------------------------------------------------------------------
 # function to check if a specific tool exists
@@ -29,25 +35,13 @@ def is_tool(name):
     return True
 
 # ------------------------------------------------------------------------------
-# run bwa index if the reference wasn't indexed previously
-# ------------------------------------------------------------------------------
-def check_reference_index(reference):
-    refFile = reference + ".bwt"
-    if not os.path.isfile(refFile):
-        sys.stderr.write("Reference wasnt indexed previously, running bwa index. This might take a few minutes.\n")
-        bwaIndexCMD = "bwa index " + reference
-        index_popenCMD = shlex.split(bwaIndexCMD)
-        if is_tool("bwa"):
-            cmd = subprocess.call(index_popenCMD)
-        else:
-            sys.stderr.write("[E::map_db] Error: BWA is not in the path. Cannot reference the database.\n")
-            sys.exit(1)
-
-# ------------------------------------------------------------------------------
 # run bwa on a file that contains reads that are single end
 # ------------------------------------------------------------------------------
 def runBWA_singleEnd(strFilteredReadFile, reference, msamPercID, msamminLength, threads, technology, msam_script, msamOverlap,verbose):
-    if verbose >= 6: sys.stderr.write("bwa: values. msamPercID: "+str(msamPercID)+" msamminLength: "+str(msamminLength)+" msamOverlap: "+str(msamOverlap)+"\n")
+    global tot_num_reads
+    global num_filt_reads
+
+    if verbose >= 6: log.print_message("bwa: values. msamPercID: "+str(msamPercID)+" msamminLength: "+str(msamminLength)+" msamOverlap: "+str(msamOverlap))
     try:
         from subprocess import DEVNULL
     except ImportError:
@@ -74,13 +68,11 @@ def runBWA_singleEnd(strFilteredReadFile, reference, msamPercID, msamminLength, 
         unzipCMD = "bunzip2 -c " + strFilteredReadFile
         zippedInput = True
         if not(is_tool("bunzip2")):
-            sys.stderr.write("[E::map_db] Error: bunzip2 is not installed. Cannot unzip the files\n")
-            sys.exit(1)
+            log.print_error("bunzip2 is not installed. Cannot unzip the files")
 
     # check that bwa is in the path
     if not(is_tool("bwa")):
-        sys.stderr.write("[E::map_db] Error: BWA is not in the path. Cannot map the reads\n")
-        sys.exit(1)
+        log.print_error("BWA is not in the path. Cannot map the reads")
 
 
     # run bwa
@@ -90,7 +82,7 @@ def runBWA_singleEnd(strFilteredReadFile, reference, msamPercID, msamminLength, 
         else:
             bwaCMD = "bwa mem -v 1 -a" + techFlag + threadsFlag + " " + reference + " " + strFilteredReadFile
 
-        if verbose >= 6: sys.stderr.write("bwa call:\n"+bwaCMD+"\n")
+        if verbose >= 6: log.print_message("bwa call:\n"+bwaCMD)
 
         if (zippedInput):
             unzip_popenCMD = shlex.split(unzipCMD)
@@ -106,12 +98,14 @@ def runBWA_singleEnd(strFilteredReadFile, reference, msamPercID, msamminLength, 
         min_length_align=msamminLength
         min_perc_cover=msamOverlap
 
-        if verbose >= 5: sys.stderr.write(" [map_db] Filter in bwa: MIN_PERC_ID:"+str(min_perc_id)+" MIN_LENGTH_ALIGN: "+str(min_length_align)+" MIN_PERC_COVER: "+str(min_perc_cover)+" \n")
+        if verbose >= 5: log.print_message(" [map_db] Filter in bwa: MIN_PERC_ID:"+str(min_perc_id)+" MIN_LENGTH_ALIGN: "+str(min_length_align)+" MIN_PERC_COVER: "+str(min_perc_cover))
 
         for line in bwa_cmd.stdout:
             #filter lines
             line = line.decode('ascii')
             if line[0]!="@": # header
+                read_name = line.split("\t")[0]
+                tot_num_reads.add(read_name)
                 arr = line.split("\t")
                 if not((arr[1] == '4') or (arr[2] == '*') or (arr[5] == '*')):
                     len_seq = 0
@@ -144,6 +138,7 @@ def runBWA_singleEnd(strFilteredReadFile, reference, msamPercID, msamminLength, 
                         flag3 = True
 
                     if flag1 and flag2 and flag3:
+                        num_filt_reads.add(read_name)
                         yield line
 
         #check that bzip finished correctly
@@ -151,27 +146,35 @@ def runBWA_singleEnd(strFilteredReadFile, reference, msamPercID, msamminLength, 
             unzip_cmd.stdout.close()
             return_code = unzip_cmd.wait()
             if return_code:
-                sys.stderr.write("[E::map_db] Error. bunzip2 failed\n")
-                sys.exit(1)
+                log.print_error("bunzip2 failed")
 
 
         # chack that bwa finished correctly
         bwa_cmd.stdout.close()
         return_code = bwa_cmd.wait()
         if return_code:
-            sys.stderr.write("[E::map_db] Error. bwa failed\n")
-            sys.exit(1)
+            log.print_error("bwa failed")
 
 
     except:
-        sys.stderr.write("[E::map_db] Error. Cannot call bwa on the file "+strFilteredReadFile+"\n")
-        sys.exit(1)
+        log.print_error("Cannot call bwa on the file "+strFilteredReadFile)
 
 
 # ------------------------------------------------------------------------------
 # run the bwa mapping considering all files as single end
 # ------------------------------------------------------------------------------
-def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, output, bamOutput, msam_script,technology, verbose, profile_mode, lane_id, msamminLength_from_motus):
+def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, output, bamOutput, msam_script,technology, verbose, profile_mode, lane_id, msamminLength_from_motus,log_):
+
+    # set up log
+    global log
+    log = log_
+    # ----------------------
+
+    global tot_num_reads
+    global num_filt_reads
+    tot_num_reads = set()
+    num_filt_reads = set()
+
     # parameters for msamtools are fixed
     msamPercID = 0.97
     msamminLength = msamminLength_from_motus
@@ -180,15 +183,12 @@ def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, o
     ## check that the files exists
     if (forwardReads):
         if not os.path.isfile(forwardReads):
-            sys.stderr.write("[E::map_db] Error: "+forwardReads+': No such file.\n')
-            sys.exit(1)
+            log.print_error(forwardReads+': No such file')
         if not os.path.isfile(reverseReads):
-            sys.stderr.write("[E::map_db] Error: "+reverseReads+': No such file.\n')
-            sys.exit(1)
+            log.print_error(reverseReads+': No such file')
     if (singleReads):
         if not os.path.isfile(singleReads):
-            sys.stderr.write("[E::map_db] Error: "+singleReads+': No such file.\n')
-            sys.exit(1)
+            log.print_error(singleReads+': No such file')
 
     # files
     sam_lines = list()
@@ -210,7 +210,7 @@ def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, o
             else:
                 sam_header.append(line)
 
-        if verbose>2: sys.stderr.write(" [map_db](map forward reads) " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
+        if verbose>2: log.print_message("  map forward reads: " + str("{0:.2f}".format(time.time() - start_time))+" s")
 
         # reverse -----
         if verbose>2: start_time = time.time()
@@ -224,12 +224,12 @@ def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, o
                 line = line.replace("\t", orientation+"\t", 1)
                 mapped_sam_lines.append(line)
 
-        if verbose>2: sys.stderr.write(" [map_db](map reverse reads) " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
+        if verbose>2: log.print_message("  map reverse reads: " + str("{0:.2f}".format(time.time() - start_time))+" s")
 
         # sort for and rev
         if verbose>2: start_time = time.time()
         mapped_sam_lines.sort()
-        if verbose>2: sys.stderr.write(" [map_db](sort reads) " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
+        if verbose>2: log.print_message("  sort alignments: " + str("{0:.2f}".format(time.time() - start_time))+" s")
 
 
     # computation single -------------------------------------------------------
@@ -247,8 +247,11 @@ def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, o
                 if (forwardReads==""): # if the header has not been printed already, then we print the header
                     sam_header.append(line)
 
-        if verbose>2: sys.stderr.write(" [map_db](map single reads) " + str("{0:.2f}".format(time.time() - start_time))+" sec\n")
+        if verbose>2: log.print_message("  map unpaired reads: " + str("{0:.2f}".format(time.time() - start_time))+" s")
 
+    # print number of reads
+    if verbose>2: log.print_message("Total number of reads: " + str(len(tot_num_reads)))
+    if verbose>2: log.print_message("Number of reads after filtering: " +str(len(num_filt_reads)) + " (" + str("{0:.2f}".format(len(num_filt_reads)/len(tot_num_reads)*100))+" percent)")
     # if we are running this as profile mode, then we return the list of the sam lines
     # without the header.
     if profile_mode:
@@ -267,8 +270,7 @@ def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, o
     if (bamOutput):
         #check that samtools is in the path
         if not(is_tool("samtools")):
-            sys.stderr.write("[map_db] Error: samtools is not in the path. Cannot save the file.\n")
-            sys.exit(1)
+            log.print_error("samtools is not in the path. Cannot save the file")
 
         convertCMD = "samtools view -b -S -"
         convert_popenCMD = shlex.split(convertCMD)
@@ -278,62 +280,3 @@ def runBWAmapping(forwardReads, reverseReads, singleReads, reference, threads, o
     else:
         for i in sam_lines:
             outfile.write(i)
-
-# ------------------------------------------------------------------------------
-# MAIN
-# ------------------------------------------------------------------------------
-def main(argv=None):
-
-    #----------------------------- input parameters ----------------------------
-    parser = argparse.ArgumentParser(description='This program calculates mOTU abundances for one sample', add_help=True)
-    parser.add_argument('reference', action="store", help='name/prefix of bwa indexed reference')
-    parser.add_argument('--forwardReads', '-f', action="store", default="",dest='forwardReads', help='name of input file for reads in forward orientation, fastq formatted, can be gzipped')
-    parser.add_argument('--reverseReads', '-r', action="store", default="",dest='reverseReads', help='name of input file for reads in reverse orientation, fastq formatted, can be gzipped')
-    parser.add_argument('--singleReads', '-1', action="store", default="",dest='singleReads', help='name of input file for reads without mate, fastq formatted, can be gzipped')
-    parser.add_argument('--output', '-o', action="store", dest='output', default="", help='name of the output file, if not specified is stdout')
-    parser.add_argument('--bamOutput', '-b', action="store_true", default=False, dest='bamOutput', help='Specify if the final output should be a bam formatted file')
-    parser.add_argument('--threads', '-t', type=int, action="store", dest='threads', default=1, help='Number of threads to be used.')
-    parser.add_argument('--technology', '-tec', action="store", default="",dest='technology', help='sequencing technlogy',choices=["illumina","pacbio","ont2d","intractg"])
-    parser.add_argument('-v', action='store', type=int, default=3, dest='verbose', help='Verbose levels')
-    parser.add_argument('--lane', action="store", dest='lane', default="lane1", help='name of the lane that we are analyzing')
-    args = parser.parse_args()
-
-    #-------------------------------- check input ------------------------------
-    # check that there is at least one file with reads
-    if (args.forwardReads=="") and (args.reverseReads=="") and (args.singleReads==""):
-        sys.stderr.write("[map_db] Error: read file not present.\n")
-        sys.exit(1)
-    # check that for and rev reads are present togehter
-    if ((args.forwardReads!="") and (args.reverseReads=="")):
-        sys.stderr.write("[map_db] Error: --forwardReads present and --reverseReads is missing\n")
-        sys.exit(1)
-    if ((args.forwardReads=="") and (args.reverseReads!="")):
-        sys.stderr.write("[map_db] Error: --reverseReads present and --forwardReads is missing\n")
-        sys.exit(1)
-
-    #-------------- check if the reference has been indexed --------------------
-    check_reference_index(args.reference)
-
-    #----------------------------- run bwa -------------------------------------
-
-    # find the position of msamtools_python.py
-    # we expect to find it in the same directory as runBWA.py
-    path_mOTUs = os.path.realpath(__file__)
-    path_array = path_mOTUs.split("/")
-    relative_path = "/".join(path_array[0:-1])
-    msam_script = relative_path+"/msamtools_python.py"
-
-    profile_mode = False # when using motu profile, this is set to True
-
-    #default paramenters
-    msamminLength_from_motus = 75
-
-    # run bwa
-    runBWAmapping( args.forwardReads, args.reverseReads, args.singleReads, args.reference, args.threads, args.output, args.bamOutput, msam_script, args.technology, args.verbose, profile_mode, args.lane, msamminLength_from_motus)
-
-    return 0        # success
-
-#-------------------------------- run main -------------------------------------
-if __name__ == '__main__':
-    status = main()
-    sys.exit(status)
