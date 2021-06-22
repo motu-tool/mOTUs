@@ -1428,7 +1428,10 @@ def main(argv=None):
         if args.verbose>2:
             log.print_log("Generate mOTU profile")
             log.print_message_execution("Each mOTU is composed of 6 to 10 MGCs")
-            log.print_message_execution("The final mOTU insert count is obtained as the median of its MGC read counts\n")
+            if args.type_output == 'base.coverage':
+                log.print_message_execution("The final mOTU base coverage is obtained as the median of its MGC base coverage values\n")
+            else:
+                log.print_message_execution("The final mOTU insert count is obtained as the median of its MGC read counts\n")
 
             log.print_message("At least "+str(args.map_lgs_cutoff)+" (-g) MGCs need to be detected to consider a mOTU as being present\n")
 
@@ -1769,7 +1772,10 @@ def main(argv=None):
         if args.verbose>2:
             log.print_log("Generate mOTU profile")
             log.print_message_execution("Each mOTU is composed of 6 to 10 MGCs")
-            log.print_message_execution("The final mOTU insert count is obtained as the median of its MGC read counts\n")
+            if args.type_output == 'base.coverage':
+                log.print_message_execution("The final mOTU base coverage is obtained as the median of its MGC base coverage values\n")
+            else:
+                log.print_message_execution("The final mOTU insert count is obtained as the median of its MGC read counts\n")
 
             log.print_message("At least "+str(args.map_lgs_cutoff)+" (-g) MGCs need to be detected to consider a mOTU as being present\n")
 
