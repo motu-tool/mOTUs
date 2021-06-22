@@ -254,7 +254,7 @@ def print_menu_append():
     sys.stderr.write(colour("Usage:","blue_bold")+" motus merge [options]\n\n")
     sys.stderr.write(colour("Input options:\n","bold"))
     sys.stderr.write("   "+colour("-i ","blue_bold")+"FILE[,FILE] list of mOTU profiles to merge (comma separated)\n")
-    sys.stderr.write("   "+colour("-d ","blue_bold")+"DIR         merge all the files in the directory DIR\n")
+    sys.stderr.write("   "+colour("-d ","blue_bold")+"DIR         merge all files in the directory DIR\n")
     sys.stderr.write("   "+colour("-a ","blue_bold")+"STR[,STR]   add pre-computed profiles from different environmental samples\n                  Values: [all, air, bioreactor, bee, cat,\n                  cattle, chicken, dog, fish, freshwater, human,\n                  marine, mouse, pig, sheep, soil, termite, wastewater]\n\n")
     sys.stderr.write(colour("Output options:\n","bold"))
     sys.stderr.write("   "+colour("-o ","blue_bold")+"FILE        output file name "+colour("[stdout]","magenta")+"\n")
