@@ -258,6 +258,6 @@ def print_menu_append():
     sys.stderr.write("   "+colour("-a ","blue_bold")+"STR[,STR]   add pre-computed profiles from different environmental samples\n                  Values: [all, air, bioreactor, bee, cat,\n                  cattle, chicken, dog, fish, freshwater, human,\n                  marine, mouse, pig, sheep, soil, termite, wastewater]\n\n")
     sys.stderr.write(colour("Output options:\n","bold"))
     sys.stderr.write("   "+colour("-o ","blue_bold")+"FILE        output file name "+colour("[stdout]","magenta")+"\n")
-    sys.stderr.write("   "+colour("-B ","blue_bold")+"             print result in BIOM format\n\n")
+    sys.stderr.write("   "+colour("-B ","blue_bold")+"            print result in BIOM format\n\n")
     sys.stderr.write(colour("Algorithm options:\n","bold"))
     sys.stderr.write("   "+colour("-v ","blue_bold")+"INT         verbosity level: 1=error, 2=warning, 3=message, 4+=debugging "+colour("[3]","magenta")+"\n\n")
