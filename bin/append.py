@@ -146,7 +146,7 @@ def memory_map_public_profiles(verbose, environments_to_merge, public_profiles, 
                 samples_2_use.add(sample)
             else:
                 continue
-    if verbose > 2: log.print_message("Selected "+str(len(samples_2_use))+" public samples for merging")
+    if verbose > 2: log.print_message("Selected "+str(len(samples_2_use))+" pre-computed profiles for merging")
 
     with gzip.open(public_profiles, 'rt') as handle:
         handle.readline()
@@ -216,7 +216,7 @@ def append_profilings(directory, list_files, output, verbose, BIOM_output,versio
     if len(environments_to_merge) > 0:
         list_files_public = memory_map_public_profiles(verbose, environments_to_merge, public_profiles, public_profiles_envo)
         list_files = list_files + list_files_public
-        if verbose > 2: log.print_message("Number of detected files including public profiles: " + str(len(list_files)))
+        if verbose > 2: log.print_message("Number of detected profiles (including pre-computed profiles): " + str(len(list_files)))
 
     # first file to get informations
     if verbose>=5: log.print_message("[merge] Opening file: "+first_file+"\n")

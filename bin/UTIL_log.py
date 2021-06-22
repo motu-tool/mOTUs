@@ -58,7 +58,7 @@ Command:
 
       map_tax     Map reads to the marker gene database
       calc_mgc    Calculate marker gene cluster (MGC) abundance
-      calc_motu   Summarize MGC abundances into a mOTU abundance table
+      calc_motu   Summarize MGC abundances into a mOTU profile
 
  -- SNV calling
       map_snv     Map reads to the marker gene database for SNV calling
@@ -91,13 +91,13 @@ def print_menu_profile():
     sys.stderr.write("   -M  FILE         save the mgc reads count (output of motus calc_mgc) [None]\n")
     sys.stderr.write("   -e               only species with reference genomes (ref-mOTUs)\n")
     sys.stderr.write("   -c               print result as counts instead of relative abundances\n")
-    sys.stderr.write("   -p               print NCBI id\n")
+    sys.stderr.write("   -p               print NCBI taxonomy identifiers\n")
     sys.stderr.write("   -u               print the full name of the species\n")
     sys.stderr.write("   -q               print the full rank taxonomy\n")
     sys.stderr.write("   -B               print result in BIOM format\n")
     sys.stderr.write("   -C  STR          print result in CAMI format (BioBoxes format 0.9.1)\n")
     sys.stderr.write("                    Values: [precision, recall, parenthesis]\n")
-    sys.stderr.write("   -A               print all taxonomic levels together (override -k)\n")
+    sys.stderr.write("   -A               print all taxonomic levels together (kingdom to mOTUs, override -k)\n")
     sys.stderr.write("   -k  STR          taxonomic level [mOTU]\n")
     sys.stderr.write("                    Values: [kingdom, phylum, class, order, family, genus, mOTU]\n\n")
     sys.stderr.write("Algorithm options:\n")
@@ -131,11 +131,11 @@ def print_menu_snv_call():
     sys.stderr.write("Usage: motus snv_call -d Directory -o Directory [options]\n\n")
     sys.stderr.write("Input options:\n")
     sys.stderr.write("   -d  DIR     Call metaSNV on all BAM files in the directory. [Mandatory]\n")
-    sys.stderr.write("   -fb FLOAT   Coverage breadth: minimal horizontal genome coverage percentage per sample per species. Default=80.0\n")
-    sys.stderr.write("   -fd FLOAT   Coverage depth: minimal average vertical genome coverage per sample per species. Default=5.0\n")
-    sys.stderr.write("   -fm INT     Minimum number of samples per species. Default=2\n")
-    sys.stderr.write("   -fp FLOAT   FILTERING STEP II: Required proportion of informative samples (coverage non-zero) per position. Default=0.90\n")
-    sys.stderr.write("   -fc FLOAT   FILTERING STEP II: Minimum coverage per position per sample per species. Default=5.0\n")
+    sys.stderr.write("   -fb FLOAT   Sample filter: Coverage breadth, minimal horizontal mOTU coverage percentage per sample [80.0]\n")
+    sys.stderr.write("   -fd FLOAT   Sample filter: Coverage depth, minimal average vertical mOTU coverage per sample [5.0]\n")
+    sys.stderr.write("   -fm INT     mOTU filter: Minimum number of samples meeting coverage criteria per mOTU [2]\n")
+    sys.stderr.write("   -fp FLOAT   Position filter: Required proportion of informative samples (coverage non-zero) per position [0.90]\n")
+    sys.stderr.write("   -fc FLOAT   Position filter: Minimum coverage per position per sample per mOTU [5.0]\n")
     sys.stderr.write("   -db DIR     provide a different database directory\n\n")
     sys.stderr.write("Output options:\n")
     sys.stderr.write("   -o  DIR     Output directory. Will fail if already exists. [Mandatory]\n")
@@ -192,9 +192,9 @@ def print_menu_map_lgs():
     sys.stderr.write("   -B        print result in BIOM format\n")
     sys.stderr.write("   -C  STR   print result in CAMI format (BioBoxes format 0.9.1)\n")
     sys.stderr.write("             Values: [precision, recall, parenthesis]\n")
-    sys.stderr.write("   -A        print all taxonomic levels together (override -k)\n")
+    sys.stderr.write("   -A        print all taxonomic levels together (kingdom to mOTUs, override -k)\n")
     sys.stderr.write("   -c        print result as counts instead of relative abundances\n")
-    sys.stderr.write("   -p        print NCBI id\n")
+    sys.stderr.write("   -p        print NCBI taxonomy identifiers\n")
     sys.stderr.write("   -u        print the full name of the species\n")
     sys.stderr.write("   -q        print the full rank taxonomy\n")
     sys.stderr.write("   -k  STR   taxonomic level [mOTU]\n")

@@ -105,7 +105,7 @@ def msg(version_tool):
 
 '''+colour("      map_tax","cyan")+'''     Map reads to the marker gene database
 '''+colour("      calc_mgc","cyan")+'''    Calculate marker gene cluster (MGC) abundance
-'''+colour("      calc_motu","cyan")+'''   Summarize MGC abundances into a mOTU abundance table
+'''+colour("      calc_motu","cyan")+'''   Summarize MGC abundances into a mOTU profile
 
 '''+colour("-- SNV calling","bold")+'''
 '''+colour("      map_snv","cyan")+'''     Map reads to the marker gene database for SNV calling
@@ -137,12 +137,12 @@ def print_menu_profile():
     sys.stderr.write("   "+colour("-e ","blue_bold")+"              only species with reference genomes (ref-mOTUs)\n")
     sys.stderr.write("   "+colour("-u ","blue_bold")+"              print the full name of the species\n")
     sys.stderr.write("   "+colour("-c ","blue_bold")+"              print result as counts instead of relative abundances\n")
-    sys.stderr.write("   "+colour("-p ","blue_bold")+"              print NCBI id\n")
+    sys.stderr.write("   "+colour("-p ","blue_bold")+"              print NCBI taxonomy identifiers\n")
     sys.stderr.write("   "+colour("-B ","blue_bold")+"              print result in BIOM format\n")
     sys.stderr.write("   "+colour("-C ","blue_bold")+" STR          print result in CAMI format (BioBoxes format 0.9.1)\n")
     sys.stderr.write("                    Values: [precision, recall, parenthesis]\n")
     sys.stderr.write("   "+colour("-q ","blue_bold")+"              print the full rank taxonomy\n")
-    sys.stderr.write("   "+colour("-A ","blue_bold")+"              print all taxonomic levels together (override -k)\n")
+    sys.stderr.write("   "+colour("-A ","blue_bold")+"              print all taxonomic levels together (kingdom to mOTUs, override -k)\n")
     sys.stderr.write("   "+colour("-k ","blue_bold")+" STR          taxonomic level "+colour("[mOTU]","magenta")+"\n")
     sys.stderr.write("                    Values: [kingdom, phylum, class, order, family, genus, mOTU]\n\n")
     sys.stderr.write(colour("Algorithm options:\n","bold"))
@@ -176,11 +176,11 @@ def print_menu_snv_call():
     sys.stderr.write(colour("Usage:","blue_bold")+" motus snv_call "+colour("-d","blue_bold")+" <DIR> "+colour("-o","blue_bold")+" <DIR> [options]\n\n")
     sys.stderr.write(colour("Input options:\n","bold"))
     sys.stderr.write("   "+colour("-d ","blue_bold")+" DIR     Call metaSNV on all BAM files in the directory\n")
-    sys.stderr.write("   "+colour("-fb ","blue_bold")+"FLOAT   Coverage breadth: minimal horizontal genome coverage percentage per sample per species "+colour("[80.0]","magenta")+"\n")
-    sys.stderr.write("   "+colour("-fd ","blue_bold")+"FLOAT   Coverage depth: minimal average vertical genome coverage per sample per species "+colour("[5.0]","magenta")+"\n")
-    sys.stderr.write("   "+colour("-fm ","blue_bold")+"INT     Minimum number of samples per species "+colour("[2]","magenta")+"\n")
-    sys.stderr.write("   "+colour("-fp ","blue_bold")+"FLOAT   FILTERING STEP II: Required proportion of informative samples (coverage non-zero) per position "+colour("[0.90]","magenta")+"\n")
-    sys.stderr.write("   "+colour("-fc ","blue_bold")+"FLOAT   FILTERING STEP II: Minimum coverage per position per sample per species "+colour("[5.0]","magenta")+"\n")
+    sys.stderr.write("   "+colour("-fb ","blue_bold")+"FLOAT   Sample filter: Coverage breadth, minimal horizontal mOTU coverage percentage per sample "+colour("[80.0]","magenta")+"\n")
+    sys.stderr.write("   "+colour("-fd ","blue_bold")+"FLOAT   Sample filter: Coverage depth, minimal average vertical mOTU coverage per sample "+colour("[5.0]","magenta")+"\n")
+    sys.stderr.write("   "+colour("-fm ","blue_bold")+"INT     mOTU filter: Minimum number of samples meeting coverage criteria per mOTU "+colour("[2]","magenta")+"\n")
+    sys.stderr.write("   "+colour("-fp ","blue_bold")+"FLOAT   Position filter: Required proportion of informative samples (coverage non-zero) per position "+colour("[0.90]","magenta")+"\n")
+    sys.stderr.write("   "+colour("-fc ","blue_bold")+"FLOAT   Position filter: Minimum coverage per position per sample per mOTU "+colour("[5.0]","magenta")+"\n")
     sys.stderr.write("   "+colour("-db ","blue_bold")+"DIR     provide a different database directory\n\n")
     sys.stderr.write(colour("Output options:\n","bold"))
     sys.stderr.write("   "+colour("-o ","blue_bold")+" DIR     Output directory. Will fail if already exists\n")
@@ -237,9 +237,9 @@ def print_menu_map_lgs():
     sys.stderr.write("   "+colour("-B ","blue_bold")+"       print result in BIOM format\n")
     sys.stderr.write("   "+colour("-C ","blue_bold")+" STR   print result in CAMI format (BioBoxes format 0.9.1)\n")
     sys.stderr.write("             Values: [precision, recall, parenthesis]\n")
-    sys.stderr.write("   "+colour("-A ","blue_bold")+"       print all taxonomic levels together (override -k)\n")
+    sys.stderr.write("   "+colour("-A ","blue_bold")+"       print all taxonomic levels together (kingdom to mOTUs, override -k)\n")
     sys.stderr.write("   "+colour("-c ","blue_bold")+"       print result as counts instead of relative abundances\n")
-    sys.stderr.write("   "+colour("-p ","blue_bold")+"       print NCBI id\n")
+    sys.stderr.write("   "+colour("-p ","blue_bold")+"       print NCBI taxonomy identifiers\n")
     sys.stderr.write("   "+colour("-u ","blue_bold")+"       print the full name of the species\n")
     sys.stderr.write("   "+colour("-q ","blue_bold")+"       print the full rank taxonomy\n")
     sys.stderr.write("   "+colour("-k ","blue_bold")+" STR   taxonomic level "+colour("[mOTU]","magenta")+"\n")
