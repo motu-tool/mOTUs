@@ -886,7 +886,7 @@ def calculate_abundance_all (infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_
     print_NCBI_id = False
     all_print = list()
     for lt in ['kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'mOTU']:
-        all_print = all_print + calculate_abundance_one_level (infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxonomy, output, cutoff, onlySpecI, sampleName, lt, BIOM_output, profile_mode,input_for_profile, print_NCBI_id, print_rel_ab,mgc_table_header,version_map_lgs,motu_version_tool,verbose,motu_call,git_commit_id,print_full_rank,print_full_name,short_names_file,version_tool)
+        all_print = all_print + calculate_abundance_one_level (infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxonomy, output, cutoff, onlySpecI, sampleName, lt, BIOM_output, profile_mode,input_for_profile, print_NCBI_id, print_rel_ab,mgc_table_header,version_map_lgs,motu_version_tool,verbose,motu_call,git_commit_id,print_full_rank,print_full_name,short_names_file,version_tool,log)
 
     # general print
     if output != "":
