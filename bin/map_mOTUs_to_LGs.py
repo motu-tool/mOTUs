@@ -880,7 +880,7 @@ def calculate_abundance_one_level (infile, LGs_map, LGs_map_l, specI_taxonomy, m
     return(LIST_ALL)
 
 
-def calculate_abundance_all (infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxonomy, output, cutoff, onlySpecI, sampleName, taxonomic_level, BIOM_output, profile_mode,input_for_profile, print_NCBI_id, print_rel_ab,mgc_table_header,version_map_lgs,motu_version_tool,verbose,motu_call,git_commit_id,print_full_rank,print_full_name,short_names_file,version_tool):
+def calculate_abundance_all (infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxonomy, output, cutoff, onlySpecI, sampleName, taxonomic_level, BIOM_output, profile_mode,input_for_profile, print_NCBI_id, print_rel_ab,mgc_table_header,version_map_lgs,motu_version_tool,verbose,motu_call,git_commit_id,print_full_rank,print_full_name,short_names_file,version_tool,log):
     print_full_rank = True
     BIOM_output = False
     print_NCBI_id = False
