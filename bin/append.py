@@ -132,7 +132,7 @@ def append_A_option(list_files_raw, output, verbose, BIOM_output, directory):
 # ------------------------------------------------------------------------------
 # merge function for metaphlan like output
 def memory_map_public_profiles(verbose, environments_to_merge, public_profiles, public_profiles_envo):
-    sample_header = '# git tag version 3.0.0 |  motus version 3.0.0 | map_tax 3.0.0 | gene database: nr3.0.0 | calc_mgc 3.0.0 -y insert.scaled_counts -l 75 | calc_motu 3.0.0 -k mOTU -C no_CAMI -g 3 -c | taxonomy: ref_mOTU_3.0.0 meta_mOTU_3.0.0\n# call: python mOTUs_v2/motus profile -n {} -s m.fq.gz,s.fq.gz -f r1.fq.gz -r r2.fq.gz -c\n#consensus_taxonomy	{}\n'
+    sample_header = '# git tag version 3.0.1 |  motus version 3.0.1 | map_tax 3.0.1 | gene database: nr3.0.1 | calc_mgc 3.0.1 -y insert.scaled_counts -l 75 | calc_motu 3.0.1 -k mOTU -C no_CAMI -g 3 -c | taxonomy: ref_mOTU_3.0.1 meta_mOTU_3.0.1\n# call: python mOTUs_v2/motus profile -n {} -s m.fq.gz,s.fq.gz -f r1.fq.gz -r r2.fq.gz -c\n#consensus_taxonomy	{}\n'
     samples_2_use = set()
     import gzip
     with gzip.open(public_profiles_envo, 'rt') as handle:
