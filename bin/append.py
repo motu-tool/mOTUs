@@ -131,8 +131,8 @@ def append_A_option(list_files_raw, output, verbose, BIOM_output, directory):
 
 # ------------------------------------------------------------------------------
 # merge function for metaphlan like output
-def memory_map_public_profiles(verbose, environments_to_merge, public_profiles, public_profiles_envo):
-    sample_header = '# git tag version 3.0.1 |  motus version 3.0.1 | map_tax 3.0.1 | gene database: nr3.0.1 | calc_mgc 3.0.1 -y insert.scaled_counts -l 75 | calc_motu 3.0.1 -k mOTU -C no_CAMI -g 3 -c | taxonomy: ref_mOTU_3.0.1 meta_mOTU_3.0.1\n# call: python mOTUs_v2/motus profile -n {} -s m.fq.gz,s.fq.gz -f r1.fq.gz -r r2.fq.gz -c\n#consensus_taxonomy	{}\n'
+def memory_map_public_profiles(verbose, environments_to_merge, public_profiles, public_profiles_envo, version_tool):
+    sample_header = '# git tag version '+version_tool+' |  motus version '+version_tool+' | map_tax '+version_tool+' | gene database: nr'+version_tool+' | calc_mgc '+version_tool+' -y insert.scaled_counts -l 75 | calc_motu '+version_tool+' -k mOTU -C no_CAMI -g 3 -c | taxonomy: ref_mOTU_'+version_tool+' meta_mOTU_'+version_tool+'\n# call: python mOTUs_v2/motus profile -n {} -s m.fq.gz,s.fq.gz -f r1.fq.gz -r r2.fq.gz -c\n#consensus_taxonomy	{}\n'
     samples_2_use = set()
     import gzip
     with gzip.open(public_profiles_envo, 'rt') as handle:
@@ -214,7 +214,7 @@ def append_profilings(directory, list_files, output, verbose, BIOM_output,versio
     if verbose>2: log.print_message("Number of detected files: " +str(len(list_files)))
 
     if len(environments_to_merge) > 0:
-        list_files_public = memory_map_public_profiles(verbose, environments_to_merge, public_profiles, public_profiles_envo)
+        list_files_public = memory_map_public_profiles(verbose, environments_to_merge, public_profiles, public_profiles_envo, version_tool)
         list_files = list_files + list_files_public
         if verbose > 2: log.print_message("Number of detected profiles (including pre-computed profiles): " + str(len(list_files)))
 
