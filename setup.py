@@ -124,6 +124,7 @@ def main(argv=None):
     # check md5 ----------------------------------------------------------------
     sys.stderr.write("\nCheck md5: ")
     current_md5 = md5(db_name)
+    sys.stderr.flush()
 
     if current_md5 == md5_db:
         sys.stderr.write("MD5 verified\n")
@@ -131,10 +132,12 @@ def main(argv=None):
         sys.stderr.write("MD5 verification failed!\n")
         os.remove(db_name)
         sys.exit(1)
+    sys.stderr.flush()
 
 
     # extract files ------------------------------------------------------------
     sys.stderr.write("Extract files from the archive...")
+    sys.stderr.flush()
     extract_cmd = "tar -zxvf "+db_name+" -C "+relative_path
     try:
         FNULL = open(os.devnull, 'w')
@@ -148,16 +151,21 @@ def main(argv=None):
         sys.exit(1)
     else:
         sys.stderr.write("done\n")
+    sys.stderr.flush()
 
     # --- remove db file
     sys.stderr.write("Remove zipped file...")
+    sys.stderr.flush()
+
     os.remove(db_name)
     sys.stderr.write("done\n")
+    sys.stderr.flush()
 
 
 
     # --------------- add file with version informations -----------------------
     sys.stderr.write("Add version file...")
+    sys.stderr.flush()
     try:
         outfile = tempfile.NamedTemporaryFile(delete=False, mode = "w")
         outfile.write("motus\t"+motus_version+"\n")
@@ -188,6 +196,7 @@ def main(argv=None):
         sys.exit(1)
 
     sys.stderr.write("done\n\n")
+    sys.stderr.flush()
 
 
 
