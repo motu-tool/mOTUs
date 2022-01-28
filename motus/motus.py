@@ -51,6 +51,7 @@ import motus.PEfiltering as PEfiltering
 import motus.motu_utilities as motu_utilities
 import motus.print_CAMI as print_CAMI
 import motus.append as append
+import motus.downloadDB
 
 use_color = True
 for i in range(len(sys.argv)):
@@ -67,6 +68,13 @@ else:
 
 
 
+
+
+# check if we need to download the database ------------------------------------
+for arg in sys.argv:
+    if arg == "downloadDB":
+        motus.downloadDB.main()
+        sys.exit(0)
 
 
 
@@ -125,9 +133,9 @@ DATABASE_prefix = DATABASE.split("/")[-1]
 
 
 
-# check if setup.py has been ran already ---------------------------------------
+# check if the database was downloaded already ---------------------------------
 if not(os.path.isdir(DATABASE)): # here we check db_mOTU exactly, because want to see if it was installed
-    sys.stderr.write("Error: database has not been downloaded. Run setup.py before using the motus profiler\n")
+    sys.stderr.write("Error: database has not been downloaded. Run 'motus downloadDB' before using the motus profiler\n")
     sys.exit(1)
 
 #-------------------------------------------------------------------------------
@@ -303,7 +311,7 @@ def main(argv=None):
 
     parser = argparse.ArgumentParser(usage=log.msg(version_tool), formatter_class=CapitalisedHelpFormatter,add_help=False)
     #parser = argparse.ArgumentParser(description='This program calculates mOTU-LGs and specI abundances for one sample', add_help = True)
-    parser.add_argument('command', action="store", default=None, help='mode to use the mOTU tool',choices=['profile','map_tax','calc_mgc','calc_motu','merge','map_snv','snv_call','util'])
+    parser.add_argument('command', action="store", default=None, help='mode to use the mOTU tool',choices=['profile','map_tax','calc_mgc','calc_motu','merge','map_snv','snv_call','util','downloadDB'])
     parser.add_argument('-f', action="store", default=None,dest='forwardReads', help='name of input file for reads in forward orientation, fastq formatted, can be gzipped')
     parser.add_argument('-r', action="store", default=None,dest='reverseReads', help='name of input file for reads in reverse orientation, fastq formatted, can be gzipped')
     parser.add_argument('-s', action="store", default=None,dest='singleReads', help='name of input file for reads without mate, fastq formatted, can be gzipped')
@@ -364,6 +372,7 @@ def main(argv=None):
 
 
     args = parser.parse_args()
+
 
     # run test.py --------------------------------------------------------------
     if args.test_motu:

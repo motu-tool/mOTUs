@@ -1,21 +1,5 @@
 from setuptools import setup
-from setuptools.command.install import install
 import os
-
-
-
-class CustomInstall(install):
-
-    def __init__(self, dist):
-        super(install, self).__init__(dist)
-        self.__post_install()
-
-    def run(self):
-        install.run(self)
-
-    def __post_install(self):
-        import motus.downloadDB
-        motus.downloadDB.main()
 
 
 def read(fname):
@@ -48,6 +32,4 @@ setup(
     entry_points = {
         'console_scripts': ['motus=motus.motus:main'],
     },
-    cmdclass={'install': CustomInstall},
 )
-
