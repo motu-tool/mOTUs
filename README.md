@@ -108,6 +108,9 @@ When profiling (`motus profile`) a metagenomic sample, the mOTUs tool maps the r
 
 ChangeLog
 --------------
+**Version 3.0.2 2022-01-31 by AlessioMilanese**
+* Convert the repository to a python package and submit to PyPI
+
 **Version 3.0.1 2021-07-27 by AlessioMilanese**
 * Improve ref-mOTUs taxonomy according to #76
 * Solve bug with `-A` option
