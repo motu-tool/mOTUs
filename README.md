@@ -39,15 +39,25 @@ Check [installation wiki](https://github.com/motu-tool/mOTUs/wiki/Installation) 
 
 Installation
 --------------
+
+mOTUs can be installed either by using `pip` or via `conda`.
+Installation with `conda` has the advantage that it will also download and install dependencies:
 ```bash
-git clone https://github.com/motu-tool/mOTUs.git
-cd mOTUs
-python setup.py
-python test.py
-export PATH=`pwd`:$PATH
+# Install in the base environment
+conda install motus
+
+# OR, create a new environment
+conda create -n motu-env motus
+conda activate motu-env
 ```
 
-Note: in the following examples we assume that the python script ```motus``` is in the system path.
+Installation with `pip`:
+```bash
+# Download and install mOTUs
+pip install mOTUs
+# Download the mOTUs database
+motus downloadDB
+```
 
 
 Basic examples
@@ -108,6 +118,9 @@ When profiling (`motus profile`) a metagenomic sample, the mOTUs tool maps the r
 
 ChangeLog
 --------------
+**Version 3.0.2 2022-01-31 by AlessioMilanese**
+* Convert the repository to a python package and submit to PyPI
+
 **Version 3.0.1 2021-07-27 by AlessioMilanese**
 * Improve ref-mOTUs taxonomy according to #76
 * Solve bug with `-A` option

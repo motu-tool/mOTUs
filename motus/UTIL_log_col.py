@@ -99,6 +99,8 @@ def msg(version_tool):
 '''+colour("Usage:","blue_bold")+''' motus <command> [options]
 
 '''+colour("Command:","blue_bold")+'''
+'''+colour("      downloadDB","cyan")+'''  Download the mOTUs database
+
 '''+colour("-- Taxonomic profiling","bold")+'''
 '''+colour("      profile","cyan")+'''     Perform taxonomic profiling (map_tax + calc_mgc + calc_motu) in a single step
 '''+colour("      merge","cyan")+'''       Merge several taxonomic profiling results into one table

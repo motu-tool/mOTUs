@@ -52,6 +52,8 @@ Reference: Milanese et al. Microbial abundance, activity and population genomic 
 Usage: motus <command> [options]
 
 Command:
+      downloadDB  Download the mOTUs database
+
  -- Taxonomic profiling
       profile     Perform taxonomic profiling (map_tax + calc_mgc + calc_motu) in a single step
       merge       Merge several taxonomic profiling results into one table

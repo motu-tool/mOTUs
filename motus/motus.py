@@ -42,13 +42,56 @@ import glob
 import multiprocessing
 import tempfile
 import errno
+import motus.map_genes_to_mOTUs as map_motu
+import motus.runBWA as runbwa
+import motus.runBWA_for_snv as runbwa_snv
+import motus.map_mOTUs_to_LGs as map_lgs
+import motus.msamtools_python as filter_sam
+import motus.PEfiltering as PEfiltering
+import motus.motu_utilities as motu_utilities
+import motus.print_CAMI as print_CAMI
+import motus.append as append
+import motus.downloadDB
+
+use_color = True
+for i in range(len(sys.argv)):
+    arg_this = sys.argv[i]
+    if arg_this == "--no_colour":
+        use_color = False
+
+if not use_color:
+    import motus.UTIL_log as log
+else:
+    import motus.UTIL_log_col as log
+
+
+
+
+
+
+
+# check if we need to download the database ------------------------------------
+for arg in sys.argv:
+    if arg == "downloadDB":
+        motus.downloadDB.main()
+        sys.exit(0)
+
+
+
+
+
+
 
 
 # position of the script -------------------------------------------------------
 path_mOTUs = os.path.realpath(__file__)
+
 path_array = path_mOTUs.split("/")
 relative_path = "/".join(path_array[0:-1])
+
 relative_path = relative_path + "/"
+motus_binary_folder = "/".join(path_array[0:-1]) + "/"
+
 
 # check if another database is specified ---------------------------------------
 # it will be -db argument
@@ -78,6 +121,7 @@ if count_db == 1:
 else: # default DB
     DATABASE = relative_path+'db_mOTU'
 
+
 # remove "/" from the end of the database string
 def strip_end(text, suffix):
     if not text.endswith(suffix):
@@ -89,9 +133,9 @@ DATABASE_prefix = DATABASE.split("/")[-1]
 
 
 
-# check if setup.py has been ran already ---------------------------------------
+# check if the database was downloaded already ---------------------------------
 if not(os.path.isdir(DATABASE)): # here we check db_mOTU exactly, because want to see if it was installed
-    sys.stderr.write("Error: database has not been downloaded. Run setup.py before using the motus profiler\n")
+    sys.stderr.write("Error: database has not been downloaded. Run 'motus downloadDB' before using the motus profiler\n")
     sys.exit(1)
 
 #-------------------------------------------------------------------------------
@@ -113,85 +157,8 @@ version_tool = versions["motus"]
 git_commit_id = "# git tag version "+version_tool
 
 
-# add /bin to the path ---------------------------------------------------------
-try:
-    if os.path.isdir(relative_path+'bin'):
-        sys.path.insert(0, relative_path+'bin')
-    else:
-        sys.stderr.write("Error: "+relative_path+"bin directory is missing.\nDownload the motus profiler again\n")
-        sys.exit(1)
-except:
-    sys.stderr.write("Error: "+relative_path+"bin directory is missing.\nDownload the motus profiler again\n")
-    sys.exit(1)
-
-# add the log ------------
-do_not_use_colour = False
-for i in range(len(sys.argv)):
-    arg_this = sys.argv[i]
-    if arg_this == "--no_colour":
-        do_not_use_colour = True
-if do_not_use_colour:
-    try:
-        import UTIL_log as log
-    except:
-        sys.stderr.write("Error: fail to load the script: "+relative_path+"bin/UTIL_log.py\nDownload the motus profiler again\n")
-        sys.exit(1)
-else:
-    try:
-        import UTIL_log_col as log
-    except:
-        # in case the colour format is not accepted, we load one that do not use colours
-        try:
-            import UTIL_log as log
-        except:
-            sys.stderr.write("Error: fail to load the script: "+relative_path+"bin/UTIL_log.py\nDownload the motus profiler again\n")
-            sys.exit(1)
 
 
-try:
-    import map_genes_to_mOTUs as map_motu
-except:
-    log.print_error("fail to load the script: "+relative_path+"bin/map_genes_to_mOTUs.py\nDownload the motus profiler again")
-
-try:
-    import runBWA as runbwa
-except ImportError:
-    log.print_error("fail to load the script: "+relative_path+"bin/runBWA.py\nDownload the motus profiler again")
-
-try:
-    import runBWA_for_snv as runbwa_snv
-except ImportError:
-    log.print_error("fail to load the script: "+relative_path+"bin/runBWA_for_snv.py\nDownload the motus profiler again")
-
-try:
-    import map_mOTUs_to_LGs as map_lgs
-except:
-    log.print_error("fail to load the script: "+relative_path+"bin/map_mOTUs_to_LGs.py\nDownload the motus profiler again")
-
-try:
-    import append
-except:
-    log.print_error("fail to load the script: "+relative_path+"bin/append.py\nDownload the motus profiler again")
-
-try:
-    import msamtools_python as filter_sam
-except:
-    log.print_error("fail to load the script: "+relative_path+"bin/msamtools_python.py\nDownload the motus profiler again")
-
-try:
-    import motu_utilities
-except:
-    log.print_error("fail to load the script: "+relative_path+"bin/motu_utilities.py\nDownload the motus profiler again")
-
-try:
-    import PEfiltering
-except:
-    log.print_error("fail to load the script: "+relative_path+"bin/PEfiltering.py\nDownload the motus profiler again")
-
-try:
-    import print_CAMI as print_CAMI
-except:
-    log.print_error("fail to load the script: "+relative_path+"bin/print_CAMI.py\nDownload the motus profiler again")
 
 
 # ------------------------------------------------------------------------------
@@ -344,7 +311,7 @@ def main(argv=None):
 
     parser = argparse.ArgumentParser(usage=log.msg(version_tool), formatter_class=CapitalisedHelpFormatter,add_help=False)
     #parser = argparse.ArgumentParser(description='This program calculates mOTU-LGs and specI abundances for one sample', add_help = True)
-    parser.add_argument('command', action="store", default=None, help='mode to use the mOTU tool',choices=['profile','map_tax','calc_mgc','calc_motu','merge','map_snv','snv_call','util'])
+    parser.add_argument('command', action="store", default=None, help='mode to use the mOTU tool',choices=['profile','map_tax','calc_mgc','calc_motu','merge','map_snv','snv_call','util','downloadDB'])
     parser.add_argument('-f', action="store", default=None,dest='forwardReads', help='name of input file for reads in forward orientation, fastq formatted, can be gzipped')
     parser.add_argument('-r', action="store", default=None,dest='reverseReads', help='name of input file for reads in reverse orientation, fastq formatted, can be gzipped')
     parser.add_argument('-s', action="store", default=None,dest='singleReads', help='name of input file for reads without mate, fastq formatted, can be gzipped')
@@ -406,9 +373,10 @@ def main(argv=None):
 
     args = parser.parse_args()
 
+
     # run test.py --------------------------------------------------------------
     if args.test_motu:
-        popenCMD = shlex.split("python "+relative_path+"test.py")
+        popenCMD = shlex.split("python "+motus_binary_folder+"test.py")
         child = subprocess.Popen(popenCMD)
         child.communicate()
         rc = child.wait()
@@ -776,7 +744,7 @@ def main(argv=None):
         if args.verbose>=4:
             log.print_message("[main] Executing metaSNV filter routine\n")
             # params = '-m 5 -d 10 -b 80 -p 0.9'
-        metaSNVFilter_command = 'python '+relative_path+'bin/metaSNV_Filtering_2.0.py %s -m %d -d %f -b %f -p %f -c %f --n_threads %d' %(outdir, fm, fd, fb, fp, fc, args.threads)
+        metaSNVFilter_command = 'python '+motus_binary_folder+'metaSNV_Filtering_2.0.py %s -m %d -d %f -b %f -p %f -c %f --n_threads %d' %(outdir, fm, fd, fb, fp, fc, args.threads)
         if args.verbose>=4:
             log.print_message("[main] Command: %s\n" % metaSNVFilter_command)
         metaSNVFilter_popenCMD = shlex.split(metaSNVFilter_command)
@@ -796,7 +764,7 @@ def main(argv=None):
     # --------------------------------------------------------------------------
         if args.verbose>=4:
             log.print_message("[main] Executing metaSNV remove padded routine\n")
-        metaSNVRMPadded_command = 'bash '+relative_path+'bin/motus.remove.padded.sh %s/filtered%s/' % (outdir, paramsdir)
+        metaSNVRMPadded_command = 'bash '+motus_binary_folder+'motus.remove.padded.sh %s/filtered%s/' % (outdir, paramsdir)
         if args.verbose>=4:
             log.print_message("[main] Command: %s\n" % metaSNVRMPadded_command)
         metaSNVRMPadded_popenCMD = shlex.split(metaSNVRMPadded_command)
@@ -816,7 +784,7 @@ def main(argv=None):
     # --------------------------------------------------------------------------
         if args.verbose>=4:
             log.print_message("[main] Executing metaSNV distance routine\n")
-        metaSNVDist_command = 'python '+relative_path+'bin/metaSNV_DistDiv.py --filt %s/filtered%s --dist --n_threads %d' % (outdir, paramsdir, args.threads)
+        metaSNVDist_command = 'python '+motus_binary_folder+'metaSNV_DistDiv.py --filt %s/filtered%s --dist --n_threads %d' % (outdir, paramsdir, args.threads)
         if args.verbose>=4:
             log.print_message("[main] Command: %s\n" % metaSNVDist_command)
         metaSNVDist_popenCMD = shlex.split(metaSNVDist_command)
@@ -1013,7 +981,7 @@ def main(argv=None):
                 lane_id = "lane"+str(i)
                 output = ""
                 bamOutput = False
-                msam_script = relative_path+"bin/msamtools_python.py"
+                msam_script = motus_binary_folder+"msamtools_python.py"
                 technology = "" # should we implement this?
 
                 profile_mode = True
@@ -1317,7 +1285,7 @@ def main(argv=None):
             loserThreshold = 0.01
 
             output = ""
-            msam_script = relative_path+"bin/msamtools_python.py"
+            msam_script = motus_binary_folder+"msamtools_python.py"
             return_dictionary = True
             profile_mode = True
 
@@ -1567,7 +1535,7 @@ def main(argv=None):
             lane_id = "lane"+str(i)
             output = ""
             bamOutput = False
-            msam_script = relative_path+"bin/msamtools_python.py"
+            msam_script = motus_binary_folder+"msamtools_python.py"
             technology = "" # should we implement this?
 
             profile_mode = True
@@ -1653,7 +1621,7 @@ def main(argv=None):
         multThreshold = 3
         winnerThreshold = 0.95
         loserThreshold = 0.01
-        msam_script = relative_path+"bin/msamtools_python.py"
+        msam_script = motus_binary_folder+"msamtools_python.py"
         return_dictionary = True # the result is printed inside the function map_motu.run_mOTUs_v2_mapping
         profile_mode = False
         all_sam_lines = ""
