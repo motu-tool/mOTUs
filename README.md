@@ -46,7 +46,7 @@ Installation with `conda` has the advantage that it will also download and insta
 # Install in the base environment
 conda install motus
 
-# OR, create new environment
+# OR, create a new environment
 conda create -n motu-env motus
 conda activate motu-env
 ```
