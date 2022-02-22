@@ -101,7 +101,7 @@ How mOTUs works
 The mOTUs tool performs taxonomic profiling of metagenomics and metatrancriptomics samples, i.e. it identifies species and their relative abundance present in a sample. It is based on a set of mOTUs (~species) contained in the mOTUs database.
 The mOTUs database is created from reference genomes, metagenomic samples and metagenome assembled genomes (MAGs):
 
-![alt text](https://github.com/motu-tool/mOTUs/blob/master/pics/motus_type.png)
+![alt text](https://raw.githubusercontent.com/motu-tool/mOTUs/master/pics/motus_type.png)
 
 A mOTUs database is composed of three types of mOTUs:
 - ref-mOTUs, which represent **known species**,
@@ -111,10 +111,10 @@ A mOTUs database is composed of three types of mOTUs:
 Note that meta- and ext-mOTUs will not have a species level annotation.
 
 The mOTUs database is updated periodically, e.g the latest version (2.6.1), which doubles the number of profilable species by including ~600,000 draft genomes. Major releases are represented in the following graph (where the numbers represents the number of mOTUs for each of the three groups, with the same color-code as the previous graph):
-![alt text](https://github.com/motu-tool/mOTUs/blob/master/pics/mOTUs_versions_2.png)
+![alt text](https://raw.githubusercontent.com/motu-tool/mOTUs/master/pics/mOTUs_versions_2.png)
 
 When profiling (`motus profile`) a metagenomic sample, the mOTUs tool maps the reads from the sample to the genes in the different mOTUs:
-![alt text](https://github.com/motu-tool/mOTUs/blob/master/pics/tax_profiling.png)
+![alt text](https://raw.githubusercontent.com/motu-tool/mOTUs/master/pics/tax_profiling.png)
 
 ChangeLog
 --------------
