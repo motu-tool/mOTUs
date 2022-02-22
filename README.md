@@ -1,4 +1,4 @@
-![alt text](https://github.com/motu-tool/mOTUs/blob/master/pics/motu_logo.png)
+![alt text](https://raw.githubusercontent.com/motu-tool/mOTUs/master/pics/motu_logo.png)
 
 [![Build status](https://ci.appveyor.com/api/projects/status/0x4veuuoabm6018v/branch/master?svg=true)](https://ci.appveyor.com/project/AlessioMilanese/motus-v2/branch/master)
 [![Install with Bioconda](https://anaconda.org/bioconda/motus/badges/installer/conda.svg)](https://anaconda.org/bioconda/motus)
