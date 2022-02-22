@@ -54,7 +54,7 @@ conda activate motu-env
 Installation with `pip`:
 ```bash
 # Download and install mOTUs
-pip install mOTUs
+pip install motu-profiler
 # Download the mOTUs database
 motus downloadDB
 ```
