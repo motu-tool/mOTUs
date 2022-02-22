@@ -59,6 +59,10 @@ pip install motu-profiler
 motus downloadDB
 ```
 
+You can test that motus is intalled correctly with:
+```
+motus profile --test
+```
 
 Basic examples
 --------------
