@@ -7,7 +7,7 @@ def read(fname):
 
 long_description = read('README.md')
 setup(
-    name = "mOTUs",
+    name = "motu-profiler",
     version = "3.0.2",
     author = "Alessio Milanese",
     author_email = "alessiom@ethz.ch",
