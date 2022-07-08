@@ -671,6 +671,12 @@ def main(argv=None):
         if args.no_gz is not None:
             if args.no_gz:
                 gzipped_result = False
+        # check that input and output are provided
+        if args.listInputFiles is None:
+            log.print_error("Missing input file (-i)")
+        if args.output is None:
+            log.print_error("Missing output file (-o)")
+
         convert_long_reads(args.listInputFiles, args.output, split_len = args.sl, min_len= args.ml, quality = "D", gz_out = gzipped_result, verbose = args.verbose)
 
 
