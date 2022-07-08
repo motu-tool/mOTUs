@@ -45,7 +45,7 @@ def split_read(read_name, read_seq, split_len, min_len, quality):
         return res
 
 
-def convert_long_reads(path_original, path_converted, split_len = 300, min_len= 50, quality = "D", gz_out = True, verbose = 3):
+def convert_long_reads(path_original, path_converted, split_len = 300, min_len= 50, quality = "D", gz_out = True, verbose = 3, log_):
     # - path_original, file with the long reads (can be fasta or fastq) (can be
     #                  gzipped)
     # - path_converted, where to save the converted reads
@@ -55,6 +55,11 @@ def convert_long_reads(path_original, path_converted, split_len = 300, min_len= 
     # - quality, quality that we use for the output fastq files, default is "D"
     #            which is 35
     # - gz_out, it's a BOOL that says if the output should be gzipped or not
+
+    # set up log
+    global log
+    log = log_
+    # ----------------------
 
     # First we check that the file exist ---------------------------------------
     # and it is a fasta or fastq
@@ -81,14 +86,13 @@ def convert_long_reads(path_original, path_converted, split_len = 300, min_len= 
             if line3.startswith("+"):
                 file_type = "fastq"
     except Exception as e:
-        sys.stderr.write("Error: Cannot open the input file\n")
+        log.print_error("Cannot open the input file", exit = False)
         if verbose > 2:
             sys.stderr.write(str(e)+"\n")
         sys.exit(1)
 
     if file_type == "unknown":
-        sys.stderr.write("Error: Cannot regcognise file type (not fastq or fasta)\n")
-        sys.exit(1)
+        log.print_error("Cannot recognise file type (not fastq or fasta)")
 
     # Transform the reads ------------------------------------------------------
     # open file

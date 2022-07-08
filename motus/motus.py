@@ -677,7 +677,11 @@ def main(argv=None):
         if args.output is None:
             log.print_error("Missing output file (-o)")
 
-        convert_long_reads(args.listInputFiles, args.output, split_len = args.sl, min_len= args.ml, quality = "D", gz_out = gzipped_result, verbose = args.verbose)
+        if args.verbose>2:
+            log.print_log("Split long read file into shorter reads")
+            log.print_message_execution("The long reads in the file are split into short reads of length "+str(args.sl))
+
+        convert_long_reads(args.listInputFiles, args.output, split_len = args.sl, min_len= args.ml, quality = "D", gz_out = gzipped_result, verbose = args.verbose, log)
 
 
     # --------------------------------------------------------------------------
