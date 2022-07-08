@@ -364,6 +364,11 @@ def main(argv=None):
                         help="FILTERING STEP II:"
                              "required proportion of informative samples (coverage non-zero) per position",
                         default=None)
+
+    parser.add_argument('-sl', metavar='INT', type=int, help="splitting length for the long reads", default=None)
+    parser.add_argument('-ml', metavar='INT', type=int, help="minimum length for the reads", default=None)
+    parser.add_argument('-no_gz',action='store_true', default=None, help='do not zip the output')
+
     parser.add_argument('--version', action='version', version='%(prog)s {0} on python {1}'.format(version_tool, sys.version.split()[0]))
     parser.add_argument('--test', action='store_true', default=None, dest='test_motu', help='test that motus has all the dependencies and is working correctly')
     parser.add_argument('--split_cami_file', action="store", default=None,dest='cami_file_to_split', help='split a gzipped CAMI file into two fzipped for and rev files')
@@ -401,6 +406,7 @@ def main(argv=None):
                     if args.command == 'calc_motu': log.print_menu_map_lgs()
                     if args.command == 'merge': log.print_menu_append()
                     if args.command == 'snv_call': log.print_menu_snv_call()
+                    if args.command == 'prep_long': log.print_menu_prep_long()
                     sys.exit(1)
     # set default for args.verbose
     if (args.verbose is None): args.verbose = 3
@@ -655,7 +661,17 @@ def main(argv=None):
     # --------------------------------------------------------------------------
     #                          COMMAND TO SPLIT LONG READS
     if args.command == "prep_long":
-        convert_long_reads(path_original, path_converted, split_len = 300, min_len= 50, quality = "D", gz_out = True, verbose = args.verbose)
+        # set splitting length and minimum length
+        if args.sl is None:
+            args.sl = 300
+        if args.ml is None:
+            args.ml = 50
+        # set if gzip the result or not
+        gzipped_result = True
+        if args.no_gz is not None:
+            if args.no_gz:
+                gzipped_result = False
+        convert_long_reads(args.listInputFiles, args.output, split_len = args.sl, min_len= args.ml, quality = "D", gz_out = gzipped_result, verbose = args.verbose)
 
 
     # --------------------------------------------------------------------------
