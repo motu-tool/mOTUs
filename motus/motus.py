@@ -52,6 +52,7 @@ import motus.motu_utilities as motu_utilities
 import motus.print_CAMI as print_CAMI
 import motus.append as append
 import motus.downloadDB
+import motus.convert_long_reads as convert_long_reads
 
 use_color = True
 for i in range(len(sys.argv)):
@@ -311,7 +312,7 @@ def main(argv=None):
 
     parser = argparse.ArgumentParser(usage=log.msg(version_tool), formatter_class=CapitalisedHelpFormatter,add_help=False)
     #parser = argparse.ArgumentParser(description='This program calculates mOTU-LGs and specI abundances for one sample', add_help = True)
-    parser.add_argument('command', action="store", default=None, help='mode to use the mOTU tool',choices=['profile','map_tax','calc_mgc','calc_motu','merge','map_snv','snv_call','util','downloadDB'])
+    parser.add_argument('command', action="store", default=None, help='mode to use the mOTU tool',choices=['profile','map_tax','calc_mgc','calc_motu','merge','map_snv','snv_call','util','downloadDB','prep_long'])
     parser.add_argument('-f', action="store", default=None,dest='forwardReads', help='name of input file for reads in forward orientation, fastq formatted, can be gzipped')
     parser.add_argument('-r', action="store", default=None,dest='reverseReads', help='name of input file for reads in reverse orientation, fastq formatted, can be gzipped')
     parser.add_argument('-s', action="store", default=None,dest='singleReads', help='name of input file for reads without mate, fastq formatted, can be gzipped')
@@ -651,7 +652,10 @@ def main(argv=None):
 
 
 
-
+    # --------------------------------------------------------------------------
+    #                          COMMAND TO SPLIT LONG READS
+    if args.command == "prep_long":
+        convert_long_reads(path_original, path_converted, split_len = 300, min_len= 50, quality = "D", gz_out = True, verbose = args.verbose)
 
 
     # --------------------------------------------------------------------------
