@@ -45,7 +45,7 @@ def split_read(read_name, read_seq, split_len, min_len, quality):
         return res
 
 
-def convert_long_reads(path_original, path_converted, split_len = 300, min_len= 50, quality = "D", gz_out = True, verbose = 3, log_):
+def convert_long_reads(path_original, path_converted, split_len = 300, min_len= 50, quality = "D", gz_out = True, verbose = 3, log_ = None):
     # - path_original, file with the long reads (can be fasta or fastq) (can be
     #                  gzipped)
     # - path_converted, where to save the converted reads
