@@ -62,6 +62,8 @@ Command:
       calc_mgc    Calculate marker gene cluster (MGC) abundance
       calc_motu   Summarize MGC abundances into a mOTU profile
 
+      prep_long   Prepare long reads to be sequenced by mOTUs
+
  -- SNV calling
       map_snv     Map reads to the marker gene database for SNV calling
       snv_call    Generate SNV profiles (using metaSNV)
@@ -218,3 +220,18 @@ def print_menu_append():
     sys.stderr.write("   -B             print result in BIOM format\n\n")
     sys.stderr.write("Algorithm options:\n")
     sys.stderr.write("   -v INT         verbosity level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n\n")
+
+
+# ------------------------------------------------------------------------------
+def print_menu_prep_long():
+    sys.stderr.write("\n")
+    sys.stderr.write("Usage: motus prep_long -i <long_read_file> -o <converted_file> [options]\n\n")
+    sys.stderr.write("Input options:\n")
+    sys.stderr.write("   -i  FILE   long read file to convert, can be fasta(.gz) or fastq(.gz)\n")
+    sys.stderr.write("Output options:\n")
+    sys.stderr.write("   -o  FILE   converted file (gzipped), ready to be used by motus profile\n")
+    sys.stderr.write("   -no_gz     save the output file without gzipping it\n")
+    sys.stderr.write("Algorithm options:\n")
+    sys.stderr.write("   -sl INT    splitting length for the long reads [300]\n")
+    sys.stderr.write("   -ml INT    minimum read length, shorter are discarded [50]\n")
+    sys.stderr.write("   -v  INT    verbosity level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n\n")

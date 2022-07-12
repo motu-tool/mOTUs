@@ -109,6 +109,8 @@ def msg(version_tool):
 '''+colour("      calc_mgc","cyan")+'''    Calculate marker gene cluster (MGC) abundance
 '''+colour("      calc_motu","cyan")+'''   Summarize MGC abundances into a mOTU profile
 
+'''+colour("      prep_long","cyan")+'''   Prepare long reads to be sequenced by mOTUs
+
 '''+colour("-- SNV calling","bold")+'''
 '''+colour("      map_snv","cyan")+'''     Map reads to the marker gene database for SNV calling
 '''+colour("      snv_call","cyan")+'''    Generate SNV profiles (using metaSNV)
@@ -263,3 +265,17 @@ def print_menu_append():
     sys.stderr.write("   "+colour("-B ","blue_bold")+"            print result in BIOM format\n\n")
     sys.stderr.write(colour("Algorithm options:\n","bold"))
     sys.stderr.write("   "+colour("-v ","blue_bold")+"INT         verbosity level: 1=error, 2=warning, 3=message, 4+=debugging "+colour("[3]","magenta")+"\n\n")
+
+# ------------------------------------------------------------------------------
+def print_menu_prep_long():
+    sys.stderr.write("\n")
+    sys.stderr.write(colour("Usage:","blue_bold")+" motus prep_long -i <long_read_file> -o <converted_file> [options]\n\n")
+    sys.stderr.write(colour("Input options:\n","bold"))
+    sys.stderr.write("   "+colour("-i  ","blue_bold")+"FILE   long read file to convert, can be fasta(.gz) or fastq(.gz)\n")
+    sys.stderr.write(colour("Output options:\n","bold"))
+    sys.stderr.write("   "+colour("-o  ","blue_bold")+"FILE   converted file (gzipped), ready to be used by motus profile\n")
+    sys.stderr.write("   "+colour("-no_gz  ","blue_bold")+"   save the output file without gzipping it\n")
+    sys.stderr.write(colour("Algorithm options:\n","bold"))
+    sys.stderr.write("   "+colour("-sl ","blue_bold")+"INT    splitting length for the long reads "+colour("[300]","magenta")+"\n")
+    sys.stderr.write("   "+colour("-ml ","blue_bold")+"INT    minimum read length, shorter are discarded "+colour("[50]","magenta")+"\n")
+    sys.stderr.write("   "+colour("-v  ","blue_bold")+"INT    verbosity level: 1=error, 2=warning, 3=message, 4+=debugging "+colour("[3]","magenta")+"\n\n")
