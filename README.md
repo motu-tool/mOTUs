@@ -122,7 +122,7 @@ When profiling (`motus profile`) a metagenomic sample, the mOTUs tool maps the r
 
 ChangeLog
 --------------
-**Version 3.0.3 2022-07-12 by AlessioMilanese**
+**Version 3.0.3 2022-07-13 by AlessioMilanese**
 * Add command `prep_long` to allow the profiling of long reads (more information [here](https://github.com/motu-tool/mOTUs/wiki/Profile-long-reads)).
 
 **Version 3.0.2 2022-01-31 by AlessioMilanese**
