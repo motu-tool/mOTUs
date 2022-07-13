@@ -8,7 +8,7 @@ def read(fname):
 long_description = read('README.md')
 setup(
     name = "motu-profiler",
-    version = "3.0.2",
+    version = "3.0.3",
     author = "Alessio Milanese",
     author_email = "alessiom@ethz.ch",
     description = ("Taxonomic profiling of metagenomes from diverse environments with mOTUs3"),
