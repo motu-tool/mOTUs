@@ -22,30 +22,35 @@ def split_read(read_name, read_seq, split_len, min_len, quality):
         return ""
 
     # from now on we have long enough reads
-    res = ""
+    res = []
+    read_name = read_name.split()[0]
     if ll < split_len:
         # between 100 and 300 (or split_len)
         count = count + 1
-        res = res + "@"+read_name+"_"+str(count) + "\n"
-        res = res + read_seq + "\n"
-        res = res + "+\n"
-        res = res + quality*ll + "\n"
-        return res
+        res.append(f'@{read_name}_{count}')
+        res.append(read_seq)
+        res.append('+')
+        res.append(quality*ll)
+        return '\n'.join(res) + '\n'
     else:
         # we need to split the reads
-        n_splits = round(ll/split_len)
-        length_split = round(ll/n_splits)
-        chunks = [read_seq[i:i+length_split] for i in range(0, len(read_seq), length_split)]
+        chunks = [read_seq[y-split_len:y] for y in range(split_len, len(read_seq)+split_len,split_len)]
+        #n_splits = round(ll/split_len)
+        #length_split = round(ll/n_splits)
+        #chunks = [read_seq[i:i+length_split] for i in range(0, len(read_seq), length_split)]
         for i in chunks:
+            if len(i) < min_len:
+                continue
             count = count + 1
-            res = res + "@"+read_name+"_"+str(count) + "\n"
-            res = res + i + "\n"
-            res = res + "+\n"
-            res = res + quality*len(i) + "\n"
-        return res
+
+            res.append(f'@{read_name}_{count}')
+            res.append(i)
+            res.append('+')
+            res.append(quality*len(i))
+        return '\n'.join(res) + '\n'
 
 
-def convert_long_reads(path_original, path_converted, split_len = 300, min_len= 50, quality = "D", gz_out = True, verbose = 3, log_ = None):
+def convert_long_reads(path_original, path_converted, split_len = 300, min_len= 50, quality = "D", gz_out = True, verbose = 3, logger = None):
     # - path_original, file with the long reads (can be fasta or fastq) (can be
     #                  gzipped)
     # - path_converted, where to save the converted reads
@@ -58,8 +63,7 @@ def convert_long_reads(path_original, path_converted, split_len = 300, min_len= 
 
     # set up log
     global log
-    log = log_
-    # ----------------------
+    log = logger
 
     # First we check that the file exist ---------------------------------------
     # and it is a fasta or fastq
