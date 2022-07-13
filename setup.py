@@ -19,7 +19,7 @@ setup(
     keywords = "bioinformatics metagenomics taxonomic profiling",
     url = "https://github.com/motu-tool/mOTUs",
     packages=['motus'],
-    download_url = "https://github.com/motu-tool/mOTUs/archive/refs/tags/3.0.2.tar.gz",
+    download_url = "https://github.com/motu-tool/mOTUs/archive/refs/tags/3.0.3.tar.gz",
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
