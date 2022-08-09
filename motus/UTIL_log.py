@@ -47,7 +47,7 @@ def msg(version_tool):
 \00
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 Version: '''+version_tool+'''
-Reference: Milanese et al. Microbial abundance, activity and population genomic profiling with mOTUs2. Nature Communications (2019). doi: 10.1038/s41467-019-08844-4
+Reference: Ruscheweyh, Milanese et al. Reference genome-independent taxonomic profiling of microbiomes with mOTUs3. biorxiv (2022). doi: 10.1101/2021.04.20.440600
 
 Usage: motus <command> [options]
 
@@ -62,7 +62,7 @@ Command:
       calc_mgc    Calculate marker gene cluster (MGC) abundance
       calc_motu   Summarize MGC abundances into a mOTU profile
 
-      prep_long   Prepare long reads to be sequenced by mOTUs
+      prep_long   Prepare long reads to be profiled by mOTUs
 
  -- SNV calling
       map_snv     Map reads to the marker gene database for SNV calling
