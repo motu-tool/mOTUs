@@ -136,7 +136,8 @@ def is_fastq(fastq_file,verbose,log_):
         cont = cont + 1
         if zippedInput:
             line = line.decode('ascii')
-
+        line = line.rstrip('\n')
+        
         if cont_line == 1:
             if line[0] != "@": print_error_fasta("Line does not start with @",cont,fastq_file)
 
