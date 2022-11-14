@@ -1,0 +1,186 @@
+cff-version: 1.2.0
+message: If you use this software, please cite it as below.
+title: 'Microbial abundance, activity and population genomic profiling with mOTUs2'
+doi: 10.1038/s41467-019-08844-4
+authors:
+  - given-names: Alessio
+    family-names: Milanese
+    affiliation: European Molecular Biology Laboratory, Heidelberg, Germany
+    orcid: https://orcid.org/0000-0002-7050-2239
+  - given-names: Daniel R.
+    family-names: Mende
+    affiliation: Daniel K. Inouye Center for Microbial Oceanography Research and Education, University of Hawaii at Mānoa, Honolulu, United States
+    orcid: https://orcid.org/0000-0001-6831-4557
+  - given-names: Lucas
+    family-names: Paoli
+    affiliation: Department of Biology, Institute of Microbiology and Swiss Institute of Bioinformatics, ETH Zürich
+      & Department of Biology, École normale supérieure, Paris, France
+    orcid: https://orcid.org/0000-0003-0771-8309
+  - given-names: Guillem
+    family-names: Salazar
+    affiliation: Department of Biology, Institute of Microbiology and Swiss Institute of Bioinformatics, ETH Zürich
+    orcid: https://orcid.org/0000-0002-9786-1493
+  - given-names: Miguelangel
+    family-names: Cuenca
+    affiliation: Department of Biology, Institute of Microbiology and Swiss Institute of Bioinformatics, ETH Zürich
+    orcid: https://orcid.org/0000-0003-3435-9102
+  - given-names: Pascal 
+    family-names: Hingamp
+    affiliation: Aix Marseille Univ, Université de Toulon, Marseille, France
+  - given-names: Renato
+    family-names: Alves
+    affiliation: European Molecular Biology Laboratory, Heidelberg, Germany
+    orcid: https://orcid.org/0000-0002-7212-0234
+  - given-names: Paul I.
+    family-names: Costea
+    affiliation: European Molecular Biology Laboratory, Heidelberg, Germany
+    orcid: https://orcid.org/0000-0003-1645-3947
+  - given-names: Luis Pedro
+    family-names: Coelho
+    affiliation: European Molecular Biology Laboratory, Heidelberg, Germany
+    orcid: https://orcid.org/0000-0002-9280-7885
+  - given-names: Thomas S. B.
+    family-names: Schmidt 
+    affiliation: European Molecular Biology Laboratory, Heidelberg, Germany
+    orcid: https://orcid.org/0000-0001-8587-4177
+  - given-names: Alexandre 
+    family-names: Almeida 
+    affiliation: European Molecular Biology Laboratory, 
+      European Bioinformatics Institute (EMBL-EBI), Wellcome Genome Campus, Hinxton, UK 
+      & Wellcome Trust Sanger Institute, Wellcome Genome Campus, Hinxton, UK
+    orcid: https://orcid.org/0000-0001-8803-0893
+  - given-names: Alex L 
+    family-names: Mitchell
+    affiliation: European Molecular Biology Laboratory, 
+      European Bioinformatics Institute (EMBL-EBI), Wellcome Genome Campus, Hinxton, UK
+  - given-names: Robert D.
+    family-names: Finn
+    affiliation: European Molecular Biology Laboratory, 
+      European Bioinformatics Institute (EMBL-EBI), Wellcome Genome Campus, Hinxton, UK
+    orcid: https://orcid.org/0000-0001-8626-2148
+  - given-names: Jaime 
+    family-names: Huerta-Cepas
+    affiliation: European Molecular Biology Laboratory, Heidelberg, Germany
+      & Centro de Biotecnología y Genómica de Plantas, 
+      Universidad Politécnica de Madrid (UPM) - Instituto Nacional de Investigación y Tecnología Agraria y Alimentaria (INIA), Madrid, Spain
+    orcid: https://orcid.org/0000-0003-4195-5025
+  - given-names: Peer 
+    family-names: Bork
+    affiliation: European Molecular Biology Laboratory, Heidelberg, Germany
+      & Max Delbrück Centre for Molecular Medicine, Berlin, Germany
+      & Molecular Medicine Partnership Unit, Heidelberg, Germany
+      & Department of Bioinformatics, Biocenter, University of Würzburg, Würzburg, Germany
+    orcid: https://orcid.org/0000-0002-2627-833X
+  - given-names: Georg
+    family-names: Zeller
+    affiliation: European Molecular Biology Laboratory, Heidelberg, Germany
+    orcid: https://orcid.org/0000-0003-1429-7485
+  - given-names: Sunagawa
+    family-names: Shinichi
+    affiliation: Department of Biology, Institute of Microbiology and Swiss Institute of Bioinformatics, ETH Zürich
+    orcid: https://orcid.org/0000-0003-3065-0314
+
+version: 3.0.3
+date-released: 2022-07-13
+repository-code: https://github.com/motu-tool/mOTUs
+license: GNU General Public License v3.0
+keywords:
+- "Metagenomics"
+- "Microbiome"
+- "Software"
+preferred-citation:
+  type: article
+  authors:
+    - given-names: Alessio
+      family-names: Milanese
+      affiliation: European Molecular Biology Laboratory, Heidelberg, Germany
+      orcid: https://orcid.org/0000-0002-7050-2239
+    - given-names: Daniel R.
+      family-names: Mende
+      affiliation: Daniel K. Inouye Center for Microbial Oceanography Research and Education, University of Hawaii at Mānoa, Honolulu, United States
+      orcid: https://orcid.org/0000-0001-6831-4557
+    - given-names: Lucas
+      family-names: Paoli
+      affiliation: Department of Biology, Institute of Microbiology and Swiss Institute of Bioinformatics, ETH Zürich
+        & Department of Biology, École normale supérieure, Paris, France
+      orcid: https://orcid.org/0000-0003-0771-8309
+    - given-names: Guillem
+      family-names: Salazar
+      affiliation: Department of Biology, Institute of Microbiology and Swiss Institute of Bioinformatics, ETH Zürich
+      orcid: https://orcid.org/0000-0002-9786-1493
+    - given-names: Miguelangel
+      family-names: Cuenca
+      affiliation: Department of Biology, Institute of Microbiology and Swiss Institute of Bioinformatics, ETH Zürich
+      orcid: https://orcid.org/0000-0003-3435-9102
+    - given-names: Pascal 
+      family-names: Hingamp
+      affiliation: Aix Marseille Univ, Université de Toulon, Marseille, France
+    - given-names: Renato
+      family-names: Alves
+      affiliation: European Molecular Biology Laboratory, Heidelberg, Germany
+      orcid: https://orcid.org/0000-0002-7212-0234
+    - given-names: Paul I.
+      family-names: Costea
+      affiliation: European Molecular Biology Laboratory, Heidelberg, Germany
+      orcid: https://orcid.org/0000-0003-1645-3947
+    - given-names: Luis Pedro
+      family-names: Coelho
+      affiliation: European Molecular Biology Laboratory, Heidelberg, Germany
+      orcid: https://orcid.org/0000-0002-9280-7885
+    - given-names: Thomas S. B.
+      family-names: Schmidt 
+      affiliation: European Molecular Biology Laboratory, Heidelberg, Germany
+      orcid: https://orcid.org/0000-0001-8587-4177
+    - given-names: Alexandre 
+      family-names: Almeida 
+      affiliation: European Molecular Biology Laboratory, 
+        European Bioinformatics Institute (EMBL-EBI), Wellcome Genome Campus, Hinxton, UK 
+        & Wellcome Trust Sanger Institute, Wellcome Genome Campus, Hinxton, UK
+      orcid: https://orcid.org/0000-0001-8803-0893
+    - given-names: Alex L 
+      family-names: Mitchell
+      affiliation: European Molecular Biology Laboratory, 
+        European Bioinformatics Institute (EMBL-EBI), Wellcome Genome Campus, Hinxton, UK
+    - given-names: Robert D.
+      family-names: Finn
+      affiliation: European Molecular Biology Laboratory, 
+        European Bioinformatics Institute (EMBL-EBI), Wellcome Genome Campus, Hinxton, UK
+      orcid: https://orcid.org/0000-0001-8626-2148
+    - given-names: Jaime 
+      family-names: Huerta-Cepas
+      affiliation: European Molecular Biology Laboratory, Heidelberg, Germany
+        & Centro de Biotecnología y Genómica de Plantas, 
+        Universidad Politécnica de Madrid (UPM) - Instituto Nacional de Investigación y Tecnología Agraria y Alimentaria (INIA), Madrid, Spain
+      orcid: https://orcid.org/0000-0003-4195-5025
+    - given-names: Peer 
+      family-names: Bork
+      affiliation: European Molecular Biology Laboratory, Heidelberg, Germany
+        & Max Delbrück Centre for Molecular Medicine, Berlin, Germany
+        & Molecular Medicine Partnership Unit, Heidelberg, Germany
+        & Department of Bioinformatics, Biocenter, University of Würzburg, Würzburg, Germany
+      orcid: https://orcid.org/0000-0002-2627-833X
+    - given-names: Georg
+      family-names: Zeller
+      affiliation: European Molecular Biology Laboratory, Heidelberg, Germany
+      orcid: https://orcid.org/0000-0003-1429-7485
+    - given-names: Sunagawa
+      family-names: Shinichi
+      affiliation: Department of Biology, Institute of Microbiology and Swiss Institute of Bioinformatics, ETH Zürich
+      orcid: https://orcid.org/0000-0003-3065-0314
+  doi: "10.1038/s41467-019-08844-4"
+  journal: "Nature Communications"
+  month: 3
+  year: 2019
+  title: "Microbial abundance, activity and population genomic profiling with mOTUs2"
+  abstract: 'Metagenomic sequencing has greatly improved our ability to profile the composition 
+  of environmental and host-associated microbial communities. However, the dependency of most methods 
+  on reference genomes, which are currently unavailable for a substantial fraction of microbial species, 
+  introduces estimation biases. We present an updated and functionally extended tool 
+  based on universal (i.e., reference-independent), phylogenetic marker gene (MG)-based 
+  operational taxonomic units (mOTUs) enabling the profiling of >7700 microbial species. 
+  As more than 30% of them could not previously be quantified at this taxonomic resolution, 
+  relative abundance estimates based on mOTUs are more accurate compared to other methods. 
+  As a new feature, we show that mOTUs, which are based on essential housekeeping genes, 
+  are demonstrably well-suited for quantification of basal transcriptional activity of community members. 
+  Furthermore, single nucleotide variation profiles estimated using mOTUs reflect those from whole genomes, 
+  which allows for comparing microbial strain populations (e.g., across different human body sites).'
