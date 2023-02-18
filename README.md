@@ -15,13 +15,16 @@ Check the [wiki](https://github.com/motu-tool/mOTUs/wiki) for more information.
 
 If you are using mOTUs, please cite:
 
-> Alessio Milanese, Daniel R Mende, Lucas Paoli, Guillem Salazar, Hans-Joachim Ruscheweyh, Miguelangel Cuenca,
-> Pascal Hingamp, Renato Alves, Paul I Costea, Luis Pedro Coelho, Thomas S B Schmidt,
-> Alexandre Almeida, Alex L Mitchell, Robert D Finn, Jaime Huerta-Cepas,
-> Peer Bork, Georg Zeller & Shinichi Sunagawa.
-> **Microbial abundance, activity and population genomic profiling with mOTUs2**; _Nature Communications_ **10**, Article number: 1014 (2019).
-> PMID: 30833550;
-> doi: [10.1038/s41467-019-08844-4](https://www.nature.com/articles/s41467-019-08844-4)
+> **Reference genome-independent taxonomic profiling of microbiomes with mOTUs3**
+> 
+> Hans-Joachim Ruscheweyh*, Alessio Milanese*, Lucas Paoli, Nicolai Karcher, Quentin Clayssen,
+> Marisa Isabell Metzger, Jakob Wirbel, Peer Bork, Daniel R. Mende, Georg Zeller# & Shinichi Sunagawa#
+> 
+> _Microbiome_ (2022)
+> 
+> doi: [10.1186/s40168-022-01410-z](https://microbiomejournal.biomedcentral.com/articles/10.1186/s40168-022-01410-z)
+
+
 
 
 Pre-requisites
