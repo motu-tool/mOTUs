@@ -240,7 +240,11 @@ def calculate_abundance(infile, LGs_map, LGs_map_l, specI_taxonomy, mOTULG_taxon
         for i in range(len(counts_mOTUs_j)):
             if counts_mOTUs_j[i]>0:
                 list_diff_zero.append(counts_mOTUs_j[i]) # find the one that are different from zero
-                cog_type.append(genes_list[i].split('.')[0]) # and save the COG type
+                # in 3.1 we have "ref_mOTU_v31_00009.COG0012"
+                # but in general I need to have COGXXXX, so I will split by COG and take the 4 character
+                # after
+                temp_cog = "COG" + genes_list[i].split("COG")[1].rstrip()[0:4]
+                cog_type.append(temp_cog) # and save the COG type
 
         rel_ab_LGs[j] = 0
         if j != 'unassigned':
