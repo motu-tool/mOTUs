@@ -17,9 +17,9 @@ import urllib.request
 #
 # ============================================================================ #
 
-motus_version = "3.0.3"
-link_db = "https://zenodo.org/record/5140350/files/db_mOTU_v3.0.1.tar.gz"
-md5_db = "f4fd09fad9b311fb4f21383f6101bfc3"
+motus_version = "3.1.0"
+link_db = "https://sunagawalab.ethz.ch/share/TEMP_MOTUS_DB/db_mOTU_v3.1.0.tar.gz"
+md5_db = "f841c36150025af837f7a9a358c9a3c3"
 DOI_db = "10.5281/zenodo.5140350"
 
 
