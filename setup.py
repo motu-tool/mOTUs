@@ -8,7 +8,7 @@ def read(fname):
 long_description = read('README.md')
 setup(
     name = "motu-profiler",
-    version = "3.0.3",
+    version = "3.1.0",
     author = "Alessio Milanese",
     author_email = "alessiom@ethz.ch",
     description = ("Taxonomic profiling of metagenomes from diverse environments with mOTUs3"),
@@ -19,7 +19,7 @@ setup(
     keywords = "bioinformatics metagenomics taxonomic profiling",
     url = "https://github.com/motu-tool/mOTUs",
     packages=['motus'],
-    download_url = "https://github.com/motu-tool/mOTUs/archive/refs/tags/3.0.3.tar.gz",
+    download_url = "https://github.com/motu-tool/mOTUs/archive/refs/tags/3.1.0.tar.gz",
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
