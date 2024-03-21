@@ -13,7 +13,7 @@ The mOTU profiler is a computational tool that estimates relative taxonomic abun
 
 Check the [wiki](https://github.com/motu-tool/mOTUs/wiki) for more information.
 
-If you are using mOTUs, please cite:
+If you use mOTUs, please cite:
 
 > **Reference genome-independent taxonomic profiling of microbiomes with mOTUs3**
 > 
