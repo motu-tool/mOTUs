@@ -46,12 +46,14 @@ Installation
 mOTUs can be installed either by using `pip` or via `conda`.
 Installation with `conda` has the advantage that it will also download and install dependencies:
 ```bash
-# Install in the base environment
+# Install in the current activated environment or base environment
 conda install motus
+motus downloadDB
 
 # OR, create a new environment
 conda create -n motu-env motus
 conda activate motu-env
+motus downloadDB
 ```
 
 Installation with `pip`:
@@ -62,7 +64,7 @@ pip install motu-profiler
 motus downloadDB
 ```
 
-You can test that motus is intalled correctly with:
+You can test that motus is installed correctly with:
 ```
 motus profile --test
 ```
