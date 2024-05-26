@@ -126,7 +126,14 @@ class MotusParameters():
     #count_mode_base_scaled_mode: str = 'base_scaled'
 
     _min_mgcs: str = 3
+    _report_mode = 'counts'
 
+
+    def set_report_mode_rel_abundance(self):
+        self._report_mode = 'relab'
+
+    def set_minimal_number_of_mgcs(self, min_mgcs: int) -> None:
+        self._min_mgcs = min_mgcs
     def set_count_mode(self, count_mode: str) -> None:
         self._count_mode = count_mode
 
@@ -205,7 +212,7 @@ class MotusParameters():
 
     def get_read_files(self) -> List[Tuple[pathlib.Path, str]]:
         read_files = []
-        for (r1_file, r2_file) in zip(self._forward_files, self._reverse_files, strict=True):
+        for (r1_file, r2_file) in zip(self._forward_files, self._reverse_files):#, strict=True):
             read_files.append((r1_file, f'/{R1IDENTIFIER}'))
             read_files.append((r2_file, f'/{R2IDENTIFIER}'))
         for u_file in self._unpaired_files:
@@ -315,7 +322,7 @@ class MotusParameters():
             if len(forward_files) != len(reverse_files):
                 logging.error('Unequal number of files submitted with -r and -f. Quitting ...')
                 shutdown(1)
-            for (r1_file, r2_file) in zip(forward_files, reverse_files, strict=True):
+            for (r1_file, r2_file) in zip(forward_files, reverse_files): #, strict=True):
                 r1_reads = self.get_first_1000_reads(r1_file)
                 r2_reads = self.get_first_1000_reads(r2_file)
                 r1_header = set([r[0] for r in r1_reads])
@@ -351,6 +358,7 @@ class MotusDB():
     mgh_2_mglength: Dict[str, int] = {}
     mgc_2_motu: Dict[str, str] = {}
     motus: Set[str] = set()
+    blocklist_mg = set()
     mgh_2_mg: Dict[str, str] = {}
     mgc_2_mg: Dict[str, str] = {}
     #motu_2_taxonomy: Dict[str, str] = {}
@@ -372,10 +380,10 @@ class MotusDB():
         :return: None
         """
         logging.info('Loading database ... ')
-        versions_file = mOTUsdb_folder.joinpath('mOTUsv4.version').resolve()
-        index_files = [mOTUsdb_folder.joinpath(f).resolve() for f in ['mOTUsv4.fna', 'mOTUsv4.fna.amb', 'mOTUsv4.fna.ann', 'mOTUsv4.fna.bwt', 'mOTUsv4.fna.pac', 'mOTUsv4.fna.sa']]
-        mgs_file = mOTUsdb_folder.joinpath('mOTUsv4.mgs.tsv').resolve()
-
+        versions_file = mOTUsdb_folder.joinpath('mOTUsv4.0.db').resolve()
+        index_files = [mOTUsdb_folder.joinpath(f).resolve() for f in ['mOTUsv4.0.db.fna.gz', 'mOTUsv4.0.db.fna.gz.amb','mOTUsv4.0.db.fna.gz.ann','mOTUsv4.0.db.fna.gz.bwt','mOTUsv4.0.db.fna.gz.pac','mOTUsv4.0.db.fna.gz.sa']]
+        mgs_file = mOTUsdb_folder.joinpath('mOTUsv4.0.map.tsv.gz').resolve()
+        blocklist_file = mOTUsdb_folder.joinpath('mOTUsv4.0.db.blocklist.gz').resolve()
         with open(versions_file) as handle:
             self.database_version = handle.readline().strip()
         self.index_location = index_files[0]
@@ -383,7 +391,7 @@ class MotusDB():
             if not index_file.exists():
                 logging.error(f'Database file {index_file} is missing. Quitting mOTUs...')
                 shutdown(1)
-        with open(mgs_file) as handle:
+        with gzip.open(mgs_file, 'rt') as handle:
             for entry in  csv.DictReader(handle, delimiter='\t'):
                 self.mgh_2_mgc[entry['MG']] = entry['MGC']
                 self.mgh_2_mglength[entry['MG']] = int(entry['LENGTH'])
@@ -393,7 +401,17 @@ class MotusDB():
                 self.mgc_2_mg[entry['MGC']] = entry['COG']
                 if 'unassigned' in entry['#MOTU']:
                     self._unassigned_motu_name = entry['#MOTU']
+        with gzip.open(blocklist_file, 'rt') as handle:
+            for line in handle:
+                self.blocklist_mg.add(line.strip())
+
         logging.info(f'Loading database finished. Version {self.database_version} contains {len(self.motus)} mOTUs, {len(self.mgc_2_motu)} markergeneclusters and {len(self.mgh_2_mglength)} markergenes.')
+
+    def is_mg_blocked(self, mg: str) -> bool:
+        if mg in self.blocklist_mg:
+            return True
+        else:
+            return False
 
 
     def get_mg_by_mgc(self, mgc):
@@ -427,23 +445,6 @@ class MotusDB():
 
 
 
-# def profile(motusdb: MotusDB, forward_files: List[str], reverse_files: List[str], unpaired_files: List[str], motus_file: str, bam_file: str =None, mgc_file: str = None, samplename: str = 'unnamed sample', threads: int = 1, count_mode: str = 'insert.scaled_counts', minlength: int = 45, mg_cutoff: int = 3) -> None:
-#     """
-#     TODO summarize the 3 methods (map_tax, calc_mgc, calc_motu)
-#     :param forward_files: List of forward read files in fasta or fastq format, optionally gzipped. Has to match the reverse files.
-#     :param reverse_files: List of reverse read files in fasta or fastq format, optionally gzipped. Has to match the forward files.
-#     :param unpaired_files: List of single/merged read files in fasta or fastq format, optionally gzipped.
-#     :param motus_file: The output file for the mOTUs profile
-#     :param bam_file: [Optional] Location of intermediate bam file. In case of None, a temporary file will be created in /tmp/. Default=[None]
-#     :param mgc_file: [Optional] Location of intermediate mgc file. In case of None, a temporary file will be created in /tmp/. Default=[None]
-#     :param samplename: [Optional] Name of the sample used in mgc and mOTUs file. Default='unnamed sample'
-#     :param threads: [Optional] Number of threads used for the alignment of reads against the mOTUs database
-#     :param count_mode: [Optional] Mode of counting inserts/bases. insert.scaled_counts, insert.raw_counts, base.coverage. Default=[insert.scaled_counts]
-#     :param minlength: [Optional] minimal length of alignment. Default=[45]
-#     :param mg_cutoff: [Optional] minimal number of MGCs that require to have abundance>0 for a mOTU to be counted as present. Default=[3]
-#     :return: None
-#     """
-#     return None
 
 
 def map_tax() -> None:
@@ -489,6 +490,8 @@ def map_tax() -> None:
             else:
                 if not record.is_secondary and not record.is_supplementary:
                     total_reads_this_file += 1
+                if motusdb.is_mg_blocked(record.reference_name):
+                    continue
                 alnlength: int = sum(record.get_cigar_stats()[0][0:3])
                 if alnlength < minlength:
                     continue
@@ -704,7 +707,7 @@ class InsertCounter():
 
         This alignment will not be counted by default for two reasons:
         1. The alignment length is too short which means that motus will not
-            report it. In mOTUs the default is 45
+            report it. In mOTUs the default is 75
         2. The aligner doesn't report it as it is too short for the aligner
             to confidently report it. In BWA this is 30 bases
 
@@ -731,7 +734,7 @@ class InsertCounter():
         for insert_name, bestAlignment in self._unique_mappers:
             mg, alignment_blocks = bestAlignment.get_mg_and_blocks()
             mg_2_alignments[mg].append((alignment_blocks, 1.0))
-        mg_2_edge_corrected_insert_counts, mg_2_edge_corrected_base_counts = self._correct_edges(mg_2_alignments, min_alignment_length)
+        mg_2_edge_corrected_insert_counts, mg_2_edge_corrected_base_counts = self._correct_edges(mg_2_alignments, 30)
 
         self._mg_2_edge_corrected_raw_uniquemapper_insert_counts = mg_2_edge_corrected_insert_counts
         self._mg_2_edge_corrected_raw_uniquemapper_base_counts = mg_2_edge_corrected_base_counts
@@ -976,9 +979,15 @@ class MGCCounter():
         orientations = set()
         orientations.add(orientation)
         current_insert[orientation].append(alignment)
+        minlength: int = motusfiles.get_minimal_alignment_length()
         readname = None
 
         for alignment in alignments:
+            if motusdb.is_mg_blocked(alignment.reference_name):
+                continue
+            alnlength: int = sum(alignment.get_cigar_stats()[0][0:3])
+            if alnlength < minlength:
+                continue
             (readname, orientation) = _get_orientation_of_aligned_segment_by_name(alignment)
             if readname == current_name:
                 current_insert[orientation].append(alignment)
@@ -1120,7 +1129,7 @@ Output options:
    -o   FILE         output file name
 
 Algorithm options:
-   -l   INT          min length of the alignment (bp) [45]
+   -l   INT          min length of the alignment (bp) [75]
    -t   INT          number of threads [1]
    -v   INT          verbosity level: 1=error, 2=warning, 3=message, 4+=debugging [3]
       ''', formatter_class=CapitalisedHelpFormatter,add_help=False)
@@ -1136,7 +1145,7 @@ Algorithm options:
     #parser.add_argument("-b", action="store_true")  # save the result in BAM format
 
     # ALgorithm options
-    parser.add_argument("-l", type=int, default=45)  # min length of the alignment (bp) [75]
+    parser.add_argument("-l", type=int, default=75)  # min length of the alignment (bp) [75]
     parser.add_argument("-t", type=int, default=1)  # number of threads
     parser.add_argument("-v", type=int, default=1)  # verbodisty level:
 
@@ -1171,7 +1180,7 @@ Algorithm options:
 
 
 
-db_folder = pathlib.Path('/nfs/nas22/fs2202/biol_micro_sunagawa/Projects/DEV/MOTUSv4/speci/speci_workfolder/motus/15database_build/')
+db_folder = pathlib.Path('/nfs/nas22/fs2202/biol_micro_sunagawa/Projects/DEV/MOTUSv4/mOTUs4-dev/db_mOTU/')
 
 def parse_profile():
     parser = argparse.ArgumentParser(usage = '''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
@@ -1189,14 +1198,14 @@ Input options:
    -n  STR          sample name ['unnamed sample']
 
 Output options:
-   -o  FILE         output file name
+   -o  FILE         output file name [required]
    -c               print result as counts instead of relative abundances
 
 Algorithm options:
    -g  INT          number of marker genes cutoff: 1=higher recall, 6=higher precision [3]
-   -l  INT          min length of the alignment (bp) [45]
+   -l  INT          min length of the alignment (bp) [75]
    -t  INT          number of threads [1]
-   -v  INT          verbosity level: 1=error, 2=warning, 3=message, 4+=debugging [3]
+   -v  INT          verbosity level: 1=error, 2=warning, 3=message, 4+=debugging [1]
    -y  STR          type of read counts [INSERT_SCALED]
                     Values: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
 ]''', formatter_class=CapitalisedHelpFormatter,add_help=False)
@@ -1223,8 +1232,8 @@ Algorithm options:
     #parser.add_argument("-k", type=str)  # taxonomic level [mOTU]
 
     # Algorithm options
-    parser.add_argument("-g", type=int, default=3)  # number of marker genes cutoff
-    parser.add_argument("-l", type=int, default=45)  # min length of the alignment (bp) [45]
+    parser.add_argument("-g", type=int, default=3, choices=[1,2,3,4,5,6,7,8,9,10])  # number of marker genes cutoff
+    parser.add_argument("-l", type=int, default=75)  # min length of the alignment (bp) [75]
     parser.add_argument("-t", type=int, default=1)  # number of thread [1]
     parser.add_argument("-v", type=int, default=1)  # verbosity level
     parser.add_argument("-y", type=str, default='INSERT_SCALED', choices=['INSERT_RAW', 'INSERT_NORM', 'INSERT_SCALED', 'BASE_RAW', 'BASE_NORM'])
@@ -1261,6 +1270,10 @@ Algorithm options:
     motusfiles.set_sample_name(samplename)
     motusfiles.set_minimal_alignment_length(min_alignment_length)
     motusfiles.set_threads(threads)
+    if not args.c:
+        motusfiles.set_report_mode_rel_abundance()
+    motusfiles.set_count_mode(args.y)
+    motusfiles.set_minimal_number_of_mgcs(args.g)
     map_tax()
 
     calc_mgc()
@@ -1284,7 +1297,7 @@ Output options:
    -o  FILE         output file name
 
 Algorithm options:
-   -l  INT          min length of the alignment (bp) [45]
+   -l  INT          min length of the alignment (bp) [75]
    -v  INT          verbosity level: 1=error, 2=warning, 3=message, 4+=debugging [3]''', formatter_class=CapitalisedHelpFormatter,add_help=False)
 
     # Input options
@@ -1294,7 +1307,7 @@ Algorithm options:
     parser.add_argument("-o", required=True)  # output file name [stdout]
 
     # Algorithm options
-    parser.add_argument("-l", type=int, default=45)  # min length of the alignment (bp) [75]
+    parser.add_argument("-l", type=int, default=75)  # min length of the alignment (bp) [75]
     parser.add_argument("-v", type=int, default=1)  # verbosity level
 
     args = parser.parse_args(sys.argv[2:])
@@ -1357,6 +1370,7 @@ motus calc_motu [options]
     parser.add_argument("-o", required=True)  # output fil name [stdout]
     parser.add_argument("-c", action="store_true")  # print result as counts instead of realtive abundances
     parser.add_argument("-y", type=str, default='INSERT_SCALED', choices=['INSERT_RAW', 'INSERT_NORM', 'INSERT_SCALED', 'BASE_RAW', 'BASE_NORM'])
+    parser.add_argument("-g", type=int, default=3,choices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10])  # number of marker genes cutoff
 
     args = parser.parse_args(sys.argv[2:])
 
@@ -1380,6 +1394,10 @@ motus calc_motu [options]
     motusfiles.set_sample_name(samplename)
     motusfiles.set_threads(1)
     motusfiles.set_count_mode(args.y)
+    if not args.c:
+        motusfiles.set_report_mode_rel_abundance()
+    motusfiles.set_count_mode(args.y)
+    motusfiles.set_minimal_number_of_mgcs(args.g)
     calc_motu()
     shutdown(0)
 
