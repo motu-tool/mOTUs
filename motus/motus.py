@@ -972,7 +972,13 @@ class MGCCounter:
         """
 
         alignments = pysam.AlignmentFile(motusfiles.get_alignment_file(), 'r')
-        alignment: pysam.AlignedSegment = next(alignments)
+        try:
+            alignment: pysam.AlignedSegment = next(alignments)
+        except StopIteration:
+            alignments.close()
+            logging.info(f'The alignmentfile {motusfiles.get_alignment_file()} has no valid alignments. Quitting ...')
+            shutdown(1)
+            return
         current_name, orientation = _get_orientation_of_aligned_segment_by_name(alignment)
         current_insert = collections.defaultdict(list)
         orientations = set()
