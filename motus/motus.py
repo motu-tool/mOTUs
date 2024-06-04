@@ -6,7 +6,6 @@ import Bio.SeqIO.FastaIO as FastaIO
 import Bio.SeqIO.QualityIO as QualityIO
 import logging
 import pathlib
-import os
 import csv
 import subprocess
 import gzip
@@ -77,7 +76,7 @@ def startup() -> None:
     logging.info('mOTU tool starting')
 
 
-class MotusParameters():
+class MotusParameters:
 
     _forward_files: List[pathlib.Path] = []
     _reverse_files: List[pathlib.Path] = []
@@ -167,7 +166,7 @@ class MotusParameters():
 
     def get_sample_name(self) -> str:
         return self._samplename
-    def get_count_mode(self) -> int:
+    def get_count_mode(self) -> str:
         return self._count_mode
 
     def get_min_mgcs(self) -> int:
@@ -312,7 +311,7 @@ class MotusParameters():
                 if not f.exists():
                     files_that_dont_exist.append(f)
             if len(files_that_dont_exist) != 0:
-                logging.error(f'Some read files dont exist:')
+                logging.error(f'Some read files dont exist: {files_that_dont_exist}')
                 for f in files_that_dont_exist:
                     logging.error(f'\t{f}')
                 shutdown(1)
@@ -345,7 +344,7 @@ class MotusParameters():
 
 
 
-class MotusDB():
+class MotusDB:
     """
     A class to keep all relevant database information such as:
     - MG - MGC - MOTU
@@ -387,7 +386,7 @@ class MotusDB():
         with open(versions_file) as handle:
             self.database_version = handle.readline().strip()
         self.index_location = index_files[0]
-        for index_file in index_files:
+        for index_file in index_files + [mgs_file, blocklist_file]:
             if not index_file.exists():
                 logging.error(f'Database file {index_file} is missing. Quitting mOTUs...')
                 shutdown(1)
@@ -418,7 +417,7 @@ class MotusDB():
         return self.mgc_2_mg[mgc]
     def is_unassigned_motu(self, motu):
         if not self._unassigned_motu_name:
-            logging.error('The unassigned mOTU was not set. This indicates a corrupted database. Quitting...')
+            logging.error('The unassigned mOTU was not set. This indicates a corrupted database. Please re-download database. Quitting...')
             shutdown(1)
         if motu == self._unassigned_motu_name:
             return True
@@ -539,7 +538,7 @@ def _get_orientation_of_aligned_segment_by_name(alignment: pysam.AlignedSegment)
 
 
 
-class BestAlignment():
+class BestAlignment:
     """
     Store information of each best alignment
     of an insert
@@ -560,19 +559,19 @@ class BestAlignment():
 
     def get_mg_and_blocks(self):
         if self.isMultimapper():
-            logging.error('This method doesnt work for multimappers.')
+            logging.error('This method doesnt work for multi mappers.')
             shutdown(1)
         for mg, blocks in self._mg_2_blocks.items():
             return mg, blocks
 
     def get_mgs_and_blocks(self):
         if not self.isMultimapper():
-            logging.error('This method doesnt work for uniq.')
+            logging.error('This method doesnt work for unique mappers.')
             shutdown(1)
         return self._mg_2_blocks
 
 
-class InsertCounter():
+class InsertCounter:
     _unique_mappers = None
     _multi_mappers = None
 
@@ -882,7 +881,7 @@ class InsertCounter():
 
 
 
-class MGCCounter():
+class MGCCounter:
     """
     A class which takes care of
     reading, parsing and interpreting
@@ -907,7 +906,7 @@ class MGCCounter():
         return mgc_2_count
 
 
-    def count(self) -> Tuple[collections.Counter, collections.Counter]:
+    def count(self) -> Dict[str, Mgc_values]:
         '''
         Entry Level method for this class
         Read the BAM file and counts abundances
