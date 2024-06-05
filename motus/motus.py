@@ -136,6 +136,12 @@ class MotusParameters:
     def set_report_mode_rel_abundance(self):
         self._report_mode = 'relab'
 
+    def is_report_mode_rel_abundance(self):
+        if self._report_mode == 'relab':
+            return True
+        else:
+            return False
+
     def set_minimal_number_of_mgcs(self, min_mgcs: int) -> None:
         self._min_mgcs = min_mgcs
     def set_count_mode(self, count_mode: str) -> None:
@@ -176,7 +182,6 @@ class MotusParameters:
 
     def get_min_mgcs(self) -> int:
         return self._min_mgcs
-
 
     def get_mgc_file(self) -> pathlib.Path:
         self._mgc_file.parent.mkdir(exist_ok=True, parents=True)
@@ -423,6 +428,18 @@ class MotusDB:
         return 'TOOL:' + MOTUS_VERSION + '_DB:' + self.database_version
     def get_full_sam_id(self):
         return 'mOTUs4'
+
+    def get_mOTUs_file_header(self, motusfiles) -> str:
+        count_mode = motusfiles.get_count_mode()
+        rel_ab = motusfiles.is_report_mode_rel_abundance()
+        min_mgcs = motusfiles.get_min_mgcs()
+        if rel_ab:
+            rel_ab = 'relative_abundance'
+        else:
+            rel_ab = 'counts'
+
+        header = f'#{self.get_full_version()}\treport_mode={rel_ab}\tcount_mode={count_mode}\tmin_mgcs={min_mgcs}'
+        return header
 
     def get_mg_by_mgc(self, mgc):
         return self.mgc_2_mg[mgc]
@@ -1120,6 +1137,7 @@ def calc_motu() -> None:
             mgc_2_count[entry['MGC']] = float(entry[count_mode])
 
 
+
     motu_2_mgccounts = collections.defaultdict(lambda: collections.defaultdict(lambda: 0.0))
 
 
@@ -1128,24 +1146,33 @@ def calc_motu() -> None:
         mg = motusdb.get_mg_by_mgc(mgc)
         motu_2_mgccounts[motu][mg] += count
 
+
+    motu_counts = {}
+    for motu in sorted(list(motu_2_mgccounts.keys())):
+        counts = list(motu_2_mgccounts[motu].values())
+        median_count = statistics.median(counts)
+        if len(counts) >= motusfiles.get_min_mgcs() or motusdb.is_unassigned_motu(motu):
+            motu_counts[motu] = median_count
+
+    motu_2_report_value = {}
+    if motusfiles.is_report_mode_rel_abundance():
+        motu_rel_ab = {}
+        tot_abundance = sum(motu_counts.values())
+        for motu, value in motu_counts.items():
+            motu_rel_ab[motu] = value / tot_abundance
+        motu_2_report_value = motu_rel_ab
+    else:
+        motu_2_report_value = motu_counts
+
+
     with open(motusfiles.get_motu_file(), 'w') as handle:
+        handle.write(motusdb.get_mOTUs_file_header(motusfiles) + '\n')
         handle.write(f'MOTU\t{motusfiles.get_sample_name()}\n')
-        for motu in sorted(list(motu_2_mgccounts.keys())):
-            counts = list(motu_2_mgccounts[motu].values())
 
-            median_count = statistics.median(counts)
-
-
-
-            count = '{number:.{digits}f}'.format(number=median_count, digits=8)
-            if len(counts) >= motusfiles.get_min_mgcs() or motusdb.is_unassigned_motu(motu):
-                handle.write(f'{motu}\t{count}\n')
-
-
-
-
-
-
+        for motu in sorted(list(motu_2_report_value.keys())):
+            value = motu_2_report_value[motu]
+            count = '{number:.{digits}f}'.format(number=value, digits=8)
+            handle.write(f'{motu}\t{count}\n')
 
     return None
 def merge_profiles(merged_motus_file: str, motus_files: List[str]) -> None:
@@ -1427,9 +1454,9 @@ motus calc_motu [options]
 
     # Output options
     parser.add_argument("-o", required=True)  # output fil name [stdout]
-    parser.add_argument("-c", action="store_true")  # print result as counts instead of realtive abundances
+    parser.add_argument("-c", action="store_true")  # print result as counts instead of relative abundances
     parser.add_argument("-y", type=str, default='INSERT_SCALED', choices=['INSERT_RAW', 'INSERT_NORM', 'INSERT_SCALED', 'BASE_RAW', 'BASE_NORM'])
-    parser.add_argument("-g", type=int, default=3,choices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10])  # number of marker genes cutoff
+    parser.add_argument("-g", type=int, default=3, choices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10])  # number of marker genes cutoff
 
     args = parser.parse_args(sys.argv[2:])
 
