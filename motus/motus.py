@@ -34,6 +34,8 @@ SIDENTIFIER = 'S'
 motusfiles = None
 motusdb = None
 
+MOTUS_VERSION = '4.0.0'
+
 
 Mgc_values = collections.namedtuple("Mgc_values", "insert_raw insert_norm insert_scaled base_raw base_norm")
 def check_call(command: str) -> None:
@@ -90,6 +92,7 @@ class MotusParameters:
     _samplename: str = None
     _min_alignment_length: int = 0
     _threads: int = 1
+    _is_strict_db_mode = True
 
     _count_mode: str = 'INSERT_SCALED'
 
@@ -127,6 +130,8 @@ class MotusParameters:
     _min_mgcs: str = 3
     _report_mode = 'counts'
 
+    def is_strict_db_mode(self):
+        return self._is_strict_db_mode
 
     def set_report_mode_rel_abundance(self):
         self._report_mode = 'relab'
@@ -353,6 +358,7 @@ class MotusDB:
     """
 
     database_version: str = None
+    database_date: str = None
     mgh_2_mgc: Dict[str, str] = {}
     mgh_2_mglength: Dict[str, int] = {}
     mgc_2_motu: Dict[str, str] = {}
@@ -363,7 +369,7 @@ class MotusDB:
     #motu_2_taxonomy: Dict[str, str] = {}
     index_location: pathlib.Path = None
     _motus_core_mgs = ['COG0012','COG0016','COG0018','COG0172','COG0215','COG0495','COG0525','COG0533','COG0541','COG0552']
-    _unassigned_motu_name =  None
+    _unassigned_motu_name = None
 
     def __init__(self, mOTUsdb_folder: pathlib.Path) -> None:
         """
@@ -384,7 +390,8 @@ class MotusDB:
         mgs_file = mOTUsdb_folder.joinpath('mOTUsv4.0.map.tsv.gz').resolve()
         blocklist_file = mOTUsdb_folder.joinpath('mOTUsv4.0.db.blocklist.gz').resolve()
         with open(versions_file) as handle:
-            self.database_version = handle.readline().strip()
+            self.database_version = handle.readline().strip().split()[-1]
+            self.database_date = handle.readline().strip().split()[-1]
         self.index_location = index_files[0]
         for index_file in index_files + [mgs_file, blocklist_file]:
             if not index_file.exists():
@@ -404,7 +411,7 @@ class MotusDB:
             for line in handle:
                 self.blocklist_mg.add(line.strip())
 
-        logging.info(f'Loading database finished. Version {self.database_version} contains {len(self.motus)} mOTUs, {len(self.mgc_2_motu)} markergeneclusters and {len(self.mgh_2_mglength)} markergenes.')
+        logging.info(f'Loading database finished. Version {self.database_version} (version date: {self.database_date}) contains {len(self.motus)} mOTUs, {len(self.mgc_2_motu)} markergeneclusters and {len(self.mgh_2_mglength)} markergenes.')
 
     def is_mg_blocked(self, mg: str) -> bool:
         if mg in self.blocklist_mg:
@@ -412,6 +419,10 @@ class MotusDB:
         else:
             return False
 
+    def get_full_version(self):
+        return 'TOOL:' + MOTUS_VERSION + '_DB:' + self.database_version
+    def get_full_sam_id(self):
+        return 'mOTUs4'
 
     def get_mg_by_mgc(self, mgc):
         return self.mgc_2_mg[mgc]
@@ -479,7 +490,17 @@ def map_tax() -> None:
         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
         in_bam_file_handle = pysam.AlignmentFile(process.stdout, 'rb')
         if not temp_bam_file_handle:
-            temp_bam_file_handle = pysam.AlignmentFile(temp_bam_file, "wb", template=in_bam_file_handle)
+
+            alignmentfile_header = in_bam_file_handle.header.to_dict()
+            pg_header = {}
+            pg_header['CL'] = 'motus.py map_tax '
+            pg_header['PN'] = 'motus.py'
+            motus_version = motusdb.get_full_version()
+            pg_header['VN'] = motus_version
+            pg_header['ID'] = motusdb.get_full_sam_id()
+            alignmentfile_header['PG'].append(pg_header)
+            temp_bam_file_handle = pysam.AlignmentFile(temp_bam_file, "wb", header = alignmentfile_header)
+
 
         for record in in_bam_file_handle:
 
@@ -972,6 +993,18 @@ class MGCCounter:
         """
 
         alignments = pysam.AlignmentFile(motusfiles.get_alignment_file(), 'r')
+        motus_version = [entry for entry in alignments.header.to_dict()['PG'] if entry['ID'] == motusdb.get_full_sam_id()]
+        header_valid = False
+        if len(motus_version) > 0:
+            if motus_version[0]['VN'] == motusdb.get_full_version():
+                header_valid = True
+        if not header_valid:
+            if motusfiles.is_strict_db_mode():
+                logging.error('mOTUs tool/database have changed and bam file is invalid. Please profile with updated database. Quitting ...')
+                shutdown(1)
+            else:
+                logging.warning('mOTUs tool/database have changed and bam file is invalid. Lenient mode enabled, will continue but results might be broken ...')
+
         try:
             alignment: pysam.AlignedSegment = next(alignments)
         except StopIteration:
@@ -1038,6 +1071,8 @@ def calc_mgc() -> None:
     mgc_2_counts = mgc_counter.count()
 
     with open(motusfiles.get_mgc_file(), 'w') as handle:
+        header_line = motusdb.get_full_version()
+        handle.write(f'#{header_line}\n')
         handle.write('MGC\tINSERT_RAW\tINSERT_NORM\tINSERT_SCALED\tBASE_RAW\tBASE_NORM\n')
         for mgc in sorted(mgc_2_counts.keys()):
             counts =  mgc_2_counts[mgc]
@@ -1059,9 +1094,28 @@ def calc_motu() -> None:
         None
     """
     mgc_file = motusfiles.get_mgc_file()
+    has_header = False
+    with open(mgc_file) as handle:
+        first_line = handle.readline().strip()
+        if first_line.startswith('#'):
+            has_header = True
+        motus_version = first_line.replace('#', '')
+        if motus_version == motusdb.get_full_version():
+            header_valid = True
+        if not header_valid:
+            if motusfiles.is_strict_db_mode():
+                logging.error('mOTUs tool/database have changed and bam file is invalid. Please profile with updated database. Quitting ...')
+                shutdown(1)
+            else:
+                logging.warning('mOTUs tool/database have changed and bam file is invalid. Lenient mode enabled, will continue but results might be broken ...')
+
+
+
     mgc_2_count = {}
     count_mode = motusfiles.get_count_mode()
     with open(mgc_file) as handle:
+        if has_header:
+            handle.readline()
         for entry in csv.DictReader(handle, delimiter='\t'):
             mgc_2_count[entry['MGC']] = float(entry[count_mode])
 
