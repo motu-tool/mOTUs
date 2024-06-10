@@ -88,7 +88,8 @@ class MotusParameters:
     _temp_alignment_file: pathlib.Path = None
 
     _mgc_file: pathlib.Path = None
-    _motu_file: pathlib.Path = 'UNNAMED_SAMPLE'
+    _motu_file: pathlib.Path = None
+    _motu_file_rel_ab: pathlib.Path = None
     _samplename: str = None
     _min_alignment_length: int = 0
     _threads: int = 1
@@ -128,24 +129,30 @@ class MotusParameters:
     #count_mode_base_scaled_mode: str = 'base_scaled'
 
     _min_mgcs: str = 3
-    _report_mode = 'counts'
+    #_report_mode = 'counts'
 
     def is_strict_db_mode(self):
         return self._is_strict_db_mode
 
-    def set_report_mode_rel_abundance(self):
-        self._report_mode = 'relab'
-
-    def is_report_mode_rel_abundance(self):
-        if self._report_mode == 'relab':
-            return True
-        else:
-            return False
+    # def set_report_mode_rel_abundance(self):
+    #     self._report_mode = 'relab'
+    #
+    # def is_report_mode_rel_abundance(self):
+    #     if self._report_mode == 'relab':
+    #         return True
+    #     else:
+    #         return False
 
     def set_minimal_number_of_mgcs(self, min_mgcs: int) -> None:
         self._min_mgcs = min_mgcs
     def set_count_mode(self, count_mode: str) -> None:
         self._count_mode = count_mode
+
+    def get_count_type(self) -> str:
+        if 'NORM' in self._count_mode:
+            return 'float'
+        else:
+            return 'int'
 
     def set_minimal_alignment_length(self, minimal_alignment_length: int):
         if minimal_alignment_length < 30:
@@ -198,9 +205,14 @@ class MotusParameters:
         self._motu_file.parent.mkdir(exist_ok=True, parents=True)
         return self._motu_file
 
+    def get_motu_file_relab(self) -> pathlib.Path:
+        self._motu_file_rel_ab.parent.mkdir(exist_ok=True, parents=True)
+        return self._motu_file_rel_ab
+
 
     def set_motu_file(self, motu_file: pathlib.Path, required_to_exist=True) -> None:
         self._motu_file = motu_file
+        self._motu_file_rel_ab = pathlib.Path(str(motu_file) + '.relab')
         if required_to_exist:
             if not motu_file.exists():
                 logging.error(f'mOTU file {motu_file} does not exist. Shutting down ...')
@@ -369,6 +381,7 @@ class MotusDB:
     mgc_2_motu: Dict[str, str] = {}
     motus: Set[str] = set()
     blocklist_mg = set()
+    motu_2_gtdb_tax = {}
     mgh_2_mg: Dict[str, str] = {}
     mgc_2_mg: Dict[str, str] = {}
     #motu_2_taxonomy: Dict[str, str] = {}
@@ -394,11 +407,12 @@ class MotusDB:
         index_files = [mOTUsdb_folder.joinpath(f).resolve() for f in ['mOTUsv4.0.db.fna.gz', 'mOTUsv4.0.db.fna.gz.amb','mOTUsv4.0.db.fna.gz.ann','mOTUsv4.0.db.fna.gz.bwt','mOTUsv4.0.db.fna.gz.pac','mOTUsv4.0.db.fna.gz.sa']]
         mgs_file = mOTUsdb_folder.joinpath('mOTUsv4.0.map.tsv.gz').resolve()
         blocklist_file = mOTUsdb_folder.joinpath('mOTUsv4.0.db.blocklist.gz').resolve()
+        gtdb_taxonomy_file = mOTUsdb_folder.joinpath('mOTUsv4.0.gtdb.taxonomy.tsv.gz').resolve()
         with open(versions_file) as handle:
             self.database_version = handle.readline().strip().split()[-1]
             self.database_date = handle.readline().strip().split()[-1]
         self.index_location = index_files[0]
-        for index_file in index_files + [mgs_file, blocklist_file]:
+        for index_file in index_files + [mgs_file, blocklist_file, gtdb_taxonomy_file]:
             if not index_file.exists():
                 logging.error(f'Database file {index_file} is missing. Quitting mOTUs...')
                 shutdown(1)
@@ -415,6 +429,11 @@ class MotusDB:
         with gzip.open(blocklist_file, 'rt') as handle:
             for line in handle:
                 self.blocklist_mg.add(line.strip())
+        with gzip.open(gtdb_taxonomy_file, 'rt') as handle:
+            for line in handle:
+                [motu, gtdb_taxonomy] = line.strip().split('\t')
+                self.motu_2_gtdb_tax[motu] = gtdb_taxonomy
+
 
         logging.info(f'Loading database finished. Version {self.database_version} (version date: {self.database_date}) contains {len(self.motus)} mOTUs, {len(self.mgc_2_motu)} markergeneclusters and {len(self.mgh_2_mglength)} markergenes.')
 
@@ -429,9 +448,9 @@ class MotusDB:
     def get_full_sam_id(self):
         return 'mOTUs4'
 
-    def get_mOTUs_file_header(self, motusfiles) -> str:
+    def get_mOTUs_file_header(self, motusfiles, relabundance=False) -> str:
         count_mode = motusfiles.get_count_mode()
-        rel_ab = motusfiles.is_report_mode_rel_abundance()
+        rel_ab = relabundance
         min_mgcs = motusfiles.get_min_mgcs()
         if rel_ab:
             rel_ab = 'relative_abundance'
@@ -1154,23 +1173,31 @@ def calc_motu() -> None:
         if len(counts) >= motusfiles.get_min_mgcs() or motusdb.is_unassigned_motu(motu):
             motu_counts[motu] = median_count
 
-    motu_2_report_value = {}
-    if motusfiles.is_report_mode_rel_abundance():
-        motu_rel_ab = {}
-        tot_abundance = sum(motu_counts.values())
-        for motu, value in motu_counts.items():
-            motu_rel_ab[motu] = value / tot_abundance
-        motu_2_report_value = motu_rel_ab
-    else:
-        motu_2_report_value = motu_counts
+    motu_2_counts = motu_counts
+    motu_2_rel_ab = {}
+    tot_abundance = sum(motu_counts.values())
+    for motu, value in motu_counts.items():
+        motu_2_rel_ab[motu] = value / tot_abundance
+
+
 
 
     with open(motusfiles.get_motu_file(), 'w') as handle:
-        handle.write(motusdb.get_mOTUs_file_header(motusfiles) + '\n')
+        handle.write(motusdb.get_mOTUs_file_header(motusfiles, relabundance=False) + '\n')
         handle.write(f'MOTU\t{motusfiles.get_sample_name()}\n')
+        for motu in sorted(list(motu_2_counts.keys())):
+            value = motu_2_counts[motu]
+            if motusfiles.get_count_type() == 'int':
+                count = round(value)
+            else:
+                count = '{number:.{digits}f}'.format(number=value, digits=8)
+            handle.write(f'{motu}\t{count}\n')
 
-        for motu in sorted(list(motu_2_report_value.keys())):
-            value = motu_2_report_value[motu]
+    with open(motusfiles.get_motu_file_relab(), 'w') as handle:
+        handle.write(motusdb.get_mOTUs_file_header(motusfiles, relabundance=True) + '\n')
+        handle.write(f'MOTU\t{motusfiles.get_sample_name()}\n')
+        for motu in sorted(list(motu_2_rel_ab.keys())):
+            value = motu_2_rel_ab[motu]
             count = '{number:.{digits}f}'.format(number=value, digits=8)
             handle.write(f'{motu}\t{count}\n')
 
@@ -1423,6 +1450,47 @@ Algorithm options:
     shutdown(0)
 
 
+def parse_taxonomy():
+    parser = argparse.ArgumentParser(usage='''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
+    Version: 4.0.0
+    Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
+    taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
+    doi: https://doi.org/10.1186/s40168-022-01410-z
+
+    motus taxonomy [options]
+
+        Input options:
+           -i  FILE  a mOTUs profile, produced by profile, calc_motu or merge
+
+        Output options:
+           -o  FILE  output file name       
+
+        Options:
+
+           -t   STR  Taxonomy to use [GTDB]
+           -l   STR  Taxonomy level [domain, phylum, class, order, family, genus, species]
+           -a        Aggregate values at taxonomic level
+
+          ''', formatter_class=CapitalisedHelpFormatter, add_help=False)
+
+    # Input options
+
+    parser.add_argument("-i", required=True)
+
+    # Output options
+    parser.add_argument("-o", required=True)
+
+    parser.add_argument("-a", action="store_true")  # print result as counts instead of relative abundances
+    parser.add_argument("-t", type=str, default='GTDB',choices=['GTDB'])
+    parser.add_argument("-l", type=int, default=3,
+                        choices=['domain', 'phylum', 'class', 'order', 'family', 'genus', 'species'])  # number of marker genes cutoff
+
+    args = parser.parse_args(sys.argv[2:])
+
+    # print usage and exit if no arguments are passed
+    if sys.argv[2:] == []:
+        parser.print_usage()
+        shutdown(1)
 def parse_calc_motu():
     parser = argparse.ArgumentParser(usage = '''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 Version: 4.0.0
@@ -1499,19 +1567,23 @@ motus <command> [options]
     
     -- Taxonomic profiling
           profile     Perform taxonomic profiling (map_tax + calc_mgc + calc_motu) in a single step
-          merge       Merge several taxonomic profiling results into one table
 
           map_tax     Map reads to the marker gene database
           calc_mgc    Calculate marker gene cluster (MGC) abundance
           calc_motu   Summarize MGC abundances into a mOTU profile
-
+    
+    -- Utilities
+          download    Download genomes associated with mOTUs
+          extend      add your genomes to mOTUs database for profiling
+          merge       Merge several taxonomic profiling results into one table
           prep_long   Prepare long reads to be profiled by mOTUs
+          taxonomy    Add taxonomic information to mOTUs
 
 
     Type motus <command> to print the help menu for a specific command
     ''',formatter_class=CapitalisedHelpFormatter,add_help=False)
 
-    parser.add_argument('command', choices=["profile", "merge", "map_tax", "calc_mgc", "calc_motu", "prep_long"])
+    parser.add_argument('command', choices=["profile", "merge", "map_tax", "calc_mgc", "calc_motu", "prep_long", "download", "extend", "merge", "taxonomy"])
     args: argparse.Namespace = parser.parse_args(sys.argv[1:2])
     if args.command == 'profile':
         parse_profile()
@@ -1523,6 +1595,12 @@ motus <command> [options]
         parse_calc_mgc()
     elif args.command == 'calc_motu':
         parse_calc_motu()
+    elif args.command == 'download':
+        logging.error('Command download not implemented yet')
+    elif args.command == 'extend':
+        logging.error('Command extend not implemented yet')
+    elif args.command == 'taxonomy':
+        parse_taxonomy()
     elif args.command == 'prep_long':
         logging.error('Command prep_long not implemented yet')
     else:
