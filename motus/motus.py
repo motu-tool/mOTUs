@@ -78,6 +78,107 @@ def startup() -> None:
     logging.info('mOTU tool starting')
 
 
+
+class MotusFile:
+
+
+    _count_mode = None
+    _min_mgcs = None
+    _full_version = None
+    _taxonomy = None
+    _taxonomy_rank = None
+    _counts_aggregated_by_taxonomy = None
+    _full_version = None
+    _motus_with_abundance = None
+    _samplename_2_motus_2_counts = None
+    _samplename_2_motus_2_relab = None
+    _motu_2_taxonomy = None
+
+    def set_mOTU_counts(self, samplename_2_motus_2_counts: Dict[str, float], count_type):
+        self._motus_with_abundance = set()
+        self._samplename_2_motus_2_counts = {}
+        for samplename, motu_2_counts in samplename_2_motus_2_counts.items():
+            self._samplename_2_motus_2_counts[samplename] = {}
+            for motu, count in motu_2_counts.items():
+                self._motus_with_abundance.add(motu)
+                if count_type == 'int':
+                    count = round(count)
+                    self._samplename_2_motus_2_counts[samplename][motu] = count
+                else:
+                    self._samplename_2_motus_2_counts[samplename][motu] = count
+        self._motus_with_abundance = sorted(list(self._motus_with_abundance))
+
+        self._samplename_2_motus_2_relab = {}
+
+        for samplename, motus_2_counts in samplename_2_motus_2_counts.items():
+            self._samplename_2_motus_2_relab[samplename] = {}
+            tot_abundance = sum(motus_2_counts.values())
+            for motu, value in motus_2_counts.items():
+                self._samplename_2_motus_2_relab[samplename][motu] = value / tot_abundance #'{number:.{digits}f}'.format(number=value / tot_abundance, digits=8)
+
+    def set_sample_name(self, sample_name):
+        self._samplename = sample_name
+    def set_count_mode(self, count_mode):
+        self._count_mode = count_mode
+    def set_min_mgcs(self, min_mgcs):
+        self._min_mgcs = min_mgcs
+    def set_full_version(self, full_version):
+        self._full_version = full_version
+
+    def get_mOTUs_file_header(self, relabundance=False) -> str:
+
+        rel_ab = relabundance
+        min_mgcs = self._min_mgcs
+        count_mode = self._count_mode
+        full_version = self._full_version
+        if not min_mgcs:
+            logging.error('min_mgcs parameter not set. Can\'t create header. Quitting...')
+        if not full_version:
+            logging.error('full_version parameter not set. Can\'t create header. Quitting...')
+        if not count_mode:
+            logging.error('count_mode parameter not set. Can\'t create header. Quitting...')
+
+        if rel_ab:
+            rel_ab = 'relative_abundance'
+        else:
+            rel_ab = 'counts'
+        header = f'#{full_version}\treport_mode={rel_ab}\tcount_mode={count_mode}\tmin_mgcs={min_mgcs}'
+        return header
+
+
+    def read_mOTUs_file(self, mOTUs_file: pathlib.Path) -> None:
+        x = 0
+
+
+    def write_mOTUs_file(self, filename, relabundance) -> None:
+
+        if len(self._samplename_2_motus_2_counts) != 1:
+            logging.error('Function not implemented yet. need to write merging routine first')
+            shutdown(1)
+        if len(self._samplename_2_motus_2_relab) != 1:
+            logging.error('Function not implemented yet. need to write merging routine first')
+            shutdown(1)
+
+        # currently implemented without taxonomy. and untested for multiple samples
+        with open(filename, 'w') as handle:
+            sample_2_motu_2_report_vals = self._samplename_2_motus_2_counts
+            if relabundance:
+                sample_2_motu_2_report_vals = self._samplename_2_motus_2_relab
+            handle.write(self.get_mOTUs_file_header(relabundance=relabundance) + '\n')
+            samplenames = sorted(list(sample_2_motu_2_report_vals.keys()))
+            tmp = '\t'.join(samplenames)
+            handle.write(f'MOTU\t{tmp}\n')
+            for samplename in samplenames:
+                for motu in self._motus_with_abundance:
+                    if relabundance:
+                        abundance = '{number:.{digits}f}'.format(number=sample_2_motu_2_report_vals[samplename].get(motu, 0), digits=8)
+                    else:
+                        abundance = sample_2_motu_2_report_vals[samplename].get(motu, 0)
+                    handle.write(f'{motu}\t{abundance}\n')
+
+
+
+
 class MotusParameters:
 
     _forward_files: List[pathlib.Path] = []
@@ -448,17 +549,17 @@ class MotusDB:
     def get_full_sam_id(self):
         return 'mOTUs4'
 
-    def get_mOTUs_file_header(self, motusfiles, relabundance=False) -> str:
-        count_mode = motusfiles.get_count_mode()
-        rel_ab = relabundance
-        min_mgcs = motusfiles.get_min_mgcs()
-        if rel_ab:
-            rel_ab = 'relative_abundance'
-        else:
-            rel_ab = 'counts'
-
-        header = f'#{self.get_full_version()}\treport_mode={rel_ab}\tcount_mode={count_mode}\tmin_mgcs={min_mgcs}'
-        return header
+    # def get_mOTUs_file_header(self, motusfiles, relabundance=False) -> str:
+    #     count_mode = motusfiles.get_count_mode()
+    #     rel_ab = relabundance
+    #     min_mgcs = motusfiles.get_min_mgcs()
+    #     if rel_ab:
+    #         rel_ab = 'relative_abundance'
+    #     else:
+    #         rel_ab = 'counts'
+    #
+    #     header = f'#{self.get_full_version()}\treport_mode={rel_ab}\tcount_mode={count_mode}\tmin_mgcs={min_mgcs}'
+    #     return header
 
     def get_mg_by_mgc(self, mgc):
         return self.mgc_2_mg[mgc]
@@ -1173,34 +1274,15 @@ def calc_motu() -> None:
         if len(counts) >= motusfiles.get_min_mgcs() or motusdb.is_unassigned_motu(motu):
             motu_counts[motu] = median_count
 
-    motu_2_counts = motu_counts
-    motu_2_rel_ab = {}
-    tot_abundance = sum(motu_counts.values())
-    for motu, value in motu_counts.items():
-        motu_2_rel_ab[motu] = value / tot_abundance
-
-
-
-
-    with open(motusfiles.get_motu_file(), 'w') as handle:
-        handle.write(motusdb.get_mOTUs_file_header(motusfiles, relabundance=False) + '\n')
-        handle.write(f'MOTU\t{motusfiles.get_sample_name()}\n')
-        for motu in sorted(list(motu_2_counts.keys())):
-            value = motu_2_counts[motu]
-            if motusfiles.get_count_type() == 'int':
-                count = round(value)
-            else:
-                count = '{number:.{digits}f}'.format(number=value, digits=8)
-            handle.write(f'{motu}\t{count}\n')
-
-    with open(motusfiles.get_motu_file_relab(), 'w') as handle:
-        handle.write(motusdb.get_mOTUs_file_header(motusfiles, relabundance=True) + '\n')
-        handle.write(f'MOTU\t{motusfiles.get_sample_name()}\n')
-        for motu in sorted(list(motu_2_rel_ab.keys())):
-            value = motu_2_rel_ab[motu]
-            count = '{number:.{digits}f}'.format(number=value, digits=8)
-            handle.write(f'{motu}\t{count}\n')
-
+    mOTU_file = MotusFile()
+    sample_2_motus_counts = {}
+    sample_2_motus_counts[motusfiles.get_sample_name()] = motu_counts
+    mOTU_file.set_mOTU_counts(sample_2_motus_counts, motusfiles.get_count_type())
+    mOTU_file.set_min_mgcs(motusfiles.get_min_mgcs())
+    mOTU_file.set_full_version(motusdb.get_full_version())
+    mOTU_file.set_count_mode(motusfiles.get_count_mode())
+    mOTU_file.write_mOTUs_file(motusfiles.get_motu_file(), False)
+    mOTU_file.write_mOTUs_file(motusfiles.get_motu_file_relab(), True)
     return None
 def merge_profiles(merged_motus_file: str, motus_files: List[str]) -> None:
     """
@@ -1480,10 +1562,9 @@ def parse_taxonomy():
     # Output options
     parser.add_argument("-o", required=True)
 
-    parser.add_argument("-a", action="store_true")  # print result as counts instead of relative abundances
-    parser.add_argument("-t", type=str, default='GTDB',choices=['GTDB'])
-    parser.add_argument("-l", type=int, default=3,
-                        choices=['domain', 'phylum', 'class', 'order', 'family', 'genus', 'species'])  # number of marker genes cutoff
+    parser.add_argument("-a", action="store_true")
+    parser.add_argument("-t", type=str, default='GTDB', choices=['GTDB'])
+    parser.add_argument("-l", type=int, default='species', choices=['domain', 'phylum', 'class', 'order', 'family', 'genus', 'species'])
 
     args = parser.parse_args(sys.argv[2:])
 
@@ -1491,6 +1572,8 @@ def parse_taxonomy():
     if sys.argv[2:] == []:
         parser.print_usage()
         shutdown(1)
+
+
 def parse_calc_motu():
     parser = argparse.ArgumentParser(usage = '''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 Version: 4.0.0
