@@ -93,6 +93,14 @@ class MotusFile:
     _samplename_2_motus_2_relab = None
     _motu_2_taxonomy = None
 
+
+    def has_counts(self):
+        if self._samplename_2_motus_2_counts:
+            return True
+        else:
+            return False
+
+
     def set_mOTU_counts(self, samplename_2_motus_2_counts: Dict[str, float], count_type):
         self._motus_with_abundance = set()
         self._samplename_2_motus_2_counts = {}
@@ -176,7 +184,7 @@ class MotusFile:
 
         # check if num_mgcs is compatible
         min_mgcs = set([mf._min_mgcs for mf in motus_files])
-        if len(count_modes) != 1:
+        if len(min_mgcs) != 1:
             logging.error(f'Incompatible min mgcs in profiles that should be merged. min mgcs = {min_mgcs}')
             shutdown(1)
 
@@ -207,8 +215,31 @@ class MotusFile:
             if samplename_count != 1:
                 logging.error(f'Samplename duplicated: {samplename}. Quitting ...')
                 shutdown(1)
+        present_motus = set()
+        merged_sample_2_motus_counts = None
+        merged_sample_2_motus_relab = {}
+        if report_counts:
+            merged_sample_2_motus_counts = {}
+            for mf in motus_files:
+                for sample, motu_2_counts in mf._samplename_2_motus_2_counts.items():
+                    merged_sample_2_motus_counts[sample] = {}
+                    for motu, count in motu_2_counts.items():
+                        present_motus.add(motu)
+                        merged_sample_2_motus_counts[sample][motu] = count
+        for mf in motus_files:
+            for sample, motu_2_relab in mf._samplename_2_motus_2_relab.items():
+                merged_sample_2_motus_relab[sample] = {}
+                for motu, relab in motu_2_relab.items():
+                    present_motus.add(motu)
+                    merged_sample_2_motus_relab[sample][motu] = relab
+        present_motus = sorted(list(present_motus))
 
-        #TODO merge tables. Check if table needs to be quadrativ. I dont think so. But the motus have to be updated
+        self._motus_with_abundance = present_motus
+        self._samplename_2_motus_2_relab = merged_sample_2_motus_relab
+        self._samplename_2_motus_2_counts = merged_sample_2_motus_counts
+        self._count_mode = count_modes.pop()
+        self._full_version = versions.pop()
+        self._min_mgcs = min_mgcs.pop()
 
 
 
@@ -341,12 +372,12 @@ class MotusFile:
 
     def write_mOTUs_file(self, filename, relabundance) -> None:
 
-        if len(self._samplename_2_motus_2_counts) != 1:
-            logging.error('Function not implemented yet. need to write merging routine first')
-            shutdown(1)
-        if len(self._samplename_2_motus_2_relab) != 1:
-            logging.error('Function not implemented yet. need to write merging routine first')
-            shutdown(1)
+        # if len(self._samplename_2_motus_2_counts) != 1:
+        #     logging.error('Function not implemented yet. need to write merging routine first')
+        #     shutdown(1)
+        # if len(self._samplename_2_motus_2_relab) != 1:
+        #     logging.error('Function not implemented yet. need to write merging routine first')
+        #     shutdown(1)
 
         # currently implemented without taxonomy. and untested for multiple samples
         with open(filename, 'w') as handle:
@@ -357,13 +388,19 @@ class MotusFile:
             samplenames = sorted(list(sample_2_motu_2_report_vals.keys()))
             tmp = '\t'.join(samplenames)
             handle.write(f'MOTU\t{tmp}\n')
-            for samplename in samplenames:
-                for motu in self._motus_with_abundance:
+
+            for motu in self._motus_with_abundance:
+                tmp = [motu]
+                for samplename in samplenames:
                     if relabundance:
                         abundance = '{number:.{digits}f}'.format(number=sample_2_motu_2_report_vals[samplename].get(motu, 0), digits=8)
                     else:
                         abundance = sample_2_motu_2_report_vals[samplename].get(motu, 0)
-                    handle.write(f'{motu}\t{abundance}\n')
+                        if not 'NORM' in self._count_mode:
+                            abundance = int(abundance)
+                    tmp.append(str(abundance))
+                tmp = '\t'.join(tmp)
+                handle.write(f'{tmp}\n')
 
 
 
@@ -1730,8 +1767,11 @@ def merge_profiles(motus_file_paths: List[pathlib.Path], output_motus_file_path:
 
     mf = MotusFile()
     mf.merge_profiles(motus_files)
-    # TODO write
-    #mf.write_mOTUs_file()
+    if mf.has_counts():
+        mf.write_mOTUs_file(output_motus_file_path, relabundance=False)
+        mf.write_mOTUs_file(pathlib.Path(str(output_motus_file_path) + '.relab'), relabundance=True)
+    else:
+        mf.write_mOTUs_file(output_motus_file_path, relabundance=False)
 
     logging.info('Finished mOTUs - merge routine - Merging of mOTUs profile files ... ')
 
