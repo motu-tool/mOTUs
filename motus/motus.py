@@ -86,9 +86,8 @@ class MotusFile:
     _min_mgcs = None
     _full_version = None
     _taxonomy = None
-    _taxonomy_rank = None
+    _taxonomy_level = None
     _counts_aggregated_by_taxonomy = None
-    _full_version = None
     _motus_with_abundance = None
     _samplename_2_motus_2_counts = None
     _samplename_2_motus_2_relab = None
@@ -146,8 +145,198 @@ class MotusFile:
         return header
 
 
+
+    def merge_profiles(self, motus_files) -> None: # Typing --> This is a List[MotusFile]
+        """ merge multiple profiles into one
+        Will also check if profiles are compatible
+
+        Params:
+            motus_files: A list with MotusFile objects, each containing
+                        one or multiple motus profiles
+
+        Returns:
+            None, will update the MotusFile object
+        """
+
+        if not motus_files or len(motus_files) == 0:
+            logging.error(f'No MotusFiles found to merge. Quitting ...')
+            shutdown(1)
+
+        # check if versions are compatible
+        versions = set([mf._full_version for mf in motus_files])
+        if len(versions) != 1:
+            logging.error(f'Incompatible versions in profiles that should be merged. versions = {versions}')
+            shutdown(1)
+
+        # check if count_mode is compatible
+        count_modes = set([mf._count_mode for mf in motus_files])
+        if len(count_modes) != 1:
+            logging.error(f'Incompatible count modes in profiles that should be merged. count modes = {count_modes}')
+            shutdown(1)
+
+        # check if num_mgcs is compatible
+        min_mgcs = set([mf._min_mgcs for mf in motus_files])
+        if len(count_modes) != 1:
+            logging.error(f'Incompatible min mgcs in profiles that should be merged. min mgcs = {min_mgcs}')
+            shutdown(1)
+
+        # check if all or none have counts --> either all or none have to have counts1
+        # if none have counts --> report rel abundances, if all have counts --> report counts
+
+        total_motus_files = len(motus_files)
+        total_motus_files_w_counts = len([mf for mf in motus_files if mf._samplename_2_motus_2_counts])
+        total_motus_files_w_relab = len([mf for mf in motus_files if mf._samplename_2_motus_2_relab])
+        report_counts = False
+        report_relab = False
+        if total_motus_files_w_counts == 0:
+            report_relab = True
+        elif total_motus_files_w_counts != total_motus_files:
+            logging.info('Profile files are mixed. Some are reported as counts, some as relative abundances. Quitting ...')
+            shutdown(1)
+        else:
+            report_counts = True
+            report_relab = True
+
+        # check if all sample names are distinct
+        samplenames = collections.Counter()
+        if report_relab:
+            for mf in motus_files:
+                for samplename in mf._samplename_2_motus_2_relab.keys():
+                    samplenames[samplename] += 1
+        for samplename, samplename_count in samplenames.items():
+            if samplename_count != 1:
+                logging.error(f'Samplename duplicated: {samplename}. Quitting ...')
+                shutdown(1)
+
+        #TODO merge tables. Check if table needs to be quadrativ. I dont think so. But the motus have to be updated
+
+
+
+
+
+
     def read_mOTUs_file(self, mOTUs_file: pathlib.Path) -> None:
-        x = 0
+        """
+        Read the mOTUs_file into this object.
+        """
+        with open(mOTUs_file) as handle:
+            header = handle.readline().strip()
+            splits = header.split('\t')
+
+            if len(splits) == 4:
+                [full_version, report_mode, count_mode, min_mgcs] = splits
+                taxonomy = None
+                aggregated = False
+                level = None
+            elif len(splits) == 7:
+                [full_version, report_mode, count_mode, min_mgcs, taxonomy, aggregated, level] = splits
+            else:
+                logging.error('The header of this mOTUs file looks malformed. Please check. Quitting ...')
+                logging.error(f'{header}')
+                shutdown(1)
+
+            if not full_version.startswith('#TOOL'):
+                logging.error('The header of this mOTUs file looks malformed. Please check. Quitting ...')
+                logging.error(f'{header}')
+                shutdown(1)
+            full_version = full_version[1:]
+
+            if 'report_mode' not in report_mode:
+                logging.error('The header of this mOTUs file looks malformed. Please check. Quitting ...')
+                logging.error(f'{header}')
+                shutdown(1)
+            report_mode = report_mode.split('=')[1]
+
+            if 'count_mode' not in count_mode:
+                logging.error('The header of this mOTUs file looks malformed. Please check. Quitting ...')
+                logging.error(f'{header}')
+                shutdown(1)
+            count_mode = count_mode.split('=')[1]
+
+            if 'min_mgcs' not in min_mgcs:
+                logging.error('The header of this mOTUs file looks malformed. Please check. Quitting ...')
+                logging.error(f'{header}')
+                shutdown(1)
+            min_mgcs = int(min_mgcs.split('=')[1])
+
+            if taxonomy:
+                if 'taxonomy' not in taxonomy:
+                    logging.error('The header of this mOTUs file looks malformed. Please check. Quitting ...')
+                    logging.error(f'{header}')
+                    shutdown(1)
+                taxonomy = taxonomy.split('=')[1]
+
+            if level:
+                if 'level' not in level:
+                    logging.error('The header of this mOTUs file looks malformed. Please check. Quitting ...')
+                    logging.error(f'{header}')
+                    shutdown(1)
+                level = level.split('=')[1]
+            if aggregated:
+                if 'aggregated' not in aggregated:
+                    logging.error('The header of this mOTUs file looks malformed. Please check. Quitting ...')
+                    logging.error(f'{header}')
+                    shutdown(1)
+                aggregated = aggregated.split('=')[1]
+                if bool(aggregated):
+                    logging.error(f'The mOTUs profile ({mOTUs_file}) has values aggregated at non-mOTU level ({level}). This table is an endproduct and cannot be used in mOTUs anymore. Quitting ...')
+                    shutdown(1)
+
+
+
+            self._count_mode = count_mode
+            self._min_mgcs = min_mgcs #TODO check if correct number of mgcs
+            self._full_version = full_version
+            self._taxonomy = taxonomy #TODO check if correct taxonomy
+            self._taxonomy_level = level #TODO check if correct level
+            self._counts_aggregated_by_taxonomy = None
+
+            self._motus_with_abundance = set()
+            if taxonomy:
+                self._motu_2_taxonomy = {}
+                self._taxonomy = taxonomy  # TODO check if correct taxonomy
+                self._taxonomy_level = level  # TODO check if correct level
+                self._counts_aggregated_by_taxonomy = bool(aggregated)
+            else:
+                self._motu_2_taxonomy = None
+                self._taxonomy = None
+                self._taxonomy_level = None
+                self._counts_aggregated_by_taxonomy = None
+
+
+
+            sample_2_motu_2_cnts = {}
+            for entry in csv.DictReader(handle, delimiter='\t'):
+                motu = entry.pop('MOTU')
+                self._motus_with_abundance.add(motu)
+                if taxonomy:
+                    taxstring = entry.pop('TAXONOMY')
+                    self._motu_2_taxonomy[motu] = taxstring
+                for sample, counts in entry.items():
+                    if sample not in sample_2_motu_2_cnts:
+                        sample_2_motu_2_cnts[sample] = {}
+                    sample_2_motu_2_cnts[sample][motu] = float(counts)
+
+            if report_mode == 'counts':
+                self._samplename_2_motus_2_counts = sample_2_motu_2_cnts
+                self._samplename_2_motus_2_relab = {}
+
+                for samplename, motus_2_counts in sample_2_motu_2_cnts.items():
+                    self._samplename_2_motus_2_relab[samplename] = {}
+                    tot_abundance = sum(motus_2_counts.values())
+                    for motu, value in motus_2_counts.items():
+                        self._samplename_2_motus_2_relab[samplename][
+                            motu] = value / tot_abundance  # '{number:.{digits}f}'.format(number=value / tot_abundance, digits=8)
+            elif report_mode == 'relative_abundance':
+                self._samplename_2_motus_2_counts = None
+                self._samplename_2_motus_2_relab = sample_2_motu_2_cnts
+            else:
+                logging.error(f'Report mode can only be counts or relative_abundance but is {report_mode}. Qutting ...')
+                shutdown(1)
+
+            self._motus_with_abundance = sorted(list(self._motus_with_abundance))
+
+
 
 
     def write_mOTUs_file(self, filename, relabundance) -> None:
@@ -1284,16 +1473,7 @@ def calc_motu() -> None:
     mOTU_file.write_mOTUs_file(motusfiles.get_motu_file(), False)
     mOTU_file.write_mOTUs_file(motusfiles.get_motu_file_relab(), True)
     return None
-def merge_profiles(merged_motus_file: str, motus_files: List[str]) -> None:
-    """
-    Takes a list of mOTUs profiles created with the same version of mOTUs and the same parameters
-    and merges them into a single profile
-    :param merged_motus_file: The output file with the merged mOTUs profiles
-    :param motus_files:  The mOTUs files in default profile/calc_motu format to merge profiles.
 
-    :return:
-    """
-    return None
 
 
 
@@ -1465,8 +1645,8 @@ Algorithm options:
     motusfiles.set_sample_name(samplename)
     motusfiles.set_minimal_alignment_length(min_alignment_length)
     motusfiles.set_threads(threads)
-    if not args.c:
-        motusfiles.set_report_mode_rel_abundance()
+    # if not args.c:
+    #     motusfiles.set_report_mode_rel_abundance()
     motusfiles.set_count_mode(args.y)
     motusfiles.set_minimal_number_of_mgcs(args.g)
     map_tax()
@@ -1530,6 +1710,75 @@ Algorithm options:
     motusfiles.set_threads(1)
     calc_mgc()
     shutdown(0)
+
+
+def merge_profiles(motus_file_paths: List[pathlib.Path], output_motus_file_path: pathlib.Path) -> None:
+    """Routine which merges mOTU profiles.
+
+    - Will read the mOTUs profiles into Motu_file objects
+    - Merge them into a new Motu_file object (only if parameters are the same, throw an exception instead)
+    - Write the merged profile into the output file
+
+    """
+    logging.info('Starting mOTUs - merge routine - Merging of mOTUs profile files ... ')
+    motus_files = []
+    logging.info(f'There are {len(motus_file_paths)} input profile files.')
+    for motus_file_path in motus_file_paths:
+        mf = MotusFile()
+        mf.read_mOTUs_file(motus_file_path)
+        motus_files.append(mf)
+
+    mf = MotusFile()
+    mf.merge_profiles(motus_files)
+    # TODO write
+    #mf.write_mOTUs_file()
+
+    logging.info('Finished mOTUs - merge routine - Merging of mOTUs profile files ... ')
+
+
+def parse_merge():
+    parser = argparse.ArgumentParser(usage='''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
+    Version: 4.0.0
+    Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
+    taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
+    doi: https://doi.org/10.1186/s40168-022-01410-z
+
+    motus merge [options]
+
+        Input options:
+           -i  FILE[ FILE]  A list of mOTUs profile files or a text file with one line
+                            per mOTUs profile files to be merged
+                            
+
+        Output options:
+           -o  FILE  output file name       
+
+          ''', formatter_class=CapitalisedHelpFormatter, add_help=False)
+
+    # Input options
+    parser.add_argument("-i", nargs="+", required=True)
+    # Output options
+    parser.add_argument("-o", required=True)
+    args = parser.parse_args(sys.argv[2:])
+
+    # print usage and exit if no arguments are passed
+    if sys.argv[2:] == []:
+        parser.print_usage()
+        shutdown(1)
+    startup()
+    input_mOTUs_files = [pathlib.Path(el) for el in args.i]
+    if len(input_mOTUs_files) == 1:
+        input_mOTUs_files_tmp = []
+        with open(input_mOTUs_files[0]) as handle:
+            for line in handle:
+                input_mOTUs_files_tmp.append(pathlib.Path(line.strip()))
+        input_mOTUs_files = input_mOTUs_files_tmp
+    output_mOTUs_file = pathlib.Path(args.o)
+    input_mOTUs_files = sorted(input_mOTUs_files)
+    merge_profiles(input_mOTUs_files, output_mOTUs_file)
+    shutdown(0)
+
+
 
 
 def parse_taxonomy():
@@ -1631,8 +1880,8 @@ motus calc_motu [options]
     motusfiles.set_sample_name(samplename)
     motusfiles.set_threads(1)
     motusfiles.set_count_mode(args.y)
-    if not args.c:
-        motusfiles.set_report_mode_rel_abundance()
+    # if not args.c:
+    #     motusfiles.set_report_mode_rel_abundance()
     motusfiles.set_count_mode(args.y)
     motusfiles.set_minimal_number_of_mgcs(args.g)
     calc_motu()
@@ -1671,7 +1920,7 @@ motus <command> [options]
     if args.command == 'profile':
         parse_profile()
     elif args.command == 'merge':
-        logging.error('Command merge not implemented yet')
+        parse_merge()
     elif args.command == 'map_tax':
         parse_map_tax()
     elif args.command == 'calc_mgc':
