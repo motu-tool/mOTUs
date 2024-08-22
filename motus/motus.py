@@ -62,7 +62,7 @@ import collections
 import random
 import argparse
 import sys
-from typing import List, Dict, Set, Tuple, Generator
+from typing import List, Dict, Set, Tuple, Generator, TextIO
 import urllib.request
 import tarfile
 import shutil
@@ -455,6 +455,7 @@ class MotusParameters:
     _mgc_file: pathlib.Path = None
     _motu_file: pathlib.Path = None
     _motu_file_rel_ab: pathlib.Path = None
+    _inserts_file: pathlib.Path = None
     _samplename: str = None
     _min_alignment_length: int = 0
     _threads: int = 1
@@ -496,6 +497,9 @@ class MotusParameters:
 
     def is_strict_db_mode(self):
         return self._is_strict_db_mode
+
+    def enable_lenient_mode(self):
+        self._is_strict_db_mode = False
 
     def set_minimal_number_of_mgcs(self, min_mgcs: int) -> None:
         self._min_mgcs = min_mgcs
@@ -555,6 +559,17 @@ class MotusParameters:
         if required_to_exist:
             if not mgc_file.exists():
                 logging.error(f'MGC file {mgc_file} does not exist. Shutting down ...')
+                shutdown(1)
+
+    def get_inserts_file(self) -> pathlib.Path:
+        self._inserts_file.parent.mkdir(exist_ok=True, parents=True)
+        return self._inserts_file
+
+    def set_inserts_file(self, inserts_file: pathlib.Path, required_to_exist=True) -> None:
+        self._inserts_file = inserts_file
+        if required_to_exist:
+            if not inserts_file.exists():
+                logging.error(f'Inserts file {inserts_file} does not exist. Shutting down ...')
                 shutdown(1)
 
     def get_motu_file(self) -> pathlib.Path:
@@ -1287,19 +1302,71 @@ class InsertCounter:
     def get_multi_mapper_count(self):
         return len(self._multi_mappers)
 
-    def correct_multi_mapper_edges(self, min_alignment_length: int):
+
+    def _get_edge_corrected_raw_uniquemapper_insert_counts_per_mgc(self):
+        '''
+        Summarize the raw unique mapper counts
+        '''
+        mgc_2_count = collections.Counter()
+        for mg, count in self._mg_2_edge_corrected_raw_uniquemapper_insert_counts.items():
+            mgc_2_count[motusdb.get_mgc_by_mg(mg)] += count
+        return mgc_2_count
+
+    def correct_multi_mapper_edges(self, insert_file_writer: TextIO, min_alignment_length: int):
+        '''
+        Routine to distribute multimapper based on fractional MGC abundance and to correct edges
+
+        1. Collect MGC abundances of unique mappers
+        2. Distribute multimappers:
+            For each multimapper (only one mg per MGC)
+            collect the total weight by summing up unique MGC
+            abundances of all aligned MGs in this multimapper.
+            Then create a fractional weight for each aligned MG.
+            Then distribute abundances based on that weight.
+            Give every MG the same weight in case all MGC
+            abundances are 0.
+
+        '''
+
         mg_2_alignments = collections.defaultdict(list)
+        multimapper_with_no_prior_mgc_abundance = 0
+        mgc_2_uniquemapper_insert_counts = self._get_edge_corrected_raw_uniquemapper_insert_counts_per_mgc()
         for insert_name, bestAlignment in self._multi_mappers:
             mg_2_blocks = bestAlignment.get_mgs_and_blocks()
-            tot_weight = sum([self._mg_2_edge_corrected_raw_uniquemapper_insert_counts.get(mg, 0.0) for mg in mg_2_blocks.keys()])
-            if tot_weight < 1.0:
-                tot_weight = 1.0
+            if False: # MG weighting
+                tot_weight = sum([self._mg_2_edge_corrected_raw_uniquemapper_insert_counts.get(mg, 0.0) for mg in mg_2_blocks.keys()])
+                if tot_weight < 1.0:
+                    tot_weight = 1.0
+                mg_2_weight = {mg: self._mg_2_edge_corrected_raw_uniquemapper_insert_counts.get(mg, 0.0) / tot_weight for mg in mg_2_blocks.keys()}
+                if sum(mg_2_weight.values()) == 0.0: # this part is different in the MGC weighing part
+                    mg_2_weight2 = {}
+                    for mg in mg_2_weight:
+                        mg_2_weight2[mg] = 1.0 / len(mg_2_weight)
+                    mg_2_weight = mg_2_weight2
+                for mg, alignment_blocks in mg_2_blocks.items():
+                    if mg_2_weight[mg] != 0.0:
+                        mg_2_alignments[mg].append((alignment_blocks, mg_2_weight[mg]))
+            else: # MGC weighting
+                tot_mgc_weight = sum([mgc_2_uniquemapper_insert_counts.get(motusdb.get_mgc_by_mg(mg), 0.0) for mg in mg_2_blocks.keys()])
+                if tot_mgc_weight < 1.0:
+                    tot_mgc_weight = 1.0
+                mg_2_mgc_weight = {mg: mgc_2_uniquemapper_insert_counts.get(motusdb.get_mgc_by_mg(mg), 0.0) / tot_mgc_weight for mg in mg_2_blocks.keys()}
+                if sum(mg_2_mgc_weight.values()) == 0.0:
+                    multimapper_with_no_prior_mgc_abundance += 1
+                    continue
 
-            mg_2_weight = {mg: self._mg_2_edge_corrected_raw_uniquemapper_insert_counts.get(mg, 0.0) / tot_weight for mg in mg_2_blocks.keys()}
-            for mg, alignment_blocks in mg_2_blocks.items():
-                if mg_2_weight[mg] != 0.0:
-                    mg_2_alignments[mg].append((alignment_blocks, mg_2_weight[mg]))
 
+                for mg, alignment_blocks in mg_2_blocks.items():
+                    if mg_2_mgc_weight[mg] != 0.0:
+                        insert_file_writer.write(f'{insert_name}\t{mg}\t{round(mg_2_mgc_weight[mg], 4):.4f}\n')
+                        mg_2_alignments[mg].append((alignment_blocks, mg_2_mgc_weight[mg]))
+
+
+
+
+
+
+        logging.info(f'Processed {len(self._multi_mappers)} multimappers. {multimapper_with_no_prior_mgc_abundance} were discarded, {len(self._multi_mappers) - multimapper_with_no_prior_mgc_abundance} were used.')
         mg_2_edge_corrected_insert_counts, mg_2_edge_corrected_base_counts = self._correct_edges(mg_2_alignments,min_alignment_length)
         self._mg_2_edge_corrected_raw_multimapper_insert_counts = mg_2_edge_corrected_insert_counts
         self._mg_2_edge_corrected_raw_multimapper_base_counts = mg_2_edge_corrected_base_counts
@@ -1360,7 +1427,7 @@ class InsertCounter:
             mg_2_edge_corrected_base_counts[mg] = edge_corrected_base_count
         return mg_2_edge_corrected_insert_counts, mg_2_edge_corrected_base_counts
 
-    def correct_uniq_mapper_edges(self, min_alignment_length: int):
+    def correct_uniq_mapper_edges(self, inserts_file_writer: TextIO, min_alignment_length: int):
         """
         ======================================================================
         Correct the alignment abundances which are biased due to partial
@@ -1400,6 +1467,7 @@ class InsertCounter:
         mg_2_alignments = collections.defaultdict(list)
         for insert_name, bestAlignment in self._unique_mappers:
             mg, alignment_blocks = bestAlignment.get_mg_and_blocks()
+            inserts_file_writer.write(f'{insert_name}\t{mg}\t1.0000\n')
             mg_2_alignments[mg].append((alignment_blocks, 1.0))
         mg_2_edge_corrected_insert_counts, mg_2_edge_corrected_base_counts = self._correct_edges(mg_2_alignments, 30)
 
@@ -1529,8 +1597,10 @@ class InsertCounter:
 
         logging.info('Finished reading alignment file ...')
         logging.info(f'Read {self.get_unique_mapper_count() + self.get_multi_mapper_count()} aligned inserts of which {round(100.0 * self.get_multi_mapper_count() / (self.get_unique_mapper_count() + self.get_multi_mapper_count()),2)}% are multimappers')
-        self.correct_uniq_mapper_edges(motusfiles.get_minimal_alignment_length())
-        self.correct_multi_mapper_edges(motusfiles.get_minimal_alignment_length())
+        inserts_file_writer = gzip.open(motusfiles.get_inserts_file(), 'wt')
+        self.correct_uniq_mapper_edges(inserts_file_writer, motusfiles.get_minimal_alignment_length())
+        self.correct_multi_mapper_edges(inserts_file_writer, motusfiles.get_minimal_alignment_length())
+        inserts_file_writer.close()
         self.combined_raw_counts()
         self.norm_and_scale_counts()
 
@@ -1692,7 +1762,7 @@ def calc_mgc() -> None:
         handle.write(f'#{header_line}\n')
         handle.write('MGC\tINSERT_RAW\tINSERT_NORM\tINSERT_SCALED\tBASE_RAW\tBASE_NORM\n')
         for mgc in sorted(mgc_2_counts.keys()):
-            counts =  mgc_2_counts[mgc]
+            counts = mgc_2_counts[mgc]
             handle.write(f'{mgc}\t{round(counts.insert_raw, 4):.4f}\t{round(counts.insert_norm, 10):.10f}\t{round(counts.insert_scaled, 4):.4f}\t{round(counts.base_raw, 4):.4f}\t{round(counts.base_norm, 10):.10f}\n')
 
     logging.info('Finished mOTUs - calc_mgc routine - Calculating abundances per MGC ... ')
@@ -1831,6 +1901,100 @@ Algorithm options:
     map_tax()
 
 
+
+def parse_batch_profile():
+    '''
+    Hidden routine which takes a list of bam files to parse, create motus and mgc files.
+
+    Advantage --> needs to load the database only once
+    '''
+
+    parser = argparse.ArgumentParser(usage=f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
+    Version: {MOTUS_VERSION}
+    Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
+    taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
+    doi: https://doi.org/10.1186/s40168-022-01410-z
+
+    motus batch_profile [options]
+
+    Input options:
+       -f  FILE[ FILE]  input tsv file. First column=samplename, second column=bam file
+
+    Algorithm options:
+       -g  INT          number of marker genes cutoff: 1=higher recall, 6=higher precision [3]
+       -l  INT          min length of the alignment (bp) [75]
+       -v  INT          verbosity level: 1=error, 2=warning, 3=message, 4+=debugging [1]
+       -y  STR          type of read counts [INSERT_SCALED]
+                        Values: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
+    ]''', formatter_class=CapitalisedHelpFormatter, add_help=False)
+
+    # Input options
+    parser.add_argument("-f", required=True)  # input file(s) for reads in forward direction
+
+    parser.add_argument("-g", type=int, default=3,
+                        choices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10])  # number of marker genes cutoff
+    parser.add_argument("-l", type=int, default=75)  # min length of the alignment (bp) [75]
+    parser.add_argument("-t", type=int, default=1)  # number of thread [1]
+    parser.add_argument("-v", type=int, default=1)  # verbosity level
+    parser.add_argument("-y", type=str, default='INSERT_SCALED',
+                        choices=['INSERT_RAW', 'INSERT_NORM', 'INSERT_SCALED', 'BASE_RAW', 'BASE_NORM'])
+
+    args = parser.parse_args(sys.argv[2:])
+    if sys.argv[2:] == []:
+        parser.print_usage()
+        shutdown(1)
+
+    map_file = args.f
+    samplename_2_files = {}
+    with open(map_file) as handle:
+        for line in handle:
+            [samplename, bamfile] = line.strip().split('\t')
+            bamfile = pathlib.Path(bamfile)
+            if not bamfile.exists():
+                logging.error(f'Submitted BAM file {bamfile} does not exist. Quitting ...')
+                shutdown(1)
+            if not str(bamfile).endswith('.bam'):
+                logging.error(f'Submitted BAM file {bamfile} does not end with .bam. Probably malformed file. Quitting ...')
+                shutdown(1)
+
+            mgc_file = str(bamfile).rsplit('.bam', 1)[0] + '.mgc'
+            inserts_file = str(bamfile).rsplit('.bam', 1)[0] + '.inserts.gz'
+            motu_file = str(bamfile).rsplit('.bam', 1)[0]
+            if samplename in samplename_2_files:
+                logging.error(f'Submitted samplename {samplename} duplicated. Quitting ...')
+                shutdown(1)
+            for (obf,mf,mof,iof) in samplename_2_files.values():
+                if obf.samefile(bamfile):
+                    logging.error(f'Submitted BAM file {bamfile} duplicated. Quitting ...')
+                    shutdown(1)
+            samplename_2_files[samplename] = (bamfile, pathlib.Path(mgc_file), pathlib.Path(motu_file), pathlib.Path(inserts_file))
+
+
+    startup()
+    threads = args.t
+    min_alignment_length = args.l
+
+    global motusdb
+    motusdb = MotusDB(DEFAULT_MOTUS_MGDB_LOCATION)
+
+    for samplename, (bamfile, mgc_file, motu_file, inserts_file) in samplename_2_files.items():
+
+        global motusfiles
+        motusfiles = MotusParameters()
+        motusfiles.set_alignment_file(bamfile)
+        motusfiles.set_mgc_file(mgc_file, required_to_exist=False)
+        motusfiles.set_inserts_file(inserts_file, required_to_exist=False)
+        motusfiles.set_motu_file(motu_file, required_to_exist=False)
+        motusfiles.set_sample_name(samplename)
+        motusfiles.set_minimal_alignment_length(min_alignment_length)
+        motusfiles.set_threads(threads)
+        motusfiles.set_count_mode(args.y)
+        motusfiles.set_minimal_number_of_mgcs(args.g)
+        motusfiles.enable_lenient_mode()
+        calc_mgc()
+        calc_motu()
+    shutdown(0)
+
 def parse_profile():
     parser = argparse.ArgumentParser(usage = f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 Version: {MOTUS_VERSION}
@@ -1884,6 +2048,7 @@ Algorithm options:
     motu_file = pathlib.Path(args.o)
     alignment_file = pathlib.Path(args.o + '.bam')
     mgc_file = pathlib.Path(args.o + '.mgc')
+    inserts_file = pathlib.Path(args.o + '.inserts.gz')
     startup()
     threads = args.t
     min_alignment_length = args.l
@@ -1896,6 +2061,7 @@ Algorithm options:
     motusfiles.set_read_files(forward_files, reverse_files, unpaired_files, check_files=True)
     motusfiles.set_alignment_file(alignment_file, required_to_exist=False)
     motusfiles.set_mgc_file(mgc_file,required_to_exist=False)
+    motusfiles.set_inserts_file(inserts_file, required_to_exist=False)
     motusfiles.set_motu_file(motu_file, required_to_exist=False)
     motusfiles.set_sample_name(samplename)
     motusfiles.set_minimal_alignment_length(min_alignment_length)
@@ -1942,6 +2108,7 @@ Algorithm options:
 
     alignment_file = pathlib.Path(args.i)
     mgc_file = pathlib.Path(args.o)
+    inserts_file = pathlib.Path(args.o + '.inserts')
 
 
     startup()
@@ -1952,6 +2119,7 @@ Algorithm options:
     motusfiles = MotusParameters()
     motusfiles.set_alignment_file(alignment_file, required_to_exist=True)
     motusfiles.set_mgc_file(mgc_file,required_to_exist=False)
+    motusfiles.set_inserts_file(inserts_file, required_to_exist=False)
     motusfiles.set_minimal_alignment_length(min_alignment_length)
     motusfiles.set_threads(1)
     calc_mgc()
@@ -2325,10 +2493,12 @@ motus <command> [options]
     Type motus <command> to print the help menu for a specific command
     ''',formatter_class=CapitalisedHelpFormatter,add_help=False)
 
-    parser.add_argument('command', choices=["profile", "map_tax", "calc_mgc", "calc_motu", "download", "merge", "downloadDB"])
+    parser.add_argument('command', choices=["profile", "map_tax", "calc_mgc", "calc_motu", "download", "merge", "downloadDB", "batch_profile"])
     args: argparse.Namespace = parser.parse_args(sys.argv[1:2])
     if args.command == 'profile':
         parse_profile()
+    if args.command == 'batch_profile':
+        parse_batch_profile()
     elif args.command == 'merge':
         parse_merge()
     elif args.command == 'map_tax':
