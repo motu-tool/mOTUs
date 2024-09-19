@@ -2,7 +2,6 @@ import unittest
 from unittest.mock import patch, mock_open
 from motus import motus
 import pathlib
-import os
 
 class TestSetmOTUCounts(unittest.TestCase):
 
