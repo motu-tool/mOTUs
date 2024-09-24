@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 import pathlib
 from motus import motus
-from motus.motus import MotusDB
+
 
 class TestMotusDB(unittest.TestCase):
     @patch('builtins.open', new_callable=MagicMock)
@@ -23,7 +23,6 @@ class TestMotusDB(unittest.TestCase):
         self.motus_db = motus.MotusDB(self.db_folder, load=True)
         self.obj = motus.MotusDB
 
-
     def test_initialization(self):
         """Test that initialization works and loads the database version correctly."""
         self.assertEqual(self.motus_db.database_version, '4.0')
@@ -32,6 +31,7 @@ class TestMotusDB(unittest.TestCase):
 
     @patch('builtins.open', new_callable=MagicMock)
     def test_index_file_does_not_exist(self, mock_open):
+        """Test that it raises an error when the path to the mOTUs database does not exist."""
         with self.assertLogs('root', level='ERROR') as log_capture:
             with self.assertRaises(SystemExit):
                 self.obj(pathlib.Path("/path/does/not/exist"), load=True)
@@ -95,7 +95,6 @@ class TestMotusDB(unittest.TestCase):
         self.assertEqual(self.motus_db.get_core_motus_mgs(),
                          ['COG0012', 'COG0016', 'COG0018', 'COG0172', 'COG0215', 'COG0495', 'COG0525', 'COG0533',
                           'COG0541', 'COG0552'])
-
 
 
 if __name__ == '__main__':

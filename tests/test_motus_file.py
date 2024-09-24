@@ -3,6 +3,7 @@ from unittest.mock import patch, mock_open
 from motus import motus
 import pathlib
 
+
 class TestSetmOTUCounts(unittest.TestCase):
 
     def setUp(self):
@@ -20,7 +21,8 @@ class TestSetmOTUCounts(unittest.TestCase):
         self.assertEqual(self.obj._samplename_2_motus_2_counts, expected_counts)
 
         # Check if relative abundances are calculated correctly
-        expected_relab = {'sample1': {'motu1': 1 / 3, 'motu2': 2 / 3}, 'sample2': {'motu1': 100 / 103, 'motu3': 3 / 103}}
+        expected_relab = {'sample1': {'motu1': 1 / 3, 'motu2': 2 / 3},
+                          'sample2': {'motu1': 100 / 103, 'motu3': 3 / 103}}
         self.assertEqual(self.obj._samplename_2_motus_2_relab, expected_relab)
 
     def test_set_mOTU_counts_float(self):
@@ -45,6 +47,7 @@ class TestSetmOTUCounts(unittest.TestCase):
             "sample2": {"motu1": 1.2 / 4.8, "motu3": 3.6 / 4.8},
         }
         self.assertEqual(self.obj._samplename_2_motus_2_relab, expected_relab)
+
 
 class TestGetmOTUsFileHeader(unittest.TestCase):
 
@@ -87,6 +90,7 @@ class TestGetmOTUsFileHeader(unittest.TestCase):
         self.obj.get_mOTUs_file_header()
         mock_log.assert_called_with("count_mode parameter not set. Can't create header. Quitting...")
 
+
 # Mocking a simple MotusFile class for testing
 class MotusFile:
     def __init__(self, full_version, count_mode, min_mgcs, counts=None, relab=None):
@@ -96,11 +100,11 @@ class MotusFile:
         self._samplename_2_motus_2_counts = counts or {}
         self._samplename_2_motus_2_relab = relab or {}
 
+
 class TestMergeProfiles(unittest.TestCase):
 
     def setUp(self):
         self.obj = motus.MotusFile()
-
 
     def test_no_motus_files(self):
         # Test with no motus files provided
@@ -109,7 +113,6 @@ class TestMergeProfiles(unittest.TestCase):
                 self.obj.merge_profiles([])
             # check that log message is accurate
             self.assertEqual(log_capture.output, ['ERROR:root:No MotusFiles found to merge. Quitting ...'])
-
 
     def test_incompatible_versions(self):
         # Test with incompatible versions
@@ -122,10 +125,10 @@ class TestMergeProfiles(unittest.TestCase):
                 self.obj.merge_profiles(motus_files)
             # check that log message is accurate
             # accept both orders of versions
-            string = "ERROR:root:Incompatible versions in profiles that should be merged. versions = {'v1', 'v2'} ERROR:root:Incompatible versions in profiles that should be merged. versions = {'v2', 'v1'}"
+            string = ("ERROR:root:Incompatible versions in profiles that should be merged. versions = {'v1', "
+                      "'v2'} ERROR:root:Incompatible versions in profiles that should be merged. versions = {'v2', "
+                      "'v1'}")
             self.assertIn(log_capture.output[0], string)
-
-
 
     def test_incompatible_count_modes(self):
         # Test with incompatible count modes
@@ -137,9 +140,10 @@ class TestMergeProfiles(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 self.obj.merge_profiles(motus_files)
             # check that log message is accurate
-            string = "ERROR:root:Incompatible count modes in profiles that should be merged. count modes = {'raw', 'norm'} ERROR:root:Incompatible count modes in profiles that should be merged. count modes = {'norm', 'raw'}"
+            string = ("ERROR:root:Incompatible count modes in profiles that should be merged. count modes = {'raw', "
+                      "'norm'} ERROR:root:Incompatible count modes in profiles that should be merged. count modes = {"
+                      "'norm', 'raw'}")
             self.assertIn(log_capture.output[0], string)
-
 
     def test_incompatible_min_mgcs(self):
         # Test with incompatible min_mgcs
@@ -151,8 +155,8 @@ class TestMergeProfiles(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 self.obj.merge_profiles(motus_files)
             # check that log message is accurate
-            self.assertEqual(log_capture.output, ['ERROR:root:Incompatible min mgcs in profiles that should be merged. min mgcs ' '= {10, 5}'])
-
+            self.assertEqual(log_capture.output, [
+                'ERROR:root:Incompatible min mgcs in profiles that should be merged. min mgcs ' '= {10, 5}'])
 
     def test_mixed_count_modes(self):
         # Test when some profiles have counts and others have relative abundances
@@ -164,8 +168,10 @@ class TestMergeProfiles(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 self.obj.merge_profiles(motus_files)
             # check that log message is accurate
-            self.assertEqual(log_capture.output, ['INFO:root:Profile files are mixed. Some are reported as counts, some as relative abundances. Quitting ...', 'INFO:root:mOTU tool shutting down with exitcode 1'])
-
+            self.assertEqual(log_capture.output, [
+                'INFO:root:Profile files are mixed. Some are reported as counts, some as relative abundances. '
+                'Quitting ...',
+                'INFO:root:mOTU tool shutting down with exitcode 1'])
 
     def test_duplicate_sample_names(self):
         # Test when sample names are duplicated across profiles
@@ -178,7 +184,6 @@ class TestMergeProfiles(unittest.TestCase):
                 self.obj.merge_profiles(motus_files)
             # check that log message is accurate
             self.assertEqual(log_capture.output, ['ERROR:root:Samplename duplicated: sample1. Quitting ...'])
-
 
     def test_successful_merge_counts(self):
         # Test successful merge of compatible profiles
@@ -230,7 +235,7 @@ class TestReadMotusFile(unittest.TestCase):
         self.assertEqual(self.obj._min_mgcs, 10)
         self.assertEqual(self.obj._full_version, 'TOOL1.0')
 
-# TODO write test for 7 columns
+    # TODO write test for 7 columns
     """    @patch('builtins.open', new_callable=mock_open,
            read_data='#TOOL1.0\treport_mode=counts\tcount_mode=raw\tmin_mgcs=10\ttaxonomy=species\taggregated=0\tlevel=species')
     def test_valid_mOTUs_file_7_fields(self, mock_file):
@@ -252,8 +257,9 @@ class TestReadMotusFile(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 self.obj.read_mOTUs_file(mock_file)
             # check that log message is accurate
-            self.assertEqual(log_capture.output, ['ERROR:root:The header of this mOTUs file looks malformed. Please check. '  'Quitting ...', 'ERROR:root:TOOL1.0\tcounts\tmin_mgcs=10'])
-
+            self.assertEqual(log_capture.output, [
+                'ERROR:root:The header of this mOTUs file looks malformed. Please check. '  'Quitting ...',
+                'ERROR:root:TOOL1.0\tcounts\tmin_mgcs=10'])
 
     @patch('builtins.open', new_callable=mock_open,
            read_data='#TOOL1.0\treport_mode=counts\tmin_mgcs=10\nMOTU\tsample1'
@@ -264,7 +270,9 @@ class TestReadMotusFile(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 self.obj.read_mOTUs_file(mock_file)
             # check that log message is accurate
-            self.assertEqual(log_capture.output, ['ERROR:root:The header of this mOTUs file looks malformed. Please check. ' 'Quitting ...', 'ERROR:root:#TOOL1.0\treport_mode=counts\tmin_mgcs=10'])
+            self.assertEqual(log_capture.output,
+                             ['ERROR:root:The header of this mOTUs file looks malformed. Please check. ' 'Quitting ...',
+                              'ERROR:root:#TOOL1.0\treport_mode=counts\tmin_mgcs=10'])
 
     @patch('builtins.open', new_callable=mock_open,
            read_data='#TOOL1.0\treport_mode=counts\tcount_mode=raw\nMOTU\tsample1\tsample2\nmotu1\t10\t20\n')
@@ -274,7 +282,9 @@ class TestReadMotusFile(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 self.obj.read_mOTUs_file(mock_file)
             # check that log message is accurate
-            self.assertEqual(log_capture.output, ['ERROR:root:The header of this mOTUs file looks malformed. Please check. ' 'Quitting ...', 'ERROR:root:#TOOL1.0\treport_mode=counts\tcount_mode=raw'])
+            self.assertEqual(log_capture.output,
+                             ['ERROR:root:The header of this mOTUs file looks malformed. Please check. ' 'Quitting ...',
+                              'ERROR:root:#TOOL1.0\treport_mode=counts\tcount_mode=raw'])
 
     @patch('builtins.open', new_callable=mock_open,
            read_data='#TOOL1.0\treport_mode=counts\tcount_mode=raw\tmin_mgcs=10\taggregated=False\tlevel=species')
@@ -284,32 +294,40 @@ class TestReadMotusFile(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 self.obj.read_mOTUs_file(mock_file)
             # check that log message is accurate
-            self.assertEqual(log_capture.output, ['ERROR:root:The header of this mOTUs file looks malformed. Please check. ' 'Quitting ...',  'ERROR:root:#TOOL1.0\treport_mode=counts\tcount_mode=raw\tmin_mgcs=10\taggregated=False\tlevel=species'])
+            self.assertEqual(log_capture.output,
+                             ['ERROR:root:The header of this mOTUs file looks malformed. Please check. ' 'Quitting ...',
+                              'ERROR:root:#TOOL1.0\treport_mode=counts\tcount_mode=raw\tmin_mgcs=10\taggregated=False'
+                              '\tlevel=species'])
 
     @patch('builtins.open', new_callable=mock_open,
-           read_data='#TOOL1.0\treport_mode=counts\tcount_mode=raw\tmin_mgcs=10\ttaxonomy=species\taggregated=True\t\nMOTU\tsample1\tsample2\nmotu1\t10\t20\n')
+           read_data='#TOOL1.0\treport_mode=counts\tcount_mode=raw\tmin_mgcs=10\ttaxonomy=species\taggregated=True\t'
+                     '\nMOTU\tsample1\tsample2\nmotu1\t10\t20\n')
     def test_missing_level(self, mock_file):
         # Test an invalid report mode
         with self.assertLogs('root', level='ERROR') as log_capture:
             with self.assertRaises(SystemExit):
                 self.obj.read_mOTUs_file(mock_file)
             # check that log message is accurate
-            self.assertEqual(log_capture.output, ['ERROR:root:The header of this mOTUs file looks malformed. Please check. Quitting ...', 'ERROR:root:#TOOL1.0\treport_mode=counts\tcount_mode=raw\tmin_mgcs=10\ttaxonomy=species\taggregated=True'])
-
+            self.assertEqual(log_capture.output,
+                             ['ERROR:root:The header of this mOTUs file looks malformed. Please check. Quitting ...',
+                              'ERROR:root:#TOOL1.0\treport_mode=counts\tcount_mode=raw\tmin_mgcs=10\ttaxonomy=species'
+                              '\taggregated=True'])
 
     @patch('builtins.open', new_callable=mock_open,
-           read_data='#TOOL1.0\treport_mode=invalid_mode\tcount_mode=raw\tmin_mgcs=10\nMOTU\tsample1\tsample2\nmotu1\t10\t20\n')
+           read_data='#TOOL1.0\treport_mode=invalid_mode\tcount_mode=raw\tmin_mgcs=10\nMOTU\tsample1\tsample2\nmotu1'
+                     '\t10\t20\n')
     def test_invalid_report_mode(self, mock_file):
         # Test an invalid report mode
         with self.assertLogs('root', level='ERROR') as log_capture:
             with self.assertRaises(SystemExit):
                 self.obj.read_mOTUs_file(mock_file)
             # check that log message is accurate
-            self.assertEqual(log_capture.output, ['ERROR:root:Report mode can only be counts or relative_abundance but is invalid_mode. Quitting ...'])
-
+            self.assertEqual(log_capture.output, [
+                'ERROR:root:Report mode can only be counts or relative_abundance but is invalid_mode. Quitting ...'])
 
     @patch('builtins.open', new_callable=mock_open,
-           read_data='#TOOL1.0\treport_mode=counts\tcount_mode=raw\tmin_mgcs=10\ttaxonomy=species\taggregated=True\tlevel=species\nMOTU\tsample1\tsample2\nmotu1\t10\t20\n')
+           read_data='#TOOL1.0\treport_mode=counts\tcount_mode=raw\tmin_mgcs=10\ttaxonomy=species\taggregated=True'
+                     '\tlevel=species\nMOTU\tsample1\tsample2\nmotu1\t10\t20\n')
     def test_aggregated_table(self, mock_file):
         # Test an aggregated table that leads to a shutdown
         with self.assertLogs('root', level='ERROR') as log_capture:
@@ -317,7 +335,9 @@ class TestReadMotusFile(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 self.obj.read_mOTUs_file(mock_file)
             # check that log message is accurate
-            self.assertEqual(log_capture.output, ['ERROR:root:The mOTUs profile (test_motus_file.tsv) has values aggregated at non-mOTU level (species). This table is an endproduct and cannot be used in mOTUs anymore. Quitting ...'])
+            self.assertEqual(log_capture.output, [
+                'ERROR:root:The mOTUs profile (test_motus_file.tsv) has values aggregated at non-mOTU level ('
+                'species). This table is an endproduct and cannot be used in mOTUs anymore. Quitting ...'])
 
 
 class TestWriteMOTUsFile(unittest.TestCase):
@@ -335,9 +355,8 @@ class TestWriteMOTUsFile(unittest.TestCase):
         }
         self.obj._motus_with_abundance = ['motu1', 'motu2']
         self.obj._count_mode = "RAW"
-        self.obj._min_mgcs=5
+        self.obj._min_mgcs = 5
         self.obj._full_version = "TOOL:4.0.0_DB:4.0"
-
 
     @patch('builtins.open', new_callable=mock_open)
     def test_write_mOTUs_file_relabundance_false(self, mock_file):
@@ -358,7 +377,8 @@ class TestWriteMOTUsFile(unittest.TestCase):
         self.obj.write_mOTUs_file('output.tsv', relabundance=True)
 
         # Check the contents written to the file
-        mock_file().write.assert_any_call("#TOOL:4.0.0_DB:4.0\treport_mode=relative_abundance\tcount_mode=RAW\tmin_mgcs=5\n")
+        mock_file().write.assert_any_call(
+            "#TOOL:4.0.0_DB:4.0\treport_mode=relative_abundance\tcount_mode=RAW\tmin_mgcs=5\n")
         mock_file().write.assert_any_call("MOTU\tsample1\tsample2\n")  # The sample header
 
         # Check the data written for motu1 and motu2 with 8 decimal places

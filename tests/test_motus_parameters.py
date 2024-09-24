@@ -227,7 +227,8 @@ class TestMotusParametersSetGet(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 self.obj.set_alignment_file(invalid_file, required_to_exist=True)
             self.assertEqual(log_capture.output, [
-                'ERROR:root:Alignment file alignment_file.txt is/will be a BAM formatted file. Please set file suffix accordingly. Shutting down ...'])
+                'ERROR:root:Alignment file alignment_file.txt is/will be a BAM formatted file. Please set file suffix '
+                'accordingly. Shutting down ...'])
 
     def test_set_alignment_file_does_not_exist(self):
         with self.assertLogs('root', level='ERROR') as log_capture:
@@ -449,7 +450,8 @@ class TestSetReadFiles(unittest.TestCase):
         with self.assertLogs('root', level='ERROR') as log_capture:
             with self.assertRaises(SystemExit):
                 self.obj.set_read_files(forward_files, reverse_files, unpaired_files)
-            self.assertEqual(log_capture.output, ['ERROR:root:Duplicated read files. Please submit every file only once. Shutting down ...'])
+            self.assertEqual(log_capture.output, ['ERROR:root:Duplicated read files. Please submit every file only '
+                                                  'once. Shutting down ...'])
 
     @patch("pathlib.Path.exists", return_value=True)
     def test_unequal_forward_reverse_files(self, mock_exists):
@@ -461,7 +463,8 @@ class TestSetReadFiles(unittest.TestCase):
         with self.assertLogs('root', level='ERROR') as log_capture:
             with self.assertRaises(SystemExit):
                 self.obj.set_read_files(forward_files, reverse_files, unpaired_files)
-            self.assertEqual(log_capture.output, ['ERROR:root:Unequal number of files submitted with -r and -f. Quitting ...'])
+            self.assertEqual(log_capture.output, ['ERROR:root:Unequal number of files submitted with -r and -f. '
+                                                  'Quitting ...'])
 
     @patch("pathlib.Path.exists", return_value=True)
     @patch("builtins.open")
@@ -486,12 +489,13 @@ class TestSetReadFiles(unittest.TestCase):
                 self.obj.set_read_files([pathlib.Path("forward_1.fa")], [pathlib.Path("reverse_2.fa")],
                                         [pathlib.Path("unpaired_file.fa")])
             self.assertIn(log_capture.output, [['ERROR:root:Headers of reads are not identical. Shutting down ...',
-                                                  "ERROR:root:Differing read headers: {'header1', 'header2'}",
-                                                  'ERROR:root:Differing read headers file 1: forward_1.fa',
-                                                  'ERROR:root:Differing read headers file 1: reverse_2.fa'], ['ERROR:root:Headers of reads are not identical. Shutting down ...',
-                                                  "ERROR:root:Differing read headers: {'header2', 'header1'}",
-                                                  'ERROR:root:Differing read headers file 1: forward_1.fa',
-                                                  'ERROR:root:Differing read headers file 1: reverse_2.fa']])
+                                                "ERROR:root:Differing read headers: {'header1', 'header2'}",
+                                                'ERROR:root:Differing read headers file 1: forward_1.fa',
+                                                'ERROR:root:Differing read headers file 1: reverse_2.fa'],
+                                               ['ERROR:root:Headers of reads are not identical. Shutting down ...',
+                                                "ERROR:root:Differing read headers: {'header2', 'header1'}",
+                                                'ERROR:root:Differing read headers file 1: forward_1.fa',
+                                                'ERROR:root:Differing read headers file 1: reverse_2.fa']])
 
     @patch("pathlib.Path.exists", return_value=True)
     @patch("builtins.open")
@@ -500,7 +504,9 @@ class TestSetReadFiles(unittest.TestCase):
     def test_valid_files(self, mock_generator, mocked_open, mock_exists):
 
         # Call the method with valid files
-        self.obj.set_read_files([pathlib.Path("/fake/path/to/forward_1.fq")], [pathlib.Path("/fake/path/to/reverse_1.fq")], [pathlib.Path("/fake/path/to/unpaired_1.fq")])
+        self.obj.set_read_files([pathlib.Path("/fake/path/to/forward_1.fq")],
+                                [pathlib.Path("/fake/path/to/reverse_1.fq")],
+                                [pathlib.Path("/fake/path/to/unpaired_1.fq")])
 
         # Mock file paths
         forward_files = [pathlib.Path("/fake/path/to/forward_1.fq")]

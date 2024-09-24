@@ -10,15 +10,19 @@ class TestMotusSearchDB(unittest.TestCase):
         # Mock the contents of the motu taxonomy file
         mock_taxonomy_data = (
             "MOTU\tGTDB\n"
-            "MOTU1\tk__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Enterobacterales;f__Enterobacteriaceae;g__Escherichia;s__coli\n"
-            "MOTU2\tk__Bacteria;p__Firmicutes;c__Bacilli;o__Lactobacillales;f__Streptococcaceae;g__Streptococcus;s__pneumoniae\n"
+            "MOTU1\tk__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Enterobacterales;f__Enterobacteriaceae"
+            ";g__Escherichia;s__coli\n"
+            "MOTU2\tk__Bacteria;p__Firmicutes;c__Bacilli;o__Lactobacillales;f__Streptococcaceae;g__Streptococcus"
+            ";s__pneumoniae\n"
         )
 
         # Mock the genome metadata file as well
         mock_metadata_data = (
             "GENOME\tLOCATION\tMOTU4\tMOTU4_STATUS\tDOMAIN\tPHYLUM\tCLASS\tORDER\tFAMILY\tGENUS\tSPECIES\n"
-            "genome1\tloc1\tMOTU1\trepresentative\tBacteria\tProteobacteria\tGammaproteobacteria\tEnterobacterales\tEnterobacteriaceae\tEscherichia\tcoli\n"
-            "genome2\tloc2\tMOTU2\t\tBacteria\tFirmicutes\tBacilli\tLactobacillales\tStreptococcaceae\tStreptococcus\tpneumoniae\n"
+            "genome1\tloc1\tMOTU1\trepresentative\tBacteria\tProteobacteria\tGammaproteobacteria\tEnterobacterales"
+            "\tEnterobacteriaceae\tEscherichia\tcoli\n"
+            "genome2\tloc2\tMOTU2\t\tBacteria\tFirmicutes\tBacilli\tLactobacillales\tStreptococcaceae\tStreptococcus"
+            "\tpneumoniae\n"
         )
 
         # Mock the file handle
@@ -49,7 +53,11 @@ class TestMotusSearchDB(unittest.TestCase):
 
         self.assertIn("genome1", db._representative_genomes)
         self.assertEqual(db._genome_2_path, {'genome1': 'loc1', 'genome2': 'loc2'})
-        self.assertEqual(db._genome_2_tax, {'genome1': 'Bacteria\tProteobacteria\tGammaproteobacteria\tEnterobacterales\tEnterobacteriaceae\tEscherichia\tcoli', 'genome2': 'Bacteria\tFirmicutes\tBacilli\tLactobacillales\tStreptococcaceae\tStreptococcus\tpneumoniae'})
+        self.assertEqual(db._genome_2_tax, {'genome1': 'Bacteria\tProteobacteria\tGammaproteobacteria'
+                                                       '\tEnterobacterales\tEnterobacteriaceae\tEscherichia\tcoli',
+                                            'genome2':
+                                                'Bacteria\tFirmicutes\tBacilli\tLactobacillales\tStreptococcaceae'
+                                                '\tStreptococcus\tpneumoniae'})
 
 
     @patch("gzip.open")
@@ -57,17 +65,23 @@ class TestMotusSearchDB(unittest.TestCase):
         # Mock the contents of the motu taxonomy file
         mock_taxonomy_data = (
             "MOTU\tGTDB\n"
-            "MOTU1\tk__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Enterobacterales;f__Enterobacteriaceae;g__Escherichia;s__coli\n"
-            "MOTU2\tk__Bacteria;p__Firmicutes;c__Bacilli;o__Lactobacillales;f__Streptococcaceae;g__Streptococcus;s__pneumoniae\n"
+            "MOTU1\tk__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Enterobacterales;f__Enterobacteriaceae"
+            ";g__Escherichia;s__coli\n"
+            "MOTU2\tk__Bacteria;p__Firmicutes;c__Bacilli;o__Lactobacillales;f__Streptococcaceae;g__Streptococcus"
+            ";s__pneumoniae\n"
         )
 
         # Mock the genome metadata file as well
         mock_metadata_data = (
             "GENOME\tLOCATION\tMOTU4\tMOTU4_STATUS\tDOMAIN\tPHYLUM\tCLASS\tORDER\tFAMILY\tGENUS\tSPECIES\n"
-            "genome1\tloc1\tMOTU11\trepresentative\tBacteria\tProteobacteria\tGammaproteobacteria\tEnterobacterales\tEnterobacteriaceae\tEscherichia\tcoli\n"
-            "genome2\tloc1\tMOTU11\t\tBacteria\tProteobacteria\tGammaproteobacteria\tEnterobacterales\tEnterobacteriaceae\tEscherichia\tcoli\n"
-            "genome3\tloc2\tMOTU12\t\tBacteria\tFirmicutes\tBacilli\tLactobacillales\tStreptococcaceae\tStreptococcus\tpneumoniae\n"
-            "genome4\tloc3\tMOTU12\t\tBacteria\tFirmicutes\tBacilli\tLactobacillales\tStreptococcaceae\tStreptococcus\tpneumoniae\n"
+            "genome1\tloc1\tMOTU11\trepresentative\tBacteria\tProteobacteria\tGammaproteobacteria\tEnterobacterales"
+            "\tEnterobacteriaceae\tEscherichia\tcoli\n"
+            "genome2\tloc1\tMOTU11\t\tBacteria\tProteobacteria\tGammaproteobacteria\tEnterobacterales"
+            "\tEnterobacteriaceae\tEscherichia\tcoli\n"
+            "genome3\tloc2\tMOTU12\t\tBacteria\tFirmicutes\tBacilli\tLactobacillales\tStreptococcaceae\tStreptococcus"
+            "\tpneumoniae\n"
+            "genome4\tloc3\tMOTU12\t\tBacteria\tFirmicutes\tBacilli\tLactobacillales\tStreptococcaceae\tStreptococcus"
+            "\tpneumoniae\n"
         )
 
         # Mock the file handles
@@ -116,7 +130,8 @@ class TestMotusSearchDB(unittest.TestCase):
         mock_taxonomy_data = "MOTU\tGTDB\n"
         mock_metadata_data = (
             "GENOME\tLOCATION\tMOTU4\tMOTU4_STATUS\tDOMAIN\tPHYLUM\tCLASS\tORDER\tFAMILY\tGENUS\tSPECIES\n"
-            "genome1\tloc1\tMOTU1\trepresentative\tBacteria\tProteobacteria\tGammaproteobacteria\tEnterobacterales\tEnterobacteriaceae\tEscherichia\tcoli\n"
+            "genome1\tloc1\tMOTU1\trepresentative\tBacteria\tProteobacteria\tGammaproteobacteria\tEnterobacterales"
+            "\tEnterobacteriaceae\tEscherichia\tcoli\n"
         )
 
         mock_taxonomy_handle = mock_open(read_data=mock_taxonomy_data)
@@ -138,7 +153,8 @@ class TestMotusSearchDB(unittest.TestCase):
         mock_taxonomy_data = "MOTU\tGTDB\n"
         mock_metadata_data = (
             "GENOME\tLOCATION\tMOTU4\tMOTU4_STATUS\tDOMAIN\tPHYLUM\tCLASS\tORDER\tFAMILY\tGENUS\tSPECIES\n"
-            "genome1\tloc1\tMOTU1\trepresentative\tBacteria\tProteobacteria\tGammaproteobacteria\tEnterobacterales\tEnterobacteriaceae\tEscherichia\tcoli\n"
+            "genome1\tloc1\tMOTU1\trepresentative\tBacteria\tProteobacteria\tGammaproteobacteria\tEnterobacterales"
+            "\tEnterobacteriaceae\tEscherichia\tcoli\n"
         )
 
         mock_taxonomy_handle = mock_open(read_data=mock_taxonomy_data)
@@ -160,7 +176,8 @@ class TestMotusSearchDB(unittest.TestCase):
         mock_taxonomy_data = "MOTU\tGTDB\n"
         mock_metadata_data = (
             "GENOME\tLOCATION\tMOTU4\tMOTU4_STATUS\tDOMAIN\tPHYLUM\tCLASS\tORDER\tFAMILY\tGENUS\tSPECIES\n"
-            "genome1\tloc1\tMOTU1\trepresentative\tBacteria\tProteobacteria\tGammaproteobacteria\tEnterobacterales\tEnterobacteriaceae\tEscherichia\tcoli\n"
+            "genome1\tloc1\tMOTU1\trepresentative\tBacteria\tProteobacteria\tGammaproteobacteria\tEnterobacterales"
+            "\tEnterobacteriaceae\tEscherichia\tcoli\n"
         )
 
         mock_taxonomy_handle = mock_open(read_data=mock_taxonomy_data)
@@ -174,7 +191,8 @@ class TestMotusSearchDB(unittest.TestCase):
 
         # Test get_genome_tax
         tax = db.get_genome_tax("genome1")
-        self.assertEqual(tax, "Bacteria\tProteobacteria\tGammaproteobacteria\tEnterobacterales\tEnterobacteriaceae\tEscherichia\tcoli")
+        self.assertEqual(tax, "Bacteria\tProteobacteria\tGammaproteobacteria\tEnterobacterales\tEnterobacteriaceae"
+                              "\tEscherichia\tcoli")
 
 
 if __name__ == '__main__':
