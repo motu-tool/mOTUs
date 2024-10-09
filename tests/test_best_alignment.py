@@ -1,11 +1,6 @@
 import unittest
-from unittest.mock import patch
 from motus.motus import BestAlignment
-from typing import List, Tuple
 
-
-# Assuming the BestAlignment class is defined in a module called alignment_module
-# from alignment_module import BestAlignment
 
 class TestBestAlignment(unittest.TestCase):
 
@@ -66,7 +61,6 @@ class TestBestAlignment(unittest.TestCase):
         with self.assertNoLogs('root', level='ERROR'):
             self.ba.get_mg_and_blocks()
 
-
     def test_get_mg_and_blocks_multimapper(self):
         """Test get_mg_and_blocks fails for multimappers."""
         self.ba.append('marker_gene_1', [(100, 200)])
@@ -77,7 +71,6 @@ class TestBestAlignment(unittest.TestCase):
                 self.ba.get_mg_and_blocks()
             self.assertEqual(log_capture.output,
                              ['ERROR:root:This method doesnt work for multi mappers.'])
-
 
     def test_get_mgs_and_blocks_multimapper(self):
         """Test get_mgs_and_blocks returns correct data for multimappers."""
@@ -98,7 +91,6 @@ class TestBestAlignment(unittest.TestCase):
 
             self.assertEqual(result, expected)
 
-
     def test_get_mgs_and_blocks_unique(self):
         """Test get_mgs_and_blocks fails for unique mappers."""
         mg = 'marker_gene_1'
@@ -109,7 +101,7 @@ class TestBestAlignment(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 self.ba.get_mgs_and_blocks()
                 self.assertEqual(log_capture.output,
-                             ['ERROR:root:This method doesnt work for unique mappers.'])
+                                 ['ERROR:root:This method doesnt work for unique mappers.'])
 
 
 if __name__ == '__main__':
