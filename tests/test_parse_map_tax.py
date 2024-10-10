@@ -169,9 +169,10 @@ class TestParseMapTax(unittest.TestCase):
         sys.argv = ["motus", "map_tax", "-f", "forward.fastq"]
 
         with self.assertRaises(SystemExit):
-            sys.stdout = io.StringIO()
+            sys.stderr = io.StringIO()
             parse_map_tax()
-            self.assertIn(['error: the following arguments are required: -o'], sys.stdout.getvalue())
+            sys.stderr = sys.__stderr__
+        self.assertIn('error: the following arguments are required: -o', sys.stderr.getvalue().strip())
 
     @patch('builtins.open', new_callable=MagicMock)
     @patch('gzip.open', new_callable=MagicMock)
