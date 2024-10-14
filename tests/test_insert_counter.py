@@ -101,7 +101,7 @@ class TestInsertCounter(unittest.TestCase):
         self.assertEqual(self.insert_counter._mg_2_edge_corrected_scaled_insert_counts, expected_scaled)"""
 
     def test_combined_raw_counts_empty(self):
-        # Test when both unique and multimapper counts are empty
+        """Test when both unique and multimapper counts are empty"""
         self.insert_counter._mg_2_edge_corrected_raw_uniquemapper_insert_counts = collections.Counter()
         self.insert_counter._mg_2_edge_corrected_raw_multimapper_insert_counts = collections.Counter()
         self.insert_counter._mg_2_edge_corrected_raw_uniquemapper_base_counts = collections.Counter()
@@ -109,7 +109,7 @@ class TestInsertCounter(unittest.TestCase):
 
         self.insert_counter.combined_raw_counts()
 
-        # Both combined counts should be empty
+        # both combined counts should be empty
         self.assertEqual(self.insert_counter._mg_2_edge_corrected_raw_insert_counts, collections.Counter())
         self.assertEqual(self.insert_counter._mg_2_edge_corrected_raw_base_counts, collections.Counter())
 
@@ -124,7 +124,7 @@ class TestInsertCounter(unittest.TestCase):
 
         self.insert_counter.combined_raw_counts()
 
-        # Combined counts should equal the unique counts
+        # combined counts should equal the unique counts
         self.assertEqual(self.insert_counter._mg_2_edge_corrected_raw_insert_counts, {'MG1': 100, 'MG2': 150})
         self.assertEqual(self.insert_counter._mg_2_edge_corrected_raw_base_counts, {'MG1': 500, 'MG2': 600})
 
@@ -139,7 +139,7 @@ class TestInsertCounter(unittest.TestCase):
 
         self.insert_counter.combined_raw_counts()
 
-        # Combined counts should equal the multimapper counts
+        # combined counts should equal the multimapper counts
         self.assertEqual(self.insert_counter._mg_2_edge_corrected_raw_insert_counts, {'MG1': 80, 'MG2': 120})
         self.assertEqual(self.insert_counter._mg_2_edge_corrected_raw_base_counts, {'MG1': 400, 'MG2': 500})
 
@@ -156,7 +156,7 @@ class TestInsertCounter(unittest.TestCase):
 
         self.insert_counter.combined_raw_counts()
 
-        # Check combined counts for multiple `mg`s
+        # check combined counts for multiple `mg`s
         self.assertEqual(self.insert_counter._mg_2_edge_corrected_raw_insert_counts,
                          {'MG1': 150, 'MG2': 225, 'MG3': 300})
         self.assertEqual(self.insert_counter._mg_2_edge_corrected_raw_base_counts,
@@ -176,7 +176,7 @@ class TestInsertCounter(unittest.TestCase):
         alignments = [mock_alignment]
         result = self.insert_counter._get_alignment_blocks(alignments)
 
-        # Expect one block returned as is
+        # expect one block returned as is
         self.assertEqual(result, [(100, 150)])
 
     def test_get_alignment_blocks_multiple_blocks(self):
@@ -187,7 +187,7 @@ class TestInsertCounter(unittest.TestCase):
         alignments = [mock_alignment]
         result = self.insert_counter._get_alignment_blocks(alignments)
 
-        # Expect multiple blocks returned as is, in sorted order
+        # expect multiple blocks returned as is, in sorted order
         self.assertEqual(result, [(100, 150), (200, 250)])
 
     def test_get_alignment_blocks_multiple_alignments(self):
@@ -200,7 +200,7 @@ class TestInsertCounter(unittest.TestCase):
         alignments = [mock_alignment1, mock_alignment2]
         result = self.insert_counter._get_alignment_blocks(alignments)
 
-        # Expect all blocks sorted by their start position
+        # expect all blocks sorted by their start position
         self.assertEqual(result, [(100, 150), (200, 250), (300, 350)])
 
     def test_get_alignment_blocks_unsorted_blocks(self):
@@ -213,7 +213,7 @@ class TestInsertCounter(unittest.TestCase):
         alignments = [mock_alignment1, mock_alignment2]
         result = self.insert_counter._get_alignment_blocks(alignments)
 
-        # The result should be sorted by start position, so the result should be:
+        # result should be sorted by start position, so the result should be:
         self.assertEqual(result, [(100, 150), (200, 250), (300, 350)])
 
 

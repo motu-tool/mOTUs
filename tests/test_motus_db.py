@@ -9,15 +9,15 @@ class TestMotusDB(unittest.TestCase):
     @patch('gzip.open', new_callable=MagicMock)
     @patch('pathlib.Path.exists', new_callable=MagicMock)
     def setUp(self, mock_exists, mock_gzip_open, mock_open):
-        # Setup mock data for testing initialization
+        # setup mock data for testing initialization (versions file)
         mock_open.return_value.__enter__.return_value = MagicMock(readline=MagicMock(side_effect=[
             "version: 4.0", "date: 2024-01-01"
         ]))
 
-        # Setup dummy folder path
+        # setup dummy folder path
         self.db_folder = pathlib.Path("/path/to/db")
 
-        # Mock gzip file reads
+        # mock gzip file reads
         mgc_data = "MG\tMGC\tLENGTH\t#MOTU\tCOG\nMG1\tMGC1\t100\tMOTU1\tCOG0012\n"
         mock_gzip_open.return_value.__enter__.return_value = MagicMock(read=MagicMock(return_value=mgc_data))
         self.motus_db = motus.MotusDB(self.db_folder, load=True)
@@ -40,7 +40,6 @@ class TestMotusDB(unittest.TestCase):
 
     def test_is_mg_blocked(self):
         """Test that blocked marker genes are correctly identified."""
-        # Add MG to blocklist for testing
         self.motus_db.blocklist_mg.add('MG1')
         self.assertTrue(self.motus_db.is_mg_blocked('MG1'))
         self.assertFalse(self.motus_db.is_mg_blocked('MG2'))

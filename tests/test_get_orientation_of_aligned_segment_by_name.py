@@ -9,11 +9,11 @@ SIDENTIFIER = 'S'
 class TestGetOrientationOfAlignedSegmentByName(unittest.TestCase):
 
     def setUp(self):
-        # Define a common setup for the AlignedSegment mock
+        # define a common setup for the AlignedSegment mock
         self.mock_alignment = Mock(spec=pysam.AlignedSegment)
 
     def test_standard_case(self):
-        # Test the case where query_name contains a '/' to separate insert and orientation.
+        # test the case where query_name contains a '/' to separate insert and orientation.
         # one '/' separator
         self.mock_alignment.query_name = 'insert_name/orientation'
 
@@ -23,7 +23,7 @@ class TestGetOrientationOfAlignedSegmentByName(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_edge_case_no_separator(self):
-        # Test the case where query_name does not contain a '/'.
+        # test the case where query_name does not contain a '/'.
         # without a '/' separator
         self.mock_alignment.query_name = 'insert_name'
 
@@ -33,7 +33,7 @@ class TestGetOrientationOfAlignedSegmentByName(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_multiple_slashes_in_query_name(self):
-        # Test the case where query_name contains multiple '/'.
+        # test the case where query_name contains multiple '/'.
         # multiple '/' characters
         self.mock_alignment.query_name = 'some/insert_name/with/multiple/slashes/orientation'
 
@@ -44,7 +44,7 @@ class TestGetOrientationOfAlignedSegmentByName(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_empty_query_name(self):
-        # Test the case where query_name is empty.
+        # test the case where query_name is empty.
         # empty string
         self.mock_alignment.query_name = ''
 

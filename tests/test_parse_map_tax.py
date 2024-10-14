@@ -1,10 +1,10 @@
 import io
 import unittest
 from unittest import mock
-from unittest.mock import patch, mock_open, MagicMock, Mock
+from unittest.mock import patch, MagicMock
 import sys
 import pathlib
-from motus.motus import parse_map_tax, MotusParameters
+from motus.motus import parse_map_tax
 from io import StringIO
 import pysam
 from collections import OrderedDict
@@ -74,7 +74,7 @@ def mock_alignment(
 ):
     """
     making a mock pysam.AlignedSegment object
-    :param pysam.AlignmentHeader header_dict: a pysam alignment header object (can be created by mock_bam_header)
+    :param pysam.AlignmentHeader header: a pysam alignment header object (can be created by mock_bam_header)
     :param str reference_name: reference name
     :param str query_name: query name
     :param str query_sequence: query sequence
@@ -109,23 +109,23 @@ class TestParseMapTax(unittest.TestCase):
     @patch('subprocess.Popen.wait', new_callable=MagicMock, return_value=0)
     @patch('pysam.sort', return_value=None)
     def run_parse_map_tax(self, mock_pysam_sort, mock_popen, mock_exists, mock_gzip_open, mock_open):
-        with (mock.patch('pathlib.Path', return_value=pathlib.Path("/fakepath")), \
-              mock.patch('motus.motus.MotusParameters.set_read_files') as mock_set_read_files, \
-              mock.patch('motus.motus.MotusParameters.set_alignment_file') as mock_set_alignment_file, \
+        with (mock.patch('pathlib.Path', return_value=pathlib.Path("/fakepath")),
+              mock.patch('motus.motus.MotusParameters.set_read_files') as mock_set_read_files,
+              mock.patch('motus.motus.MotusParameters.set_alignment_file') as mock_set_alignment_file,
               mock.patch(
-                  'motus.motus.MotusParameters.set_minimal_alignment_length') as mock_set_minimal_alignment_length, \
-              mock.patch('motus.motus.MotusParameters.set_threads') as mock_set_threads, \
-              mock.patch('motus.motus.MotusParameters._temp_alignment_file', return_value="temporary.bam"), \
+                  'motus.motus.MotusParameters.set_minimal_alignment_length') as mock_set_minimal_alignment_length,
+              mock.patch('motus.motus.MotusParameters.set_threads') as mock_set_threads,
+              mock.patch('motus.motus.MotusParameters._temp_alignment_file', return_value="temporary.bam"),
               mock.patch('motus.motus.MotusParameters.get_read_files', return_value=[
                   (pathlib.Path("forward_file1"), '/1'),
                   (pathlib.Path("reverse_file1"), '/2'),
                   (pathlib.Path("forward_file2"), '/1'),
                   (pathlib.Path("reverse_file2"), '/2'),
                   (pathlib.Path("unpaired_file"), '/S')
-              ]), \
+              ]),
               mock.patch('motus.motus.MotusParameters.get_alignment_file',
-                         return_value="aligment.bam") as mock_get_alignment_file, \
-              mock.patch('pysam.AlignmentFile') as pysam_bam, \
+                         return_value="aligment.bam") as mock_get_alignment_file,
+              mock.patch('pysam.AlignmentFile') as pysam_bam,
               mock.patch('sys.stdout', new=StringIO())):
             header = mock_bam_header([('chr1', 100)])  # mock a 100 bp chr1 contig
             in_alignment = mock_alignment(
@@ -165,7 +165,7 @@ class TestParseMapTax(unittest.TestCase):
         self.run_parse_map_tax()
 
     def test_missing_output_argument(self):
-        # Simulate command-line args without the required output file (-o)
+        # simulate command-line args without the required output file (-o)
         sys.argv = ["motus", "map_tax", "-f", "forward.fastq"]
 
         with self.assertRaises(SystemExit):
@@ -189,7 +189,7 @@ class TestParseMapTax(unittest.TestCase):
                 mock.patch('motus.motus.map_tax'):
             parse_map_tax()
 
-            # Ensure that the correct file paths are passed to set_read_files
+            # ensure that the correct file paths are passed to set_read_files
             expected_forward = [pathlib.Path("forward.fastq")]
             expected_reverse = [pathlib.Path("reverse.fastq")]
             expected_unpaired = [pathlib.Path("unpaired.fastq")]
@@ -200,7 +200,7 @@ class TestParseMapTax(unittest.TestCase):
     @patch('gzip.open', new_callable=MagicMock)
     @patch('pathlib.Path.exists', new_callable=MagicMock)
     def test_custom_min_length_threads_verbosity(self, mock_exists, mock_gzip_open, mock_open):
-        # Test with custom alignment length, thread count, and verbosity level
+        # test with custom alignment length, thread count, and verbosity level
         sys.argv = ["motus", "map_tax", "-f", "forward.fastq", "-o", "output.txt", "-l", "100", "-t", "4", "-v", "2"]
 
         with mock.patch('pathlib.Path', return_value=pathlib.Path("/fakepath")), \
@@ -222,7 +222,7 @@ class TestParseMapTax(unittest.TestCase):
     @patch('gzip.open', new_callable=MagicMock)
     @patch('pathlib.Path.exists', new_callable=MagicMock)
     def test_no_input_files_provided(self, mock_exists, mock_gzip_open, mock_open):
-        # Test for case where no input files are provided, expect an error
+        # test for case where no input files are provided, expect an error
         sys.argv = ["motus", "map_tax", "-o", "output.txt"]
         with self.assertLogs('root', level='ERROR') as log_capture:
             with mock.patch('pathlib.Path', return_value=pathlib.Path("/fakepath")), \
