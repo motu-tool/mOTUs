@@ -55,6 +55,55 @@ class TestDownloadGenomes(unittest.TestCase):
         mock_logging_info.assert_any_call(f'Downloading genome (2 / 2) genome2 to /output/folder/genome2')
         mock_logging_info.assert_any_call(f'Finished downloading genomes')
 
+    @patch('motus.motus.urllib.request.urlretrieve')
+    @patch('motus.motus.open', new_callable=mock_open)
+    @patch('motus.motus.MotusSearchDB')
+    @patch('motus.motus.pathlib.Path.mkdir')
+    @patch('logging.info')
+    def test_download_genomes_success_all_genomes(self, mock_logging_info, mock_mkdir, MockMotusSearchDB,
+                                      mock_file, mock_urlretrieve):
+        # set up the mock MotusSearchDB instance
+        mock_db_instance = MockMotusSearchDB.return_value
+        mock_db_instance.search_for_genomes.return_value = ['genome1', 'genome2']
+        mock_db_instance.get_genome_path.side_effect = lambda genome: f"/path/to/{genome}"
+        mock_db_instance.get_genome_motu.side_effect = lambda genome: f"motu_{genome}"
+        mock_db_instance.get_genome_tax.side_effect = lambda \
+                genome: "Domain\tPhylum\tClass\tOrder\tFamily\tGenus\tSpecies"
+
+        # prepare test data
+        keyword = "test_keyword"
+        output_folder = pathlib.Path("/output/folder")
+        output_file = pathlib.Path("/output/file.txt")
+
+        # call the function
+        download_genomes(keyword, mock_db_instance, output_folder, output_file,
+                         download_representative_genomes_only=False)
+
+        # verify the genome search was performed
+        mock_db_instance.search_for_genomes.assert_called_once_with(keyword, only_representatives=False)
+
+        # verify genome information was written to file
+        mock_file().write.assert_any_call('GENOME\tMOTU\tPATH\tDOMAIN\tPHYLUM\tCLASS\tORDER\tFAMILY\tGENUS\tSPECIES\n')
+        mock_file().write.assert_any_call(
+            'genome1\tmotu_genome1\t/path/to/genome1\tDomain\tPhylum\tClass\tOrder\tFamily\tGenus\tSpecies\n')
+        mock_file().write.assert_any_call(
+            'genome2\tmotu_genome2\t/path/to/genome2\tDomain\tPhylum\tClass\tOrder\tFamily\tGenus\tSpecies\n')
+
+        # verify directory creation and downloads
+        mock_mkdir.assert_called_once_with(exist_ok=True, parents=True)
+        mock_urlretrieve.assert_has_calls([
+            call("/path/to/genome1", "/output/folder/genome1"),
+            call("/path/to/genome2", "/output/folder/genome2")
+        ])
+
+        # verify logging messages
+        mock_logging_info.assert_any_call(f'Searching for keyword: {keyword}.')
+        mock_logging_info.assert_any_call(f'Found: 2 hits.')
+        mock_logging_info.assert_any_call(f'Finished writing genome information to {output_file}')
+        mock_logging_info.assert_any_call(f'Downloading genome (1 / 2) genome1 to /output/folder/genome1')
+        mock_logging_info.assert_any_call(f'Downloading genome (2 / 2) genome2 to /output/folder/genome2')
+        mock_logging_info.assert_any_call(f'Finished downloading genomes')
+
     @patch('motus.motus.MotusSearchDB')
     @patch('motus.motus.open', new_callable=mock_open)
     @patch('logging.info')
