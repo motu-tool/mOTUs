@@ -39,7 +39,8 @@ class TestParseDownload(unittest.TestCase):
     @patch('gzip.open', new_callable=MagicMock)
     @patch('pathlib.Path.exists', new_callable=MagicMock)
     @patch('logging.info')
-    def test_parse_download_skip_with_genome_download(self, mock_logging_info, mock_exists, mock_gzip_open, mock_open):
+    @patch('os.mkdir')
+    def test_parse_download_skip_with_genome_download(self, mock_mkdir, mock_logging_info, mock_exists, mock_gzip_open, mock_open):
         key_word = "Enterococcus"
         output_folder = "my_output_folder"
         sys.argv = ["motus", "download", "-s", "metadata_file", "-w", key_word, "-o", output_folder]
@@ -55,7 +56,8 @@ class TestParseDownload(unittest.TestCase):
     @patch('gzip.open', new_callable=MagicMock)
     @patch('pathlib.Path.exists', new_callable=MagicMock)
     @patch('logging.info')
-    def test_parse_download_only_representative_genomes(self, mock_logging_info, mock_exists, mock_gzip_open, mock_open):
+    @patch('os.mkdir')
+    def test_parse_download_only_representative_genomes(self, mock_mkdir, mock_logging_info, mock_exists, mock_gzip_open, mock_open):
         key_word = "Enterococcus"
         output_folder = "my_output_folder"
         sys.argv = ["motus", "download", "-s", "metadata_file", "-w", key_word, "-r", "-o", output_folder]
