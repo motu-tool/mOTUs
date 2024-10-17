@@ -14,20 +14,30 @@ permissions:
 
 jobs:
   build:
+    name: ${{matrix.os}}
+    runs-on: ${{matrix.os}}
+    defaults:
+      run:
+        shell: bash -l {0}
 
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v3
+    - name: create conda environment with conda
+      uses: conda-incubator/setup-miniconda@v3
       with:
-        python-version: "3.10"
-    - name: Install dependencies
+        conda-version: "*"
+        activate-environment: mOTUs4
+        environment-file: environment.yaml
+        auto-activate-base: false
+    - name: check conda environment & install flake8 and pytest
       run: |
-        python -m pip install --upgrade pip
+        conda info
+        conda list
         pip install flake8 pytest
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
