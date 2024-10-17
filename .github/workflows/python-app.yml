@@ -19,33 +19,32 @@ jobs:
     defaults:
       run:
         shell: bash -l {0}
-
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    - name: create conda environment with conda
-      uses: conda-incubator/setup-miniconda@v3
-      with:
-        conda-version: "*"
-        activate-environment: mOTUs4
-        environment-file: tests/environment.yaml
-        auto-activate-base: false
-    - name: check conda environment & install flake8 and pytest
-      run: |
-        conda info
-        conda list
-        pip install flake8 pytest
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test with pytest
-      run: |
-        pytest
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: create conda environment with conda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          conda-version: "*"
+          activate-environment: mOTUs4
+          environment-file: tests/environment.yaml
+          auto-activate-base: false
+      - name: check conda environment & install flake8 and pytest
+        run: |
+          conda info
+          conda list
+          pip install flake8 pytest
+      - name: Lint with flake8
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      - name: Test with pytest
+        run: |
+          pytest
