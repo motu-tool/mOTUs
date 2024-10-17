@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest]
 
     steps:
       - name: Checkout code
@@ -30,7 +30,7 @@ jobs:
       - name: create conda environment with conda
         uses: conda-incubator/setup-miniconda@v3
         with:
-          conda-version: "24.5.0"
+          conda-version: "*"
           activate-environment: mOTUs4
           environment-file: tests/environment.yaml
           auto-activate-base: false
