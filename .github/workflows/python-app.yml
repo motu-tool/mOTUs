@@ -26,9 +26,9 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: create conda environment with conda
-        uses: conda-incubator/setup-miniconda@v4
+        uses: conda-incubator/setup-miniconda@v3
         with:
           conda-version: "*"
           activate-environment: mOTUs4
