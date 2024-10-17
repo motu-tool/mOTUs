@@ -31,7 +31,7 @@ jobs:
       with:
         conda-version: "*"
         activate-environment: mOTUs4
-        environment-file: environment.yaml
+        environment-file: tests/environment.yaml
         auto-activate-base: false
     - name: check conda environment & install flake8 and pytest
       run: |
