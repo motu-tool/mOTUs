@@ -23,7 +23,7 @@
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# any later version.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -88,10 +88,12 @@ DEFAULT_MOTUS_MGDB_PARENT_LOCATION = pathlib.Path(__file__).resolve().parent
 DEFAULT_MOTUS_MGDB_LOCATION = DEFAULT_MOTUS_MGDB_PARENT_LOCATION.joinpath('db_mOTU')
 DEFAULT_MOTUS_MGDB_LOCATION_MARKER = DEFAULT_MOTUS_MGDB_LOCATION.joinpath('db_mOTU.downloaded')
 MOTUS_MGDB_REMOTE_LOCATION = 'https://sunagawalab.ethz.ch/share/MOTUS/database/4.0/data/mOTUS-MGDB/current/db_mOTU.tar.gz'
+MOTUS_GENOME_REMOTE_PREFIX = 'https://sunagawalab.ethz.ch/share/MOTUS/database/4.0/data/genomes/'
+
+Mgc_values = collections.namedtuple("Mgc_values", "insert_raw insert_norm insert_scaled base_raw base_norm")
 
 
-
-class Taxonomic_Rank(Enum):
+class TaxonomicRank(Enum):
     DOMAIN = 'domain'
     PHYLUM = 'phylum'
     CLASS = 'class'
@@ -100,22 +102,21 @@ class Taxonomic_Rank(Enum):
     GENUS = 'genus'
     SPECIES = 'species'
 
-Mgc_values = collections.namedtuple("Mgc_values", "insert_raw insert_norm insert_scaled base_raw base_norm")
 
 
-def check_call(command: str) -> None:
-    """
-    Simple wrapper to execute check_call and catch exceptions
-    :param command:
-    :return:
-    """
 
-    returncode = 1
-    try:
-        returncode = subprocess.check_call(command, shell=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
-    except subprocess.CalledProcessError as e:
-        logging.error('Command {} failed with message:\t{}'.format(e.cmd, e.stderr))
-        shutdown(returncode)
+# def check_call(command: str) -> None:
+#     """
+#     Simple wrapper to execute check_call and catch exceptions
+#     :param command:
+#     :return:
+#     """
+#
+#     try:
+#         returncode = subprocess.check_call(command, shell=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+#     except subprocess.CalledProcessError as e:
+#         logging.error('Command {} failed with message:\t{}'.format(e.cmd, e.stderr))
+#         shutdown(returncode)
 
 
 def shutdown(exitcode: int) -> None:
@@ -162,6 +163,12 @@ class MotusFile:
         else:
             return False
 
+    def has_motus_with_abundance(self):
+        if len(self._motus_with_abundance) == 0:
+            return False
+        else:
+            return True
+
     def set_mOTU_counts(self, samplename_2_motus_2_counts: Dict[str, float], count_type):
         self._motus_with_abundance = set()
         self._samplename_2_motus_2_counts = {}
@@ -198,7 +205,7 @@ class MotusFile:
 
     def get_mOTUs_file_header(self, relabundance=False) -> str:
 
-        rel_ab = relabundance
+        relab = relabundance
         min_mgcs = self._min_mgcs
         count_mode = self._count_mode
         full_version = self._full_version
@@ -209,11 +216,11 @@ class MotusFile:
         if not count_mode:
             logging.error('count_mode parameter not set. Can\'t create header. Quitting...')
 
-        if rel_ab:
-            rel_ab = 'relative_abundance'
+        if relab:
+            relab = 'relative_abundance'
         else:
-            rel_ab = 'counts'
-        header = f'#{full_version}\treport_mode={rel_ab}\tcount_mode={count_mode}\tmin_mgcs={min_mgcs}'
+            relab = 'counts'
+        header = f'#{full_version}\treport_mode={relab}\tcount_mode={count_mode}\tmin_mgcs={min_mgcs}'
         return header
 
     def merge_profiles(self, motus_files) -> None: # Typing --> This is a List[MotusFile]
@@ -319,50 +326,57 @@ class MotusFile:
             elif len(splits) == 7:
                 [full_version, report_mode, count_mode, min_mgcs, taxonomy, aggregated, level] = splits
             else:
-                logging.error('The header of this mOTUs file looks malformed. Please check. Quitting ...')
+                logging.error('The header of this mOTUs file looks malformed. Expected 7 columns. Please check. Quitting ...')
                 logging.error(f'{header}')
                 shutdown(1)
 
             if not full_version.startswith('#TOOL'):
-                logging.error('The header of this mOTUs file looks malformed. Please check. Quitting ...')
+                logging.error('The header of this mOTUs file looks malformed. #TOOL token is missing. Please check. Quitting ...')
+                logging.error('Malformed header:')
                 logging.error(f'{header}')
                 shutdown(1)
             full_version = full_version[1:]
 
             if 'report_mode' not in report_mode:
-                logging.error('The header of this mOTUs file looks malformed. Please check. Quitting ...')
+                logging.error('The header of this mOTUs file looks malformed. report_mode token missing. Please check. Quitting ...')
+                logging.error('Malformed header:')
                 logging.error(f'{header}')
                 shutdown(1)
             report_mode = report_mode.split('=')[1]
 
             if 'count_mode' not in count_mode:
-                logging.error('The header of this mOTUs file looks malformed. Please check. Quitting ...')
+                logging.error('The header of this mOTUs file looks malformed. count_mode token missing. Please check. Quitting ...')
+                logging.error('Malformed header:')
                 logging.error(f'{header}')
                 shutdown(1)
             count_mode = count_mode.split('=')[1]
 
             if 'min_mgcs' not in min_mgcs:
-                logging.error('The header of this mOTUs file looks malformed. Please check. Quitting ...')
+                logging.error('The header of this mOTUs file looks malformed. min_mgcs token missing. Please check. Quitting ...')
+                logging.error('Malformed header:')
                 logging.error(f'{header}')
                 shutdown(1)
             min_mgcs = int(min_mgcs.split('=')[1])
 
             if taxonomy:
                 if 'taxonomy' not in taxonomy:
-                    logging.error('The header of this mOTUs file looks malformed. Please check. Quitting ...')
+                    logging.error('The header of this mOTUs file looks malformed. taxonomy token missing. Please check. Quitting ...')
+                    logging.error('Malformed header:')
                     logging.error(f'{header}')
                     shutdown(1)
                 taxonomy = taxonomy.split('=')[1]
 
             if level:
                 if 'level' not in level:
-                    logging.error('The header of this mOTUs file looks malformed. Please check. Quitting ...')
+                    logging.error('The header of this mOTUs file looks malformed. level token missing. Please check. Quitting ...')
+                    logging.error('Malformed header:')
                     logging.error(f'{header}')
                     shutdown(1)
                 level = level.split('=')[1]
             if aggregated:
                 if 'aggregated' not in aggregated:
-                    logging.error('The header of this mOTUs file looks malformed. Please check. Quitting ...')
+                    logging.error('The header of this mOTUs file looks malformed. aggregated token missing. Please check. Quitting ...')
+                    logging.error('Malformed header:')
                     logging.error(f'{header}')
                     shutdown(1)
                 aggregated = aggregated.split('=')[1]
@@ -408,7 +422,10 @@ class MotusFile:
                     self._samplename_2_motus_2_relab[samplename] = {}
                     tot_abundance = sum(motus_2_counts.values())
                     for motu, value in motus_2_counts.items():
-                        self._samplename_2_motus_2_relab[samplename][motu] = value / tot_abundance
+                        if int(value) == 0:
+                            self._samplename_2_motus_2_relab[samplename][motu] = 0.0
+                        else:
+                            self._samplename_2_motus_2_relab[samplename][motu] = value / tot_abundance
             elif report_mode == 'relative_abundance':
                 self._samplename_2_motus_2_counts = None
                 self._samplename_2_motus_2_relab = sample_2_motu_2_cnts
@@ -454,7 +471,7 @@ class MotusParameters:
 
     _mgc_file: pathlib.Path = None
     _motu_file: pathlib.Path = None
-    _motu_file_rel_ab: pathlib.Path = None
+    _motu_file_relab: pathlib.Path = None
     _inserts_file: pathlib.Path = None
     _samplename: str = None
     _min_alignment_length: int = 0
@@ -527,7 +544,7 @@ class MotusParameters:
     def set_threads(self, threads: int):
         if threads < 1:
             logging.error('Threads have to be at least 1')
-            shutdown()
+            shutdown(1)
         if threads > os.cpu_count():
             logging.warning('Number of threads exceeds the total number of CPU cores.')
         self._threads = int(threads)
@@ -577,13 +594,13 @@ class MotusParameters:
         return self._motu_file
 
     def get_motu_file_relab(self) -> pathlib.Path:
-        self._motu_file_rel_ab.parent.mkdir(exist_ok=True, parents=True)
-        return self._motu_file_rel_ab
+        self._motu_file_relab.parent.mkdir(exist_ok=True, parents=True)
+        return self._motu_file_relab
 
 
     def set_motu_file(self, motu_file: pathlib.Path, required_to_exist=True) -> None:
         self._motu_file = motu_file
-        self._motu_file_rel_ab = pathlib.Path(str(motu_file) + '.relab')
+        self._motu_file_relab = pathlib.Path(str(motu_file) + '.relab')
         if required_to_exist:
             if not motu_file.exists():
                 logging.error(f'mOTU file {motu_file} does not exist. Shutting down ...')
@@ -667,7 +684,7 @@ class MotusParameters:
                     break
                 reads.append((header.strip().split()[0], sequence))
         else:
-            logging.error(f'Unknown file format: {reads_file}')
+            logging.error(f'Unknown file format: {reads_file}. Expecting a fasta or fastq file, can be gzipped.')
             shutdown(1)
         of.close()
         return reads
@@ -720,7 +737,7 @@ class MotusParameters:
                     logging.error(f'Headers of reads are not identical. Shutting down ...')
                     logging.error(f'Differing read headers: {r1_header.symmetric_difference(r2_header)}')
                     logging.error(f'Differing read headers file 1: {r1_file}')
-                    logging.error(f'Differing read headers file 1: {r2_file}')
+                    logging.error(f'Differing read headers file 2: {r2_file}')
                     shutdown(1)
 
             for u_file in unpaired_files:
@@ -746,10 +763,10 @@ class MotusSearchDB:
             handle.readline()
             for line in handle:
                 [motu, gtdb] = line.strip().split('\t')
-                [domain, phylum, classi, order, family, genus, species] = [x.split('__')[1] for x in gtdb.split(';')]
+                [domain, phylum, class_rank, order, family, genus, species] = [x.split('__')[1] for x in gtdb.split(';')]
                 self._tax_2_motu_and_genome[domain].add(motu)
                 self._tax_2_motu_and_genome[phylum].add(motu)
-                self._tax_2_motu_and_genome[classi].add(motu)
+                self._tax_2_motu_and_genome[class_rank].add(motu)
                 self._tax_2_motu_and_genome[order].add(motu)
                 self._tax_2_motu_and_genome[family].add(motu)
                 self._tax_2_motu_and_genome[genus].add(motu)
@@ -764,12 +781,12 @@ class MotusSearchDB:
                 self._genome_2_path[genome] = location
                 if 'representative' in entry['MOTU4_STATUS']:
                     self._representative_genomes.add(genome)
-                [domain, phylum, classi, order, family, genus, species] = [entry['DOMAIN'], entry['PHYLUM'], entry['CLASS'], entry['ORDER'], entry['FAMILY'], entry['GENUS'], entry['SPECIES']]
-                self._genome_2_tax[genome] = '\t'.join([domain, phylum, classi, order, family, genus, species])
+                [domain, phylum, class_rank, order, family, genus, species] = [entry['DOMAIN'], entry['PHYLUM'], entry['CLASS'], entry['ORDER'], entry['FAMILY'], entry['GENUS'], entry['SPECIES']]
+                self._genome_2_tax[genome] = '\t'.join([domain, phylum, class_rank, order, family, genus, species])
 
                 self._tax_2_motu_and_genome[domain].add(genome)
                 self._tax_2_motu_and_genome[phylum].add(genome)
-                self._tax_2_motu_and_genome[classi].add(genome)
+                self._tax_2_motu_and_genome[class_rank].add(genome)
                 self._tax_2_motu_and_genome[order].add(genome)
                 self._tax_2_motu_and_genome[family].add(genome)
                 self._tax_2_motu_and_genome[genus].add(genome)
@@ -810,7 +827,7 @@ class MotusSearchDB:
         report_genomes = sorted(list(report_genomes))
         return report_genomes
     def get_genome_path(self, genome:str):
-        p = 'https://sunagawalab.ethz.ch/share/MOTUS/database/4.0/data/genomes/' + self._genome_2_path[genome]
+        p = MOTUS_GENOME_REMOTE_PREFIX + self._genome_2_path[genome]
         return p
     def get_genome_motu(self, genome: str):
         return self._genome_2_motu[genome]
@@ -1009,7 +1026,7 @@ class MotusDB:
 
         return self.mgc_2_motu[mgc]
 
-    def get_bwa_index(self) -> str:
+    def get_bwa_index(self) -> pathlib.Path:
         """
         Get the location of the bwa index
 
@@ -1372,6 +1389,16 @@ class InsertCounter:
         self._mg_2_edge_corrected_raw_multimapper_base_counts = mg_2_edge_corrected_base_counts
 
     def _correct_edges(self, mg_2_alignments, min_alignment_length):
+        """Corrects for missing alignments towards the gene edges.
+        Assuming you have a read which is only partly overlapping with a
+        markegene therefor the alignment is too short is filtered. This
+        happens mostly at the edges of genes. We can correct for that by
+        something we call inverse padding (formerly known as edge correction).
+        We remove all aligned bases from the end regions of the gene and then
+        extrapolate the abundance based on the median abundance of the rest of
+        the gene
+
+        """
 
         mg_2_trunc_insert_counts = collections.Counter()
         mg_2_untrunc_insert_counts = collections.Counter()
@@ -1491,6 +1518,13 @@ class InsertCounter:
         self._mg_2_edge_corrected_raw_base_counts = mg_2_edge_corrected_raw_base_counts
 
     def _norm_and_scale_counts2(self, mg_2_raw_counts):
+        """ Raw insert counts are being normalised (and scaled).
+
+        Normalisation per MG:
+        norm(mg_count) = mg_cnt / sum(mgn_cnt/len(mgn) + ... + mgm_cnt/len(mgm))
+        scaled(mg_count) = norm(mg_count) / sum(mg_counts)
+
+        """
         tot_cnt = float(sum(mg_2_raw_counts.values()))
         denominator: float = sum([float(mgh_2_count[1]) / float(motusdb.get_length_by_mg(mgh_2_count[0])) for mgh_2_count in mg_2_raw_counts.items()])
         scaled_mg_2_counts = {}
@@ -1592,6 +1626,12 @@ class InsertCounter:
         return best_mgs
 
     def count(self, bam_insert_iterator) -> None:
+        """Umbrella count method
+        Reads the alignments and stores them based on insert name.
+        Then counts unique mappers and distributes multimappers
+        based on the abundances of mgcs
+
+        """
         for insert_name, alignments in bam_insert_iterator:
             self.appendmapper(insert_name, self._filter_best_alignment(alignments))
 
@@ -1615,6 +1655,9 @@ class MGCCounter:
 
 
     def aggregate_mgc(self, mgh_2_scaled_counts, mgh_2_unscaled_counts):
+        """Aggregate counts by markergenes by markergeneclusters
+
+        """
         mgc_2_count = {}
         for mgh, count in mgh_2_scaled_counts.items():
             mgc = motusdb.get_mgc_by_mg(mgh)
@@ -1963,7 +2006,7 @@ def parse_batch_profile():
             if samplename in samplename_2_files:
                 logging.error(f'Submitted samplename {samplename} duplicated. Quitting ...')
                 shutdown(1)
-            for (obf,mf,mof,iof) in samplename_2_files.values():
+            for (obf,mf,mof,iof) in samplename_2_files.values(): #output_bam_file, mgc_file, motu_file, inserts_output_file
                 if obf.samefile(bamfile):
                     logging.error(f'Submitted BAM file {bamfile} duplicated. Quitting ...')
                     shutdown(1)
@@ -2014,7 +2057,7 @@ Output options:
    -o  FILE         output file name [required]
 
 Algorithm options:
-   -g  INT          number of marker genes cutoff: 1=higher recall, 6=higher precision [3]
+   -g  INT          number of marker genes cutoff: 1=higher recall, 6=higher precision, 10=maximum [3]
    -l  INT          min length of the alignment (bp) [75]
    -t  INT          number of threads [1]
    -v  INT          verbosity level: 1=error, 2=warning, 3=message, 4+=debugging [1]
@@ -2095,7 +2138,7 @@ Algorithm options:
    -l  INT          min length of the alignment (bp) [75]
    -v  INT          verbosity level: 1=error, 2=warning, 3=message, 4+=debugging [3]''', formatter_class=CapitalisedHelpFormatter,add_help=False)
 
-    parser.add_argument("-i", type=str)  # provide a SAM or BAM input file (or list of files) output of motus map_tax
+    parser.add_argument("-i", type=str, required=True)  # provide a SAM or BAM input file (or list of files) output of motus map_tax
     parser.add_argument("-o", required=True)  # output file name [stdout]
     parser.add_argument("-l", type=int, default=75)  # min length of the alignment (bp) [75]
     parser.add_argument("-v", type=int, default=1)  # verbosity level
@@ -2125,7 +2168,7 @@ Algorithm options:
     calc_mgc()
     shutdown(0)
 
-def assign_taxonomy(input_motu_file: pathlib.Path, output_motu_file: pathlib.Path, aggregate: bool, use_representative_taxonomy: bool, taxonomy_to_use: str, taxonomic_rank: Taxonomic_Rank) -> None:
+def assign_taxonomy(input_motu_file: pathlib.Path, output_motu_file: pathlib.Path, aggregate: bool, use_representative_taxonomy: bool, taxonomy_to_use: str, taxonomic_rank: TaxonomicRank) -> None:
     """
     Assign taxonomy to existing motusfile and
     potentially aggregate
@@ -2150,15 +2193,20 @@ def merge_profiles(motus_file_paths: List[pathlib.Path], output_motus_file_path:
     - Write the merged profile into the output file
 
     """
-
+    #TODO check for empty motus files
     logging.info('Starting mOTUs - merge routine - Merging of mOTUs profile files ... ')
     motus_files = []
     logging.info(f'There are {len(motus_file_paths)} input profile files.')
-    for motus_file_path in motus_file_paths:
+    for cnt, motus_file_path in enumerate(motus_file_paths, 1):
+        if cnt % 100 == 0:
+            logging.info(f'{cnt} / {len(motus_file_paths)} processed')
         mf = MotusFile()
         mf.read_mOTUs_file(motus_file_path)
+        if not mf.has_motus_with_abundance():
+            logging.info(f'mOTUs4 file has no mOTUs with abundance. Will be ignored. {motus_file_path}')
+            continue
         motus_files.append(mf)
-
+    logging.info(f'{cnt} / {len(motus_file_paths)} processed')
     mf = MotusFile()
     mf.merge_profiles(motus_files)
     if mf.has_counts():
@@ -2300,7 +2348,8 @@ def parse_download():
 
          Output options:
             -s  FILE  Genome metadata file
-            -o  PATH  Genome output folder     
+            -o  PATH  Genome output folder. Only required when 
+                      -l is not set     
 
          Options:
 
@@ -2427,7 +2476,7 @@ motus calc_motu [options]
        -c        print result as counts instead of relative abundances
     
     Algorithm options:
-       -g   INT   number of marker genes cutoff: 1=higher recall, 6=higher precision [3]
+       -g   INT   number of marker genes cutoff: 1=higher recall, 6=higher precision, 10=maximum [3]
        -v   INT   verbosity level: 1=error, 2=warning, 3=message, 4+=debugging [3]
        -y  STR    type of read counts [INSERT_SCALED]
                     Values: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
@@ -2460,7 +2509,6 @@ motus calc_motu [options]
     motusfiles.set_motu_file(motu_file, required_to_exist=False)
     motusfiles.set_sample_name(samplename)
     motusfiles.set_threads(1)
-    motusfiles.set_count_mode(args.y)
     motusfiles.set_count_mode(args.y)
     motusfiles.set_minimal_number_of_mgcs(args.g)
     calc_motu()
