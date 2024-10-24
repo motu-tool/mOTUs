@@ -527,7 +527,7 @@ class MotusParameters:
     def set_threads(self, threads: int):
         if threads < 1:
             logging.error('Threads have to be at least 1')
-            shutdown()
+            shutdown(1)
         if threads > os.cpu_count():
             logging.warning('Number of threads exceeds the total number of CPU cores.')
         self._threads = int(threads)

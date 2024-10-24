@@ -1,6 +1,6 @@
 import unittest
 from motus import motus
-from unittest.mock import patch, mock_open, MagicMock
+from unittest.mock import patch, mock_open
 import pathlib
 import os
 
@@ -10,7 +10,7 @@ class TestMotusParametersSetGet(unittest.TestCase):
     def setUp(self):
         self.obj = motus.MotusParameters()
 
-        # Set initial values to ensure a known state
+        # set initial values to ensure a known state
         self.obj = motus.MotusParameters()
         self.obj._min_alignment_length = 100
         self.obj._threads = 4
@@ -29,16 +29,16 @@ class TestMotusParametersSetGet(unittest.TestCase):
         self.obj._unpaired_files = [pathlib.Path("unpaired_file")]
 
     def test_is_strict_db_mode(self):
-        # Test strict mode is initially True
+        # test strict mode is initially True
         self.assertTrue(self.obj.is_strict_db_mode())
 
     def test_enable_lenient_mode(self):
-        # Test that enable_lenient_mode sets _is_strict_db_mode to False
+        # test that enable_lenient_mode sets _is_strict_db_mode to False
         self.obj.enable_lenient_mode()
         self.assertFalse(self.obj.is_strict_db_mode())
 
     def test_set_minimal_number_of_mgcs(self):
-        # Test that set_minimal_number_of_mgcs sets the correct value
+        # test that set_minimal_number_of_mgcs sets the correct value
         self.obj.set_minimal_number_of_mgcs(10)
         self.assertEqual(self.obj._min_mgcs, 10)
 
@@ -46,7 +46,7 @@ class TestMotusParametersSetGet(unittest.TestCase):
         self.assertEqual(self.obj._min_mgcs, 5)
 
     def test_set_count_mode(self):
-        # Test that set_count_mode sets the correct count mode
+        # test that set_count_mode sets the correct count mode
         self.obj.set_count_mode('raw')
         self.assertEqual(self.obj._count_mode, 'raw')
 
@@ -54,26 +54,26 @@ class TestMotusParametersSetGet(unittest.TestCase):
         self.assertEqual(self.obj._count_mode, 'NORM')
 
     def test_get_count_type_norm(self):
-        # Test that set_count_mode sets the correct count mode
+        # test that set_count_mode sets the correct count mode
         self.obj._count_mode = "NORM"
 
         self.assertEqual(self.obj.get_count_type(), 'float')
 
     def test_get_count_type_other(self):
-        # Test that set_count_mode sets the correct count mode
+        # test that set_count_mode sets the correct count mode
         self.obj._count_mode = "OTHER"
 
         self.assertEqual(self.obj.get_count_type(), 'int')
 
     def test_set_minimal_alignment_length(self):
-        # Test that set_count_mode sets the correct count mode
+        # test that set_minimal_alignment_length
         minimal_alignment_length = 50
         self.obj.set_minimal_alignment_length(minimal_alignment_length)
 
         self.assertEqual(self.obj._min_alignment_length, 50)
 
     def test_set_minimal_alignment_length_below(self):
-        # Test that set_count_mode sets the correct count mode
+        # test that set_minimal_alignment_length fails for values below 30
         minimal_alignment_length = 29
 
         with self.assertLogs('root', level='ERROR') as log_capture:
@@ -84,7 +84,7 @@ class TestMotusParametersSetGet(unittest.TestCase):
                 'ERROR:root:Minimal alignment length is below aligner threshold. Pick a larger value. Quitting ...'])
 
     def test_set_minimal_alignment_length_above(self):
-        # Test that set_count_mode sets the correct count mode
+        # test that set_minimal_alignment_length fails for values above 152
         minimal_alignment_length = 152
 
         with self.assertLogs('root', level='INFO') as log_capture:
@@ -94,57 +94,62 @@ class TestMotusParametersSetGet(unittest.TestCase):
                 'WARNING:root:Minimal alignment length set to above average read length of metagenomic sequencing data.'])
 
     def test_get_minimal_alignment_length(self):
+        # test that minimal alignment length is set correctly
         self.assertEqual(self.obj.get_minimal_alignment_length(), 100)
 
     def test_set_threads(self):
-        # Test valid thread setting
+        # test valid thread setting
         self.obj.set_threads(4)
         self.assertEqual(self.obj.get_threads(), 4)
 
-        # Test setting more threads than CPU cores
+    def test_set_too_many_threads(self):
+        # test setting more threads than CPU cores
         with self.assertLogs('root', level='INFO') as log_capture:
             self.obj.set_threads(os.cpu_count() + 1)
             self.assertEqual(log_capture.output,
                              ['WARNING:root:Number of threads exceeds the total number of CPU cores.'])
 
-        # Test setting invalid number of threads
+    def test_set_invalid_number_of_threads(self):
+        # test setting invalid number of threads
         with self.assertLogs('root', level='ERROR') as log_capture:
             with self.assertRaises(SystemExit):
                 self.obj.set_threads(0)
             self.assertEqual(log_capture.output, ['ERROR:root:Threads have to be at least 1'])
 
     def test_set_sample_name(self):
-        # Test valid sample name
+        # test valid sample name
         self.obj.set_sample_name("new_sample")
         self.assertEqual(self.obj.get_sample_name(), "new_sample")
 
     def test_set_sample_name_empty(self):
-        # Test invalid (empty) sample name
+        # test invalid (empty) sample name
         with self.assertLogs('root', level='ERROR') as log_capture:
             with self.assertRaises(SystemExit):
                 self.obj.set_sample_name("")
             self.assertEqual(log_capture.output, ['ERROR:root:Sample name cannot be empty. Quitting'])
 
     def test_get_count_mode(self):
+        # test get_count_mode returns expected value
         self.assertEqual(self.obj.get_count_mode(), "raw")
 
     def test_get_min_mgcs(self):
+        # test get_min_mgcs returns expected value
         self.assertEqual(self.obj.get_min_mgcs(), 3)
 
     @patch("pathlib.Path.mkdir")
     def test_get_mgc_file(self, mock_mkdir):
-        # Call the method
+        # call get_mgc_file
         result = self.obj.get_mgc_file()
 
-        # Assert that the mkdir method was called with correct parameters
+        # assert that the mkdir method was called with correct parameters
         mock_mkdir.assert_called_once_with(exist_ok=True, parents=True)
 
-        # Assert that the method returns the correct Path object
+        # assert that the method returns the correct Path object
         self.assertEqual(result, self.obj._mgc_file)
 
     @patch('pathlib.Path.exists', return_value=True)
     def test_set_mgc_file_exists(self, mock_exists):
-        # Test valid MGC file
+        # test valid MGC file
         self.obj.set_mgc_file(pathlib.Path(mock_exists), required_to_exist=True)
         self.assertEqual(self.obj._mgc_file, pathlib.Path(mock_exists))
 
@@ -157,18 +162,18 @@ class TestMotusParametersSetGet(unittest.TestCase):
 
     @patch("pathlib.Path.mkdir")
     def test_get_inserts_file(self, mock_mkdir):
-        # Call the method
+        # call get_inserts_file
         result = self.obj.get_inserts_file()
 
-        # Assert that the mkdir method was called
+        # assert that the mkdir method was called
         mock_mkdir.assert_called_once_with(exist_ok=True, parents=True)
 
-        # Assert that the method returns the correct Path object
+        # assert that the method returns the correct Path object
         self.assertEqual(result, self.obj._inserts_file)
 
     @patch('pathlib.Path.exists', return_value=True)
     def test_set_inserts_file_exists(self, mock_exists):
-        # Test valid MGC file
+        # test valid MGC file
         self.obj.set_inserts_file(pathlib.Path(mock_exists), required_to_exist=True)
         self.assertEqual(self.obj._inserts_file, pathlib.Path(mock_exists))
 
@@ -181,33 +186,37 @@ class TestMotusParametersSetGet(unittest.TestCase):
 
     @patch("pathlib.Path.mkdir")
     def test_get_motu_file(self, mock_mkdir):
-        # Call the method
+        # call get_motu_file
         result = self.obj.get_motu_file()
 
-        # Assert that the mkdir method was called
+        # assert that the mkdir method was called
         mock_mkdir.assert_called_once_with(exist_ok=True, parents=True)
 
-        # Assert that the method returns the correct Path object
+        # assert that the method returns the correct Path object
         self.assertEqual(result, self.obj._motu_file)
 
     @patch("pathlib.Path.mkdir")
     def test_get_motu_file_rel_ab(self, mock_mkdir):
-        # Call the method
+        # call get_motu_file_relab
         result = self.obj.get_motu_file_relab()
 
-        # Assert that the mkdir method was called
+        # assert that the mkdir method was called
         mock_mkdir.assert_called_once_with(exist_ok=True, parents=True)
 
-        # Assert that the method returns the correct Path object
+        # assert that the method returns the correct Path object
         self.assertEqual(result, self.obj._motu_file_rel_ab)
 
     @patch('pathlib.Path.exists', return_value=True)
     def test_set_motu_file_exists(self, mock_exists):
+        # call set_motu_file
         self.obj.set_motu_file(pathlib.Path(mock_exists), required_to_exist=True)
+
+        # assert that the paths were correctly set
         self.assertEqual(self.obj._motu_file, pathlib.Path(mock_exists))
         self.assertEqual(self.obj._motu_file_rel_ab, pathlib.Path(str(self.obj._motu_file) + '.relab'))
 
     def test_set_motu_file_does_not_exist(self):
+        # do not patch the pathlib.Path function, so it fails because the motu file doesn't exist
         with self.assertLogs('root', level='ERROR') as log_capture:
             with self.assertRaises(SystemExit):
                 self.obj.set_motu_file(pathlib.Path("/invalid/path/to/mOTU_file"), required_to_exist=True)
@@ -216,12 +225,14 @@ class TestMotusParametersSetGet(unittest.TestCase):
 
     @patch('pathlib.Path.exists', return_value=True)
     def test_set_alignment_file_exists(self, mock_exists):
+        # call set_alignment_file
         file_name = pathlib.Path("alignment_file.bam")
         self.obj.set_alignment_file(pathlib.Path(file_name), required_to_exist=True)
         self.assertEqual(self.obj._alignment_file, pathlib.Path(file_name))
 
     @patch('pathlib.Path.exists', return_value=True)
     def test_set_alignment_file_invalid_suffix(self, mock_exists):
+        # pass alignment file with invalid suffix, expect failure
         with self.assertLogs('root', level='ERROR') as log_capture:
             invalid_file = pathlib.Path("alignment_file.txt")
             with self.assertRaises(SystemExit):
@@ -231,6 +242,7 @@ class TestMotusParametersSetGet(unittest.TestCase):
                 'accordingly. Shutting down ...'])
 
     def test_set_alignment_file_does_not_exist(self):
+        # do not patch pathlib.Path.exists, so it will fail because the file doesn't exist
         with self.assertLogs('root', level='ERROR') as log_capture:
             with self.assertRaises(SystemExit):
                 self.obj.set_alignment_file(pathlib.Path("/invalid/path/to/alignment_file"), required_to_exist=True)
@@ -238,6 +250,7 @@ class TestMotusParametersSetGet(unittest.TestCase):
                 'ERROR:root:Alignment file /invalid/path/to/alignment_file does not exist. Shutting down ...'])
 
     def test_get_read_files(self):
+        # test if get_read_files returns the correct values
         expected_read_files = [
             (pathlib.Path("forward_file1"), '/1'),
             (pathlib.Path("reverse_file1"), '/2'),
@@ -248,36 +261,37 @@ class TestMotusParametersSetGet(unittest.TestCase):
         self.assertEqual(self.obj.get_read_files(), expected_read_files)
 
     def test_get_temporary_alignment_file(self):
+        # test get_temporary_alignment_file
         temp_file = self.obj.get_temporary_alignment_file()
         self.assertEqual(temp_file, pathlib.Path("alignment_file_tmp.bam"))
 
     @patch('pathlib.Path.unlink', return_value=None)
     def test_delete_temporary_alignment_file(self, mock_unlink):
+        # test delete_temporary_alignment_file
         self.obj.delete_temporary_alignment_file()
         mock_unlink.assert_called_once_with(missing_ok=True)
 
     @patch("pathlib.Path.mkdir")
     def test_get_alignment_file(self, mock_mkdir):
+        # test get_alignment_file
         alignment_file = self.obj.get_alignment_file()
         self.assertEqual(alignment_file, pathlib.Path("alignment_file.bam"))
-        # Assert that the mkdir method was called
         mock_mkdir.assert_called_once_with(exist_ok=True, parents=True)
 
 
 class TestGetFirst1000Reads(unittest.TestCase):
     def setUp(self):
-        # Mock object for testing
+        # mock object MotusParameters for testing
         self.obj = motus.MotusParameters()
 
     @patch("gzip.open", new_callable=mock_open, read_data=">header\nATCG\n")
     @patch("Bio.SeqIO.FastaIO.SimpleFastaParser", return_value=[("header", "ATCG")] * 1001)
     def test_get_first_1000_reads_fa_gz(self, mock_fasta_parser, mock_gzip_open):
+        # test get_first_1000_reads with fa.gz file
         reads_file = pathlib.Path("/fake/path/to/file.fa.gz")
-
-        # Call the method
         result = self.obj.get_first_1000_reads(reads_file)
 
-        # Ensure gzip.open is called and only first 1000 reads are returned
+        # ensure gzip.open is called and only first 1000 reads are returned
         mock_gzip_open.assert_called_once_with(reads_file, 'rt')
         self.assertEqual(len(result), 1000)
         self.assertEqual(result[0], ("header", "ATCG"))
@@ -285,12 +299,11 @@ class TestGetFirst1000Reads(unittest.TestCase):
     @patch("builtins.open", new_callable=mock_open, read_data=">header\nATCG\n")
     @patch("Bio.SeqIO.FastaIO.SimpleFastaParser", return_value=[("header", "ATCG")] * 1001)
     def test_get_first_1000_reads_fa(self, mock_fasta_parser, mock_open_file):
+        # test get_first_1000_reads with fa file
         reads_file = pathlib.Path("/fake/path/to/file.fa")
-
-        # Call the method
         result = self.obj.get_first_1000_reads(reads_file)
 
-        # Ensure open is called and only first 1000 reads are returned
+        # ensure open is called and only first 1000 reads are returned
         mock_open_file.assert_called_once_with(reads_file, 'r')
         self.assertEqual(len(result), 1000)
         self.assertEqual(result[0], ("header", "ATCG"))
@@ -298,12 +311,11 @@ class TestGetFirst1000Reads(unittest.TestCase):
     @patch("gzip.open", new_callable=mock_open, read_data=">header\nATCG\n")
     @patch("Bio.SeqIO.FastaIO.SimpleFastaParser", return_value=[("header", "ATCG")] * 1001)
     def test_get_first_1000_reads_fna_gz(self, mock_fasta_parser, mock_gzip_open):
+        # test get_first_1000_reads with fna.gz file
         reads_file = pathlib.Path("/fake/path/to/file.fna.gz")
-
-        # Call the method
         result = self.obj.get_first_1000_reads(reads_file)
 
-        # Ensure gzip.open is called and only first 1000 reads are returned
+        # ensure gzip.open is called and only first 1000 reads are returned
         mock_gzip_open.assert_called_once_with(reads_file, 'rt')
         self.assertEqual(len(result), 1000)
         self.assertEqual(result[0], ("header", "ATCG"))
@@ -311,12 +323,11 @@ class TestGetFirst1000Reads(unittest.TestCase):
     @patch("builtins.open", new_callable=mock_open, read_data=">header\nATCG\n")
     @patch("Bio.SeqIO.FastaIO.SimpleFastaParser", return_value=[("header", "ATCG")] * 1001)
     def test_get_first_1000_reads_fna(self, mock_fasta_parser, mock_open_file):
+        # test get_first_1000_reads with fna file
         reads_file = pathlib.Path("/fake/path/to/file.fna")
-
-        # Call the method
         result = self.obj.get_first_1000_reads(reads_file)
 
-        # Ensure open is called and only first 1000 reads are returned
+        # ensure open is called and only first 1000 reads are returned
         mock_open_file.assert_called_once_with(reads_file, 'r')
         self.assertEqual(len(result), 1000)
         self.assertEqual(result[0], ("header", "ATCG"))
@@ -324,12 +335,11 @@ class TestGetFirst1000Reads(unittest.TestCase):
     @patch("gzip.open", new_callable=mock_open, read_data=">header\nATCG\n")
     @patch("Bio.SeqIO.FastaIO.SimpleFastaParser", return_value=[("header", "ATCG")] * 1001)
     def test_get_first_1000_reads_fasta_gz(self, mock_fasta_parser, mock_gzip_open):
+        # test get_first_1000_reads with fasta.gz file
         reads_file = pathlib.Path("/fake/path/to/file.fasta.gz")
-
-        # Call the method
         result = self.obj.get_first_1000_reads(reads_file)
 
-        # Ensure gzip.open is called and only first 1000 reads are returned
+        # ensure gzip.open is called and only first 1000 reads are returned
         mock_gzip_open.assert_called_once_with(reads_file, 'rt')
         self.assertEqual(len(result), 1000)
         self.assertEqual(result[0], ("header", "ATCG"))
@@ -337,12 +347,11 @@ class TestGetFirst1000Reads(unittest.TestCase):
     @patch("builtins.open", new_callable=mock_open, read_data=">header\nATCG\n")
     @patch("Bio.SeqIO.FastaIO.SimpleFastaParser", return_value=[("header", "ATCG")] * 1001)
     def test_get_first_1000_reads_fasta(self, mock_fasta_parser, mock_open_file):
+        # test get_first_1000_reads with fasta file
         reads_file = pathlib.Path("/fake/path/to/file.fasta")
-
-        # Call the method
         result = self.obj.get_first_1000_reads(reads_file)
 
-        # Ensure open is called and only first 1000 reads are returned
+        # ensure open is called and only first 1000 reads are returned
         mock_open_file.assert_called_once_with(reads_file, 'r')
         self.assertEqual(len(result), 1000)
         self.assertEqual(result[0], ("header", "ATCG"))
@@ -350,12 +359,11 @@ class TestGetFirst1000Reads(unittest.TestCase):
     @patch("gzip.open", new_callable=mock_open, read_data="@header\nATCG\n+\n!!!!\n")
     @patch("Bio.SeqIO.QualityIO.FastqGeneralIterator", return_value=[("header", "ATCG", "!!!!")] * 1001)
     def test_get_first_1000_reads_fq_gz(self, mock_fastq_iterator, mock_gzip_open):
+        # test get_first_1000_reads with fq.gz file
         reads_file = pathlib.Path("/fake/path/to/file.fq.gz")
-
-        # Call the method
         result = self.obj.get_first_1000_reads(reads_file)
 
-        # Ensure gzip.open is called and only first 1000 reads are returned
+        # ensure gzip.open is called and only first 1000 reads are returned
         mock_gzip_open.assert_called_once_with(reads_file, 'rt')
         self.assertEqual(len(result), 1000)
         self.assertEqual(result[0], ("header", "ATCG"))
@@ -363,12 +371,11 @@ class TestGetFirst1000Reads(unittest.TestCase):
     @patch("builtins.open", new_callable=mock_open, read_data="@header\nATCG\n+\n!!!!\n")
     @patch("Bio.SeqIO.QualityIO.FastqGeneralIterator", return_value=[("header", "ATCG", "!!!!")] * 1001)
     def test_get_first_1000_reads_fq(self, mock_fastq_iterator, mock_open_file):
+        # test get_first_1000_reads with fq file
         reads_file = pathlib.Path("/fake/path/to/file.fq")
-
-        # Call the method
         result = self.obj.get_first_1000_reads(reads_file)
 
-        # Ensure open is called and only first 1000 reads are returned
+        # ensure open is called and only first 1000 reads are returned
         mock_open_file.assert_called_once_with(reads_file, 'r')
         self.assertEqual(len(result), 1000)
         self.assertEqual(result[0], ("header", "ATCG"))
@@ -376,9 +383,8 @@ class TestGetFirst1000Reads(unittest.TestCase):
     @patch("gzip.open", new_callable=mock_open, read_data="@header\nATCG\n+\n!!!!\n")
     @patch("Bio.SeqIO.QualityIO.FastqGeneralIterator", return_value=[("header", "ATCG", "!!!!")] * 1001)
     def test_get_first_1000_reads_fastq_gz(self, mock_fastq_iterator, mock_gzip_open):
+        # test get_first_1000_reads with fastq.gz file
         reads_file = pathlib.Path("/fake/path/to/file.fastq.gz")
-
-        # Call the method
         result = self.obj.get_first_1000_reads(reads_file)
 
         # Ensure gzip.open is called and only first 1000 reads are returned
@@ -389,18 +395,18 @@ class TestGetFirst1000Reads(unittest.TestCase):
     @patch("builtins.open", new_callable=mock_open, read_data="@header\nATCG\n+\n!!!!\n")
     @patch("Bio.SeqIO.QualityIO.FastqGeneralIterator", return_value=[("header", "ATCG", "!!!!")] * 1001)
     def test_get_first_1000_reads_fastq(self, mock_fastq_iterator, mock_open_file):
+        # test get_first_1000_reads with fastq file
         reads_file = pathlib.Path("/fake/path/to/file.fastq")
-
-        # Call the method
         result = self.obj.get_first_1000_reads(reads_file)
 
-        # Ensure open is called and only first 1000 reads are returned
+        # ensure open is called and only first 1000 reads are returned
         mock_open_file.assert_called_once_with(reads_file, 'r')
         self.assertEqual(len(result), 1000)
         self.assertEqual(result[0], ("header", "ATCG"))
 
     @patch("builtins.open", new_callable=mock_open)
     def test_unknown_file_format(self, mock_open_file):
+        # test failure when passing an unknown file format to get_first_1000_reads
         reads_file = pathlib.Path("/fake/path/to/file.unknown")
         with self.assertLogs('root', level='ERROR') as log_capture:
             with self.assertRaises(SystemExit):
@@ -410,11 +416,11 @@ class TestGetFirst1000Reads(unittest.TestCase):
 
 class TestSetReadFiles(unittest.TestCase):
     def setUp(self):
-        # Mock object for testing
+        # mock object MotusParameters for testing
         self.obj = motus.MotusParameters()
 
     def test_no_input_files(self):
-        # Empty lists for forward, reverse, and unpaired files
+        # empty lists for forward, reverse, and unpaired files
         forward_files = []
         reverse_files = []
         unpaired_files = []
@@ -426,7 +432,7 @@ class TestSetReadFiles(unittest.TestCase):
 
     @patch("pathlib.Path.exists", return_value=False)
     def test_files_dont_exist(self, mock_exists):
-        # Define some mock file paths
+        # define some mock file paths
         forward_files = [pathlib.Path("/fake/path/to/forward_1.fq")]
         reverse_files = [pathlib.Path("/fake/path/to/reverse_2.fq")]
         unpaired_files = []
@@ -442,7 +448,7 @@ class TestSetReadFiles(unittest.TestCase):
 
     @patch("pathlib.Path.exists", return_value=True)
     def test_duplicate_files(self, mock_exists):
-        # Duplicate files in forward and reverse lists
+        # duplicate files in forward and reverse lists
         forward_files = [pathlib.Path("/fake/path/to/file.fq")]
         reverse_files = [pathlib.Path("/fake/path/to/file.fq")]
         unpaired_files = []
@@ -455,7 +461,7 @@ class TestSetReadFiles(unittest.TestCase):
 
     @patch("pathlib.Path.exists", return_value=True)
     def test_unequal_forward_reverse_files(self, mock_exists):
-        # Unequal number of forward and reverse files
+        # unequal number of forward and reverse files
         forward_files = [pathlib.Path("/fake/path/to/forward_1.fq")]
         reverse_files = [pathlib.Path("/fake/path/to/reverse_1.fq"), pathlib.Path("/fake/path/to/reverse_2.fq")]
         unpaired_files = []
@@ -469,21 +475,21 @@ class TestSetReadFiles(unittest.TestCase):
     @patch("pathlib.Path.exists", return_value=True)
     @patch("builtins.open")
     def test_mismatched_read_headers(self, mocked_open, mocked_exists):
-        # Define the content of the two files
+        # define the content of the two files
         mock_file1 = mock_open(read_data=">header1\nATCG\n")
         mock_file2 = mock_open(read_data=">header2\nATCG\n")
 
-        # Create a side effect that returns different mock files based on the file being opened
+        # create a side effect that returns different mock files based on the file being opened
         def mock_file_selector(file, mode='r'):
             if "forward_1.fa" in str(file):
                 return mock_file1.return_value
             elif "reverse_2.fa" in str(file):
                 return mock_file2.return_value
 
-        # Set the side effect for open to simulate reading different files
+        # set the side effect for open to simulate reading different files
         mocked_open.side_effect = mock_file_selector
 
-        # Simulate your test case where mismatched headers should cause a SystemExit
+        # mismatched headers should cause a SystemExit
         with self.assertLogs('root', level='ERROR') as log_capture:
             with self.assertRaises(SystemExit):
                 self.obj.set_read_files([pathlib.Path("forward_1.fa")], [pathlib.Path("reverse_2.fa")],
@@ -502,18 +508,17 @@ class TestSetReadFiles(unittest.TestCase):
     # mock content of both forward, reverse and unpaired file (will be identical)
     @patch("Bio.SeqIO.QualityIO.FastqGeneralIterator", return_value=[("header", "ATCG", "!!!!")] * 1001)
     def test_valid_files(self, mock_generator, mocked_open, mock_exists):
-
-        # Call the method with valid files
+        # call the method with valid files
         self.obj.set_read_files([pathlib.Path("/fake/path/to/forward_1.fq")],
                                 [pathlib.Path("/fake/path/to/reverse_1.fq")],
                                 [pathlib.Path("/fake/path/to/unpaired_1.fq")])
 
-        # Mock file paths
+        # mock file paths
         forward_files = [pathlib.Path("/fake/path/to/forward_1.fq")]
         reverse_files = [pathlib.Path("/fake/path/to/reverse_1.fq")]
         unpaired_files = [pathlib.Path("/fake/path/to/unpaired_1.fq")]
 
-        # Ensure files were set correctly in the object
+        # ensure files were set correctly in the object
         self.assertEqual(self.obj._forward_files, forward_files)
         self.assertEqual(self.obj._reverse_files, reverse_files)
         self.assertEqual(self.obj._unpaired_files, unpaired_files)
