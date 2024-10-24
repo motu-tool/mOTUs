@@ -5,9 +5,9 @@ name: mOTUs4
 
 on:
   push:
-    branches: [ "test" ]
+    branches: [ "hans", "main" ]
   pull_request:
-    branches: [ "test" ]
+    branches: [ "hans", "main" ]
 
 permissions:
   contents: read
