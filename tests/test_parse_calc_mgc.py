@@ -39,7 +39,7 @@ class TestParseCalcMGC(unittest.TestCase):
         with self.assertRaises(SystemExit):
                 sys.stderr = io.StringIO()
                 parse_calc_mgc()
-        self.assertIn('error: the following arguments are required: -o', sys.stderr.getvalue())
+        self.assertIn('error: the following arguments are required: -i, -o', sys.stderr.getvalue())
 
     @patch('builtins.open')
     @patch('gzip.open', new_callable=MagicMock)
@@ -51,7 +51,7 @@ class TestParseCalcMGC(unittest.TestCase):
         with self.assertRaises(SystemExit):
             sys.stderr = io.StringIO()
             parse_calc_mgc()
-        self.assertIn('error: the following arguments are required: -o', sys.stderr.getvalue())
+        self.assertIn('error: the following arguments are required: -i, -o', sys.stderr.getvalue())
 
 
 if __name__ == '__main__':

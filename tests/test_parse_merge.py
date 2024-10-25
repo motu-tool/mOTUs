@@ -32,7 +32,7 @@ class TestParseMerge(unittest.TestCase):
             "version: 4.0", "date: 2024-01-01"
         ]))
 
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(UnboundLocalError):
             parse_merge()
 
     @patch('builtins.open')

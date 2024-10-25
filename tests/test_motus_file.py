@@ -258,7 +258,7 @@ class TestReadMotusFile(unittest.TestCase):
                 self.obj.read_mOTUs_file(mock_file)
             # check that log message is accurate
             self.assertEqual(log_capture.output, [
-                'ERROR:root:The header of this mOTUs file looks malformed. Please check. '  'Quitting ...',
+                'ERROR:root:The header of this mOTUs file looks malformed. Expected 7 columns. Please check. Quitting ...',
                 'ERROR:root:TOOL1.0\tcounts\tmin_mgcs=10'])
 
     @patch('builtins.open', new_callable=mock_open,
@@ -271,7 +271,7 @@ class TestReadMotusFile(unittest.TestCase):
                 self.obj.read_mOTUs_file(mock_file)
             # check that log message is accurate
             self.assertEqual(log_capture.output,
-                             ['ERROR:root:The header of this mOTUs file looks malformed. Please check. ' 'Quitting ...',
+                             ['ERROR:root:The header of this mOTUs file looks malformed. Expected 7 columns. Please check. ' 'Quitting ...',
                               'ERROR:root:#TOOL1.0\treport_mode=counts\tmin_mgcs=10'])
 
     @patch('builtins.open', new_callable=mock_open,
@@ -283,7 +283,7 @@ class TestReadMotusFile(unittest.TestCase):
                 self.obj.read_mOTUs_file(mock_file)
             # check that log message is accurate
             self.assertEqual(log_capture.output,
-                             ['ERROR:root:The header of this mOTUs file looks malformed. Please check. ' 'Quitting ...',
+                             ['ERROR:root:The header of this mOTUs file looks malformed. Expected 7 columns. Please check. ' 'Quitting ...',
                               'ERROR:root:#TOOL1.0\treport_mode=counts\tcount_mode=raw'])
 
     @patch('builtins.open', new_callable=mock_open,
@@ -295,7 +295,7 @@ class TestReadMotusFile(unittest.TestCase):
                 self.obj.read_mOTUs_file(mock_file)
             # check that log message is accurate
             self.assertEqual(log_capture.output,
-                             ['ERROR:root:The header of this mOTUs file looks malformed. Please check. ' 'Quitting ...',
+                             ['ERROR:root:The header of this mOTUs file looks malformed. Expected 7 columns. Please check. ' 'Quitting ...',
                               'ERROR:root:#TOOL1.0\treport_mode=counts\tcount_mode=raw\tmin_mgcs=10\taggregated=False'
                               '\tlevel=species'])
 
@@ -309,7 +309,7 @@ class TestReadMotusFile(unittest.TestCase):
                 self.obj.read_mOTUs_file(mock_file)
             # check that log message is accurate
             self.assertEqual(log_capture.output,
-                             ['ERROR:root:The header of this mOTUs file looks malformed. Please check. Quitting ...',
+                             ['ERROR:root:The header of this mOTUs file looks malformed. Expected 7 columns. Please check. Quitting ...',
                               'ERROR:root:#TOOL1.0\treport_mode=counts\tcount_mode=raw\tmin_mgcs=10\ttaxonomy=species'
                               '\taggregated=True'])
 

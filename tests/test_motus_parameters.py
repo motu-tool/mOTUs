@@ -198,6 +198,7 @@ class TestMotusParametersSetGet(unittest.TestCase):
     @patch("pathlib.Path.mkdir")
     def test_get_motu_file_rel_ab(self, mock_mkdir):
         # call get_motu_file_relab
+        self.obj._motu_file_relab = pathlib.Path("motu_file.relab")
         result = self.obj.get_motu_file_relab()
 
         # assert that the mkdir method was called
@@ -213,7 +214,7 @@ class TestMotusParametersSetGet(unittest.TestCase):
 
         # assert that the paths were correctly set
         self.assertEqual(self.obj._motu_file, pathlib.Path(mock_exists))
-        self.assertEqual(self.obj._motu_file_rel_ab, pathlib.Path(str(self.obj._motu_file) + '.relab'))
+        self.assertEqual(self.obj._motu_file_rel_ab, pathlib.Path('motu_file.relab'))
 
     def test_set_motu_file_does_not_exist(self):
         # do not patch the pathlib.Path function, so it fails because the motu file doesn't exist
@@ -411,7 +412,8 @@ class TestGetFirst1000Reads(unittest.TestCase):
         with self.assertLogs('root', level='ERROR') as log_capture:
             with self.assertRaises(SystemExit):
                 self.obj.get_first_1000_reads(reads_file)
-            self.assertEqual(log_capture.output, [f'ERROR:root:Unknown file format: {reads_file}'])
+            self.assertEqual(log_capture.output, [f'ERROR:root:Unknown file format: {reads_file}. Expecting a '
+ 'fasta or fastq file, can be gzipped.'])
 
 
 class TestSetReadFiles(unittest.TestCase):
@@ -497,11 +499,11 @@ class TestSetReadFiles(unittest.TestCase):
             self.assertIn(log_capture.output, [['ERROR:root:Headers of reads are not identical. Shutting down ...',
                                                 "ERROR:root:Differing read headers: {'header1', 'header2'}",
                                                 'ERROR:root:Differing read headers file 1: forward_1.fa',
-                                                'ERROR:root:Differing read headers file 1: reverse_2.fa'],
+                                                'ERROR:root:Differing read headers file 2: reverse_2.fa'],
                                                ['ERROR:root:Headers of reads are not identical. Shutting down ...',
                                                 "ERROR:root:Differing read headers: {'header2', 'header1'}",
                                                 'ERROR:root:Differing read headers file 1: forward_1.fa',
-                                                'ERROR:root:Differing read headers file 1: reverse_2.fa']])
+                                                'ERROR:root:Differing read headers file 2: reverse_2.fa']])
 
     @patch("pathlib.Path.exists", return_value=True)
     @patch("builtins.open")

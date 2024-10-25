@@ -75,3 +75,7 @@ class TestParseDownload(unittest.TestCase):
             sys.stderr = io.StringIO()
             parse_download()
         self.assertIn('error: the following arguments are required: -s, -w', sys.stderr.getvalue())
+
+
+if __name__ == '__main__':
+    unittest.main()
