@@ -35,18 +35,7 @@
 #
 # ============================================================================ #
 
-__author__ = ('Hans-Joachim Ruscheweyh (hansr@ethz.ch), '
-              'Lilith Feer, '
-              'Marija Dmitrijeva, '
-              'Kang Li, '
-              'Florian Ruscheweyh'
-              'Daniel Mende, '
-              'Georg Zeller, '
-              'Shinichi Sunagawa')
-__version__ = '4.0.0'
-__date__ = '01 July 2024'
-__license__ = "GPL - v3"
-__maintainer__ = "Hans-Joachim Ruscheweyh & Lilith Feer"
+
 
 import os
 import statistics
@@ -67,6 +56,25 @@ import urllib.request
 import tarfile
 import shutil
 from enum import Enum
+import mutils
+from mentities import MOTUS_PARAMETERS
+from mentities import MOTUS_DB
+import mentities
+
+
+__author__ = ('Hans-Joachim Ruscheweyh (hansr@ethz.ch), '
+              'Lilith Feer, '
+              'Marija Dmitrijeva, '
+              'Kang Li, '
+              'Florian Ruscheweyh'
+              'Daniel Mende, '
+              'Georg Zeller, '
+              'Shinichi Sunagawa')
+__version__ = mutils.MOTUS_VERSION
+__date__ = '27 June 2024'
+__license__ = "GPL - v3"
+__maintainer__ = "Hans-Joachim Ruscheweyh"
+
 
 """
 Terminology
@@ -77,18 +85,10 @@ markergenecluster = mgc = a set of mgh that come from the same mOTU and markerge
 motu = Top level unit, species level cluster
 """
 
-R1IDENTIFIER = '1'
-R2IDENTIFIER = '2'
-SIDENTIFIER = 'S'
-motusfiles = None
-motusdb = None
-MOTUS_VERSION = __version__
-SAM_ID_FLAG = 'mOTUs4'
-DEFAULT_MOTUS_MGDB_PARENT_LOCATION = pathlib.Path(__file__).resolve().parent
-DEFAULT_MOTUS_MGDB_LOCATION = DEFAULT_MOTUS_MGDB_PARENT_LOCATION.joinpath('db_mOTU')
-DEFAULT_MOTUS_MGDB_LOCATION_MARKER = DEFAULT_MOTUS_MGDB_LOCATION.joinpath('db_mOTU.downloaded')
-MOTUS_MGDB_REMOTE_LOCATION = 'https://sunagawalab.ethz.ch/share/MOTUS/database/4.0/data/mOTUS-MGDB/current/db_mOTU.tar.gz'
-MOTUS_GENOME_REMOTE_PREFIX = 'https://sunagawalab.ethz.ch/share/MOTUS/database/4.0/data/genomes/'
+
+
+
+
 
 Mgc_values = collections.namedtuple("Mgc_values", "insert_raw insert_norm insert_scaled base_raw base_norm")
 
@@ -104,45 +104,20 @@ class TaxonomicRank(Enum):
 
 
 
-
-# def check_call(command: str) -> None:
-#     """
-#     Simple wrapper to execute check_call and catch exceptions
-#     :param command:
-#     :return:
-#     """
-#
-#     try:
-#         returncode = subprocess.check_call(command, shell=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
-#     except subprocess.CalledProcessError as e:
-#         logging.error('Command {} failed with message:\t{}'.format(e.cmd, e.stderr))
-#         shutdown(returncode)
+class SinglemOTUsFile:
+    _count_mode = None
+    _min_mgcs = None
+    _full_version = None
+    _taxonomy = None
+    _taxonomy_level = None # TODO remove. we dont aggregate in motus
+    _counts_aggregated_by_taxonomy = None # TODO remove. we dont aggregate in motus
+    _motus_with_abundance = None
+    _samplename_2_motus_2_counts = None
+    _samplename_2_motus_2_relab = None
+    _motu_2_taxonomy = None # TODO not sure this will be needed
 
 
-def shutdown(exitcode: int) -> None:
-    """
-    Securily shutdown the mOTU tool.
-    Args:
-        exitcode: The exitcode with which mOTU should shutdown.
 
-    Returns:
-        None
-    """
-    logging.info(f'mOTU tool shutting down with exitcode {exitcode}')
-    sys.exit(exitcode)
-
-
-def startup() -> None:
-    """
-    A method to group all functions that should be
-    executed during startup of the mOTU tool.
-    Returns:
-        None
-    """
-    logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=logging.INFO, datefmt='%Y-%m-%d,%H:%M:%S')
-
-    #TODO TEST if bwa and samtools are installed and working
-    logging.info('mOTU tool starting')
 
 
 class MotusFile:
@@ -150,12 +125,12 @@ class MotusFile:
     _min_mgcs = None
     _full_version = None
     _taxonomy = None
-    _taxonomy_level = None
-    _counts_aggregated_by_taxonomy = None
+    _taxonomy_level = None # TODO remove. we dont aggregate in motus
+    _counts_aggregated_by_taxonomy = None # TODO remove. we dont aggregate in motus
     _motus_with_abundance = None
     _samplename_2_motus_2_counts = None
     _samplename_2_motus_2_relab = None
-    _motu_2_taxonomy = None
+    _motu_2_taxonomy = None # TODO not sure this will be needed
 
     def has_counts(self):
         if self._samplename_2_motus_2_counts:
@@ -237,25 +212,25 @@ class MotusFile:
 
         if not motus_files or len(motus_files) == 0:
             logging.error(f'No MotusFiles found to merge. Quitting ...')
-            shutdown(1)
+            mutils.shutdown(1)
 
         # check if versions are compatible
         versions = set([mf._full_version for mf in motus_files])
         if len(versions) != 1:
             logging.error(f'Incompatible versions in profiles that should be merged. versions = {versions}')
-            shutdown(1)
+            mutils.shutdown(1)
 
         # check if count_mode is compatible
         count_modes = set([mf._count_mode for mf in motus_files])
         if len(count_modes) != 1:
             logging.error(f'Incompatible count modes in profiles that should be merged. count modes = {count_modes}')
-            shutdown(1)
+            mutils.shutdown(1)
 
         # check if num_mgcs is compatible
         min_mgcs = set([mf._min_mgcs for mf in motus_files])
         if len(min_mgcs) != 1:
             logging.error(f'Incompatible min mgcs in profiles that should be merged. min mgcs = {min_mgcs}')
-            shutdown(1)
+            mutils.shutdown(1)
 
         # check if all or none have counts --> either all or none have to have counts1
         # if none have counts --> report rel abundances, if all have counts --> report counts
@@ -269,7 +244,7 @@ class MotusFile:
             report_relab = True
         elif total_motus_files_w_counts != total_motus_files:
             logging.info('Profile files are mixed. Some are reported as counts, some as relative abundances. Quitting ...')
-            shutdown(1)
+            mutils.shutdown(1)
         else:
             report_counts = True
             report_relab = True
@@ -283,7 +258,7 @@ class MotusFile:
         for samplename, samplename_count in samplenames.items():
             if samplename_count != 1:
                 logging.error(f'Samplename duplicated: {samplename}. Quitting ...')
-                shutdown(1)
+                mutils.shutdown(1)
         present_motus = set()
         merged_sample_2_motus_counts = None
         merged_sample_2_motus_relab = {}
@@ -328,34 +303,34 @@ class MotusFile:
             else:
                 logging.error('The header of this mOTUs file looks malformed. Expected 7 columns. Please check. Quitting ...')
                 logging.error(f'{header}')
-                shutdown(1)
+                mutils.shutdown(1)
 
             if not full_version.startswith('#TOOL'):
                 logging.error('The header of this mOTUs file looks malformed. #TOOL token is missing. Please check. Quitting ...')
                 logging.error('Malformed header:')
                 logging.error(f'{header}')
-                shutdown(1)
+                mutils.shutdown(1)
             full_version = full_version[1:]
 
             if 'report_mode' not in report_mode:
                 logging.error('The header of this mOTUs file looks malformed. report_mode token missing. Please check. Quitting ...')
                 logging.error('Malformed header:')
                 logging.error(f'{header}')
-                shutdown(1)
+                mutils.shutdown(1)
             report_mode = report_mode.split('=')[1]
 
             if 'count_mode' not in count_mode:
                 logging.error('The header of this mOTUs file looks malformed. count_mode token missing. Please check. Quitting ...')
                 logging.error('Malformed header:')
                 logging.error(f'{header}')
-                shutdown(1)
+                mutils.shutdown(1)
             count_mode = count_mode.split('=')[1]
 
             if 'min_mgcs' not in min_mgcs:
                 logging.error('The header of this mOTUs file looks malformed. min_mgcs token missing. Please check. Quitting ...')
                 logging.error('Malformed header:')
                 logging.error(f'{header}')
-                shutdown(1)
+                mutils.shutdown(1)
             min_mgcs = int(min_mgcs.split('=')[1])
 
             if taxonomy:
@@ -363,7 +338,7 @@ class MotusFile:
                     logging.error('The header of this mOTUs file looks malformed. taxonomy token missing. Please check. Quitting ...')
                     logging.error('Malformed header:')
                     logging.error(f'{header}')
-                    shutdown(1)
+                    mutils.shutdown(1)
                 taxonomy = taxonomy.split('=')[1]
 
             if level:
@@ -371,18 +346,18 @@ class MotusFile:
                     logging.error('The header of this mOTUs file looks malformed. level token missing. Please check. Quitting ...')
                     logging.error('Malformed header:')
                     logging.error(f'{header}')
-                    shutdown(1)
+                    mutils.shutdown(1)
                 level = level.split('=')[1]
             if aggregated:
                 if 'aggregated' not in aggregated:
                     logging.error('The header of this mOTUs file looks malformed. aggregated token missing. Please check. Quitting ...')
                     logging.error('Malformed header:')
                     logging.error(f'{header}')
-                    shutdown(1)
+                    mutils.shutdown(1)
                 aggregated = aggregated.split('=')[1]
                 if bool(aggregated):
                     logging.error(f'The mOTUs profile ({mOTUs_file}) has values aggregated at non-mOTU level ({level}). This table is an endproduct and cannot be used in mOTUs anymore. Quitting ...')
-                    shutdown(1)
+                    mutils.shutdown(1)
 
             self._count_mode = count_mode
             self._min_mgcs = min_mgcs
@@ -431,7 +406,7 @@ class MotusFile:
                 self._samplename_2_motus_2_relab = sample_2_motu_2_cnts
             else:
                 logging.error(f'Report mode can only be counts or relative_abundance but is {report_mode}. Quitting ...')
-                shutdown(1)
+                mutils.shutdown(1)
 
             self._motus_with_abundance = sorted(list(self._motus_with_abundance))
 
@@ -459,293 +434,6 @@ class MotusFile:
                 tmp = '\t'.join(tmp)
                 handle.write(f'{tmp}\n')
 
-
-class MotusParameters:
-
-    _forward_files: List[pathlib.Path] = []
-    _reverse_files: List[pathlib.Path] = []
-    _unpaired_files: List[pathlib.Path] = []
-    _read_files_were_checked: bool= False
-    _alignment_file: pathlib.Path = None
-    _temp_alignment_file: pathlib.Path = None
-
-    _mgc_file: pathlib.Path = None
-    _motu_file: pathlib.Path = None
-    _motu_file_relab: pathlib.Path = None
-    _inserts_file: pathlib.Path = None
-    _samplename: str = None
-    _min_alignment_length: int = 0
-    _threads: int = 1
-    _is_strict_db_mode = True
-
-    _count_mode: str = 'INSERT_SCALED'
-
-    '''
-    Count modes:
-    insert_raw (not actual mode but used for preproc):
-        The sum of all inserts that map against a markergene.
-        Multimapper inserts are counted fractional
-    insert_norm:
-        length normalised insert counts:
-        for each markergene do:
-        mg(insert_raw)/len(mg) / sum(foreach mg: mg(insert_raw)/len(mg))
-    insert_scaled:
-        add scaling factor to have values above 1
-        mg(insert_scaled) = tot_inserts * mg(insert_norm)
-        
-    base_raw (not actual mode but used for preproc):
-        The sum of all bases that map against a markergene
-        Multimapper inserts are counted fractional
-    base_norm:
-        for each markergene do:
-        mg(base_raw)/len(mg) / sum(foreach mg: mg(base_raw)/len(mg))
-    base_scaled:
-        add scaling factor to have values above 1
-        mg(base_scaled) = tot_bases * mg(base_norm)
-    '''
-
-    count_mode_insert_raw_mode: str = 'INSERT_RAW'
-    count_mode_insert_norm_mode: str = 'INSERT_NORM'
-    count_mode_insert_scaled_mode: str = 'INSERT_SCALED'
-    count_mode_base_raw_mode: str = 'BASE_RAW'
-    count_mode_base_norm_mode: str = 'BASE_NORM'
-
-    _min_mgcs: str = 3
-
-    def is_strict_db_mode(self):
-        return self._is_strict_db_mode
-
-    def enable_lenient_mode(self):
-        self._is_strict_db_mode = False
-
-    def set_minimal_number_of_mgcs(self, min_mgcs: int) -> None:
-        self._min_mgcs = min_mgcs
-
-    def set_count_mode(self, count_mode: str) -> None:
-        self._count_mode = count_mode
-
-    def get_count_type(self) -> str:
-        if 'NORM' in self._count_mode:
-            return 'float'
-        else:
-            return 'int'
-
-    def set_minimal_alignment_length(self, minimal_alignment_length: int):
-        if minimal_alignment_length < 30:
-            logging.error('Minimal alignment length is below aligner threshold. Pick a larger value. Quitting ...')
-            shutdown(1)
-        if minimal_alignment_length > 150:
-            logging.warning('Minimal alignment length set to above average read length of metagenomic sequencing data.')
-        self._min_alignment_length = int(minimal_alignment_length)
-
-    def get_minimal_alignment_length(self) -> int:
-        return self._min_alignment_length
-
-    def set_threads(self, threads: int):
-        if threads < 1:
-            logging.error('Threads have to be at least 1')
-            shutdown(1)
-        if threads > os.cpu_count():
-            logging.warning('Number of threads exceeds the total number of CPU cores.')
-        self._threads = int(threads)
-
-    def get_threads(self) -> int:
-        return self._threads
-
-    def set_sample_name(self, samplename: str):
-        if len(samplename) == 0:
-            logging.error('Sample name cannot be empty. Quitting')
-            shutdown(1)
-        self._samplename = samplename
-
-    def get_sample_name(self) -> str:
-        return self._samplename
-
-    def get_count_mode(self) -> str:
-        return self._count_mode
-
-    def get_min_mgcs(self) -> int:
-        return self._min_mgcs
-
-    def get_mgc_file(self) -> pathlib.Path:
-        self._mgc_file.parent.mkdir(exist_ok=True, parents=True)
-        return self._mgc_file
-
-    def set_mgc_file(self, mgc_file: pathlib.Path, required_to_exist=True) -> None:
-        self._mgc_file = mgc_file
-        if required_to_exist:
-            if not mgc_file.exists():
-                logging.error(f'MGC file {mgc_file} does not exist. Shutting down ...')
-                shutdown(1)
-
-    def get_inserts_file(self) -> pathlib.Path:
-        self._inserts_file.parent.mkdir(exist_ok=True, parents=True)
-        return self._inserts_file
-
-    def set_inserts_file(self, inserts_file: pathlib.Path, required_to_exist=True) -> None:
-        self._inserts_file = inserts_file
-        if required_to_exist:
-            if not inserts_file.exists():
-                logging.error(f'Inserts file {inserts_file} does not exist. Shutting down ...')
-                shutdown(1)
-
-    def get_motu_file(self) -> pathlib.Path:
-        self._motu_file.parent.mkdir(exist_ok=True, parents=True)
-        return self._motu_file
-
-    def get_motu_file_relab(self) -> pathlib.Path:
-        self._motu_file_relab.parent.mkdir(exist_ok=True, parents=True)
-        return self._motu_file_relab
-
-
-    def set_motu_file(self, motu_file: pathlib.Path, required_to_exist=True) -> None:
-        self._motu_file = motu_file
-        self._motu_file_relab = pathlib.Path(str(motu_file) + '.relab')
-        if required_to_exist:
-            if not motu_file.exists():
-                logging.error(f'mOTU file {motu_file} does not exist. Shutting down ...')
-                shutdown(1)
-
-    def set_alignment_file(self, alignment_file: pathlib.Path, required_to_exist=True) -> None:
-        self._alignment_file = alignment_file
-        self._temp_alignment_file = pathlib.Path(str(alignment_file) + '_tmp.bam')
-        if required_to_exist:
-            if not alignment_file.exists():
-                logging.error(f'Alignment file {alignment_file} does not exist. Shutting down ...')
-                shutdown(1)
-
-        if not str(alignment_file).endswith('.bam'):
-            logging.error(f'Alignment file {alignment_file} is/will be a BAM formatted file. Please set file suffix accordingly. Shutting down ...')
-            shutdown(1)
-
-    def get_read_files(self) -> List[Tuple[pathlib.Path, str]]:
-        read_files = []
-        for (r1_file, r2_file) in zip(self._forward_files, self._reverse_files):#, strict=True):
-            read_files.append((r1_file, f'/{R1IDENTIFIER}'))
-            read_files.append((r2_file, f'/{R2IDENTIFIER}'))
-        for u_file in self._unpaired_files:
-            read_files.append((u_file, f'/{SIDENTIFIER}'))
-        return read_files
-
-    def get_temporary_alignment_file(self) -> pathlib.Path:
-        self._temp_alignment_file.parent.mkdir(exist_ok=True, parents=True)
-        return self._temp_alignment_file
-
-    def delete_temporary_alignment_file(self) -> None:
-        self._temp_alignment_file.unlink(missing_ok=True)
-
-    def get_alignment_file(self) -> pathlib.Path:
-        self._alignment_file.parent.mkdir(exist_ok=True, parents=True)
-        return self._alignment_file
-
-    def get_first_1000_reads(self, reads_file: pathlib.Path) -> List[Tuple[str, str]]:
-        """ Read the first thousand reads
-        and check if the file endings are correct.
-
-        Params:
-            reads_file: The file with the short read sequencing data
-
-        Returns:
-            A list with the first 1000 reads of the file as tuples of
-                header and sequence
-
-        """
-        # self._forward_files = forward_files
-        # self._reverse_files = reverse_files
-        # self._unpaired_files = unpaired_files
-
-        allowed_file_fq_endings = ['fq.gz', 'fq', 'fastq', 'fastq.gz']
-        allowed_file_fa_endings = ['fa', 'fa.gz', 'fasta', 'fasta.gz', 'fna', 'fna.gz']
-        is_fq = False
-        is_fa = False
-        is_gz = False
-        if str(reads_file).endswith('.gz'):
-            is_gz = True
-        for allowed_file_fa_ending in allowed_file_fa_endings:
-            if str(reads_file).endswith(allowed_file_fa_ending):
-                is_fa = True
-        for allowed_file_fq_ending in allowed_file_fq_endings:
-            if str(reads_file).endswith(allowed_file_fq_ending):
-                is_fq = True
-
-        reads = []
-        if is_gz:
-            of = gzip.open(reads_file, 'rt')
-        else:
-            of = open(reads_file, 'r')
-        if is_fa:
-            for (header, sequence) in FastaIO.SimpleFastaParser(of):
-                if len(reads) >= 1000:
-                    break
-                reads.append((header.strip().split()[0], sequence))
-        elif is_fq:
-            for header, sequence, qual in QualityIO.FastqGeneralIterator(of):
-                if len(reads) >= 1000:
-                    break
-                reads.append((header.strip().split()[0], sequence))
-        else:
-            logging.error(f'Unknown file format: {reads_file}. Expecting a fasta or fastq file, can be gzipped.')
-            shutdown(1)
-        of.close()
-        return reads
-
-    def set_read_files(self, forward_files: List[pathlib.Path],  reverse_files: List[pathlib.Path], unpaired_files: List[pathlib.Path],  check_files: bool=True) -> None:
-        """ Define set of read files
-        that we should align against the mOTUs
-        database. This step can/will also check
-        if the files exist and to check if foward
-        and reverse read files have the same read
-        headers
-
-        Params:
-            forward_files: A list of pathlike objects
-                which are forward read files. Can be fasta
-                or fastq. Can be gzipped or uncompressed
-            reverse_files: A list of pathlike objects
-                which are reverse read files. Can be fasta
-                or fastq. Can be gzipped or uncompressed
-            unpaired_files: A list of pathlike objects
-                which are unpaired read files. Can be fasta
-                or fastq. Can be gzipped or uncompressed
-        """
-
-        if check_files:
-            files_that_dont_exist = []
-            if len(forward_files + reverse_files + unpaired_files) == 0:
-                logging.error('No input files defined with -f -r or -s. Quitting ...')
-                shutdown(1)
-            for f in forward_files + reverse_files + unpaired_files:
-                if not f.exists():
-                    files_that_dont_exist.append(f)
-            if len(files_that_dont_exist) != 0:
-                logging.error(f'Some read files dont exist: {files_that_dont_exist}')
-                for f in files_that_dont_exist:
-                    logging.error(f'\t{f}')
-                shutdown(1)
-            if len(set(forward_files + reverse_files + unpaired_files)) != len(forward_files + reverse_files + unpaired_files):
-                logging.error(f'Duplicated read files. Please submit every file only once. Shutting down ...')
-                shutdown(1)
-            if len(forward_files) != len(reverse_files):
-                logging.error('Unequal number of files submitted with -r and -f. Quitting ...')
-                shutdown(1)
-            for (r1_file, r2_file) in zip(forward_files, reverse_files): #, strict=True):
-                r1_reads = self.get_first_1000_reads(r1_file)
-                r2_reads = self.get_first_1000_reads(r2_file)
-                r1_header = set([r[0] for r in r1_reads])
-                r2_header = set([r[0] for r in r2_reads])
-                if len(r1_header.symmetric_difference(r2_header)) != 0:
-                    logging.error(f'Headers of reads are not identical. Shutting down ...')
-                    logging.error(f'Differing read headers: {r1_header.symmetric_difference(r2_header)}')
-                    logging.error(f'Differing read headers file 1: {r1_file}')
-                    logging.error(f'Differing read headers file 2: {r2_file}')
-                    shutdown(1)
-
-            for u_file in unpaired_files:
-                u_reads = self.get_first_1000_reads(u_file)
-
-        self._forward_files = forward_files
-        self._reverse_files = reverse_files
-        self._unpaired_files = unpaired_files
 
 
 class MotusSearchDB:
@@ -834,260 +522,6 @@ class MotusSearchDB:
     def get_genome_tax(self, genome: str):
         return self._genome_2_tax[genome]
 
-class MotusDB:
-    """
-    The MotusDB class contains all relevant information that
-    represents the current mOTUs marker gene database.
-    E.g. (but not limited to)
-    - MG - MGC - MOTU
-    - Taxonomy per mOTU
-    - Version
-    - Member genome information
-    """
-
-    database_version: str = None
-    database_date: str = None
-    mgh_2_mgc: Dict[str, str] = {}
-    mgh_2_mglength: Dict[str, int] = {}
-    mgc_2_motu: Dict[str, str] = {}
-    motus: Set[str] = set()
-    blocklist_mg = set()
-    motu_2_representative_genome_gtdb_tax = {}
-    motu_2_mv_gtdb_tax = {}
-    motu_2_representative = {}
-    mgh_2_mg: Dict[str, str] = {}
-    mgc_2_mg: Dict[str, str] = {}
-    index_location: pathlib.Path = None
-    _motus_core_mgs = ['COG0012','COG0016','COG0018','COG0172','COG0215','COG0495','COG0525','COG0533','COG0541','COG0552']
-    _unassigned_motu_name = None
-
-    motus_mv_taxonomy_file = None
-    genome_metadata_file = None
-
-    def __init__(self, mOTUsdb_folder: pathlib.Path, load=True) -> None:
-        """Collect the mOTUs MGDB files, check their existence and,
-        if the load parameter is set, load their contents into memory.
-
-        Following files are expected:
-        1. mOTUs.version --> holds the version of the database
-        2. mOTUsNR.fasta.gz --> Marker gene sequences in gzipped fasta file
-        3. mOTUsNR.fasta.gz.* --> the BWA index
-        4. mOTUsv4.0.map.tsv.gz --> Link between mOTU, MGC and MG
-        5. mOTUsv4.0.db.blocklist.gz --> contains MGs that should be removed from the alignment file
-        6. mOTUsv4.0.gtdb.taxonomy.rep.tsv.gz --> The GTDB R220 annotation of mOTUs by their rep genome
-        7. mOTUsv4.0.gtdb.taxonomy.80mv.tsv.gz --> The GTDB R220 annotation of mOTUs by their 80% majority vote
-        8. mOTUsv4.0.genomes.tsv.gz --> Genome metadata
-        9.
-
-        :param mOTUsdb_folder:
-        :return: None
-        """
-        logging.info('Loading database ... ')
-        versions_file = mOTUsdb_folder.joinpath('mOTUsv4.0.db').resolve()
-        index_files = [mOTUsdb_folder.joinpath(f).resolve() for f in ['mOTUsv4.0.db.fna.gz', 'mOTUsv4.0.db.fna.gz.amb', 'mOTUsv4.0.db.fna.gz.ann', 'mOTUsv4.0.db.fna.gz.bwt', 'mOTUsv4.0.db.fna.gz.pac', 'mOTUsv4.0.db.fna.gz.sa']]
-        mgs_file = mOTUsdb_folder.joinpath('mOTUsv4.0.map.tsv.gz').resolve()
-        blocklist_file = mOTUsdb_folder.joinpath('mOTUsv4.0.db.blocklist.gz').resolve()
-        gtdb_taxonomy_file_reps = mOTUsdb_folder.joinpath('mOTUsv4.0.gtdb.taxonomy.rep.tsv.gz').resolve()
-        gtdb_taxonomy_file_mv = mOTUsdb_folder.joinpath('mOTUsv4.0.gtdb.taxonomy.80mv.tsv.gz').resolve()
-        genome_data_file = mOTUsdb_folder.joinpath('mOTUsv4.0.genomes.tsv.gz').resolve()
-
-        with open(versions_file) as handle:
-            self.database_version = handle.readline().strip().split()[-1]
-            self.database_date = handle.readline().strip().split()[-1]
-        self.index_location = index_files[0]
-        for index_file in index_files + [mgs_file, blocklist_file, gtdb_taxonomy_file_reps, gtdb_taxonomy_file_mv, genome_data_file]:
-            if not index_file.exists():
-                logging.error(f'Database file {index_file} is missing. Quitting mOTUs...')
-                shutdown(1)
-
-        self.motus_mv_taxonomy_file = gtdb_taxonomy_file_mv
-        self.genome_metadata_file = genome_data_file
-
-        if load:
-            with gzip.open(mgs_file, 'rt') as handle:
-                for entry in  csv.DictReader(handle, delimiter='\t'):
-                    self.mgh_2_mgc[entry['MG']] = entry['MGC']
-                    self.mgh_2_mglength[entry['MG']] = int(entry['LENGTH'])
-                    self.mgc_2_motu[entry['MGC']] = entry['#MOTU']
-                    self.mgh_2_mg[entry['MG']] = entry['COG']
-                    self.motus.add(entry['#MOTU'])
-                    self.mgc_2_mg[entry['MGC']] = entry['COG']
-                    if 'unassigned' in entry['#MOTU']:
-                        self._unassigned_motu_name = entry['#MOTU']
-            with gzip.open(blocklist_file, 'rt') as handle:
-                for line in handle:
-                    self.blocklist_mg.add(line.strip())
-            with gzip.open(gtdb_taxonomy_file_reps, 'rt') as handle:
-                #MOTU    GENOME  GTDBR220
-                handle.readline()
-                for line in handle:
-                    [motu, representative, gtdb_taxonomy] = line.strip().split('\t')
-                    self.motu_2_representative_genome_gtdb_tax[motu] = gtdb_taxonomy
-                    self.motu_2_representative[motu] = representative
-            with gzip.open(gtdb_taxonomy_file_mv, 'rt') as handle:
-                #MOTU    GENOME  GTDBR220
-                handle.readline()
-                for line in handle:
-                    [motu, gtdb_taxonomy] = line.strip().split('\t')
-                    self.motu_2_mv_gtdb_tax[motu] = gtdb_taxonomy
-            logging.info(f'Loading database finished. Version {self.database_version} (version date: {self.database_date}) contains {len(self.motus)} mOTUs, {len(self.mgc_2_motu)} markergeneclusters and {len(self.mgh_2_mglength)} markergenes.')
-
-    def is_mg_blocked(self, mg: str) -> bool:
-        """
-        Checks if the markergene is in the blocklist
-        and return True if that is the case
-
-        Params:
-            mg: a mOTUs markergene
-
-        Return:
-            True is markergene is in the blocklist. Does not check
-            if markergene is in the mOTUs database
-        """
-        if mg in self.blocklist_mg:
-            return True
-        else:
-            return False
-
-    def get_full_version(self):
-        """
-        Get the full database version used in the
-        header section of all mOTUs files.
-        """
-
-        return 'TOOL:' + MOTUS_VERSION + '_DB:' + self.database_version
-
-    def get_full_sam_id(self):
-        """
-        Get the ID flag name for SAM/BAM header lines
-        """
-
-        return SAM_ID_FLAG
-
-    def get_mg_by_mgc(self, mgc: str) -> str:
-        """
-        Get the COG of the markergenecluster
-
-        Params:
-            mgc: Name of the markergenecluster
-
-        Returns:
-            COG assoicated to markergenecluster
-
-        """
-
-        return self.mgc_2_mg[mgc]
-
-    def is_unassigned_motu(self, motu: str) -> bool:
-        """
-        Checks whether the mOTU in the parameters
-        is the unassigned mOTU
-
-        Params:
-            motu: a mOTUs
-
-        Return:
-            Whether the motu variable is the unassigned mOTU
-        """
-
-        if not self._unassigned_motu_name:
-            logging.error('The unassigned mOTU was not set. This indicates a corrupted database. Please re-download database. Quitting...')
-            shutdown(1)
-        if motu == self._unassigned_motu_name:
-            return True
-        else:
-            return False
-
-    def get_unassigned_motu(self) -> str:
-        """
-        Get the name of the unassigned mOTU
-
-        Returns:
-            the name of the unassigned mOTU
-        """
-
-        if not self._unassigned_motu_name:
-            logging.error('The unassigned mOTU was not set. This indicates a corrupted database. Please re-download database. Quitting...')
-            shutdown(1)
-
-        return self._unassigned_motu_name
-
-    def get_motu_by_mgc(self, mgc: str) -> str:
-        """
-        Get the name of the mOTU associated with
-        the mgc
-
-        Params:
-            mgc: The name of the markergenecluster
-
-        Returns:
-            The name of the associated mOTU
-        """
-
-        return self.mgc_2_motu[mgc]
-
-    def get_bwa_index(self) -> pathlib.Path:
-        """
-        Get the location of the bwa index
-
-        Returns:
-            The Location of the bwa index
-        """
-
-        return self.index_location
-
-    def get_mgc_by_mg(self, mgh: str) -> str:
-        """
-        Report markergenecluster by a markergene
-
-        Params:
-            mgh: the name of the markergene
-
-        Returns:
-            the associated markergenecluster
-        """
-
-        return self.mgh_2_mgc[mgh]
-
-    def get_length_by_mg(self, mgh: str) -> int:
-        """
-        Get the length of the markergeneheader
-
-        Params:
-            mgh: a markergeneheader
-
-        Returns:
-            The length of the markergeneheader
-        """
-
-        return self.mgh_2_mglength[mgh]
-
-    def get_mg_by_mgh(self, mgh: str) -> str:
-        """
-        Get the markergene (COG) associated with the
-        markergeneheader
-
-        Params:
-            mgh: the markergeneheader
-
-        Return:
-            The COG associated with the markergeneheader
-        """
-
-        return self.mgh_2_mg[mgh]
-
-    def get_core_motus_mgs(self) -> List[str]:
-        """
-        Return a list of the (currently) 10 mOTUs
-        markergenes
-
-        Return:
-            List of 10 mOTUs markergenes
-        """
-
-        return self._motus_core_mgs
-
-
 def map_tax() -> None:
     """
     Alignment of read files against the mOTUs MGDB:
@@ -1104,19 +538,19 @@ def map_tax() -> None:
 
     logging.info('Starting mOTUs - map_tax routine - Alignment against the mOTUs database ... ')
     min_perc_id: float = 97.0
-    threads: int = motusfiles.get_threads()
-    minlength: int = motusfiles.get_minimal_alignment_length()
-    temp_bam_file = motusfiles.get_temporary_alignment_file()
+    threads: int = MOTUS_PARAMETERS.get_threads()
+    minlength: int = MOTUS_PARAMETERS.get_minimal_alignment_length()
+    temp_bam_file = MOTUS_PARAMETERS.get_temporary_alignment_file()
     temp_bam_file_handle = None
 
     total_reads = 0
     total_mapped_reads = 0
 
-    for readsfile, orientation in motusfiles.get_read_files():
+    for readsfile, orientation in MOTUS_PARAMETERS.get_read_files():
         total_reads_this_file: int = 0
         total_mapped_reads_this_file: Set[str] = set()
         logging.info(f'Aligning {readsfile}')
-        command: str = f'bwa mem -a -t {threads} {motusdb.get_bwa_index()} {readsfile}'
+        command: str = f'bwa mem -a -t {threads} {MOTUS_DB.get_bwa_index()} {readsfile}'
         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
         in_bam_file_handle = pysam.AlignmentFile(process.stdout, 'rb')
 
@@ -1125,9 +559,9 @@ def map_tax() -> None:
             pg_header = {}
             pg_header['CL'] = 'motus.py map_tax '
             pg_header['PN'] = 'motus.py'
-            motus_version = motusdb.get_full_version()
+            motus_version = MOTUS_DB.get_full_version()
             pg_header['VN'] = motus_version
-            pg_header['ID'] = motusdb.get_full_sam_id()
+            pg_header['ID'] = MOTUS_DB.get_full_sam_id()
             alignmentfile_header['PG'].append(pg_header)
             temp_bam_file_handle = pysam.AlignmentFile(temp_bam_file, "wb", header = alignmentfile_header)
 
@@ -1138,7 +572,7 @@ def map_tax() -> None:
             else:
                 if not record.is_secondary and not record.is_supplementary:
                     total_reads_this_file += 1
-                if motusdb.is_mg_blocked(record.reference_name):
+                if MOTUS_DB.is_mg_blocked(record.reference_name):
                     continue
                 alnlength: int = sum(record.get_cigar_stats()[0][0:3])
                 if alnlength < minlength:
@@ -1168,15 +602,15 @@ def map_tax() -> None:
     return_code: int = process.wait()
     if return_code != 0:
         logging.error(f'BWA command failed with return code {return_code}')
-        shutdown(1)
+        mutils.shutdown(1)
     logging.info(f'Finished all alignments. Total reads: {total_reads}, Total aligned reads {total_mapped_reads}, {round(total_mapped_reads * 100.0 / total_reads, 4)}%')
     temp_bam_file_handle.close()
 
     logging.info(f'Sorting BAM file')
-    pysam.sort('-n', '-m', '1G', '-@', '1', '-o', str(motusfiles.get_alignment_file()),  str(motusfiles.get_temporary_alignment_file()))
+    pysam.sort('-n', '-m', '1G', '-@', '1', '-o', str(MOTUS_PARAMETERS.get_alignment_file()),  str(MOTUS_PARAMETERS.get_temporary_alignment_file()))
     logging.info(f'Finished sorting BAM file')
 
-    motusfiles.delete_temporary_alignment_file()
+    MOTUS_PARAMETERS.delete_temporary_alignment_file()
     logging.info('Finished mOTUs - map_tax routine - Alignment against the mOTUs database ...')
     return None
 
@@ -1198,7 +632,7 @@ def _get_orientation_of_aligned_segment_by_name(alignment: pysam.AlignedSegment)
     if len(splits) == 2:
         return splits[0], splits[1]
     else:
-        return alignment.query_name, SIDENTIFIER
+        return alignment.query_name, mentities.SIDENTIFIER
 
 
 class BestAlignment:
@@ -1253,7 +687,7 @@ class BestAlignment:
 
         if self.isMultimapper():
             logging.error('This method doesnt work for multi mappers.')
-            shutdown(1)
+            mutils.shutdown(1)
         for mg, blocks in self._mg_2_blocks.items():
             return mg, blocks
 
@@ -1268,7 +702,7 @@ class BestAlignment:
 
         if not self.isMultimapper():
             logging.error('This method doesnt work for unique mappers.')
-            shutdown(1)
+            mutils.shutdown(1)
         return self._mg_2_blocks
 
 
@@ -1326,7 +760,7 @@ class InsertCounter:
         '''
         mgc_2_count = collections.Counter()
         for mg, count in self._mg_2_edge_corrected_raw_uniquemapper_insert_counts.items():
-            mgc_2_count[motusdb.get_mgc_by_mg(mg)] += count
+            mgc_2_count[MOTUS_DB.get_mgc_by_mg(mg)] += count
         return mgc_2_count
 
     def correct_multi_mapper_edges(self, insert_file_writer: TextIO, min_alignment_length: int):
@@ -1364,10 +798,10 @@ class InsertCounter:
                     if mg_2_weight[mg] != 0.0:
                         mg_2_alignments[mg].append((alignment_blocks, mg_2_weight[mg]))
             else: # MGC weighting
-                tot_mgc_weight = sum([mgc_2_uniquemapper_insert_counts.get(motusdb.get_mgc_by_mg(mg), 0.0) for mg in mg_2_blocks.keys()])
+                tot_mgc_weight = sum([mgc_2_uniquemapper_insert_counts.get(MOTUS_DB.get_mgc_by_mg(mg), 0.0) for mg in mg_2_blocks.keys()])
                 if tot_mgc_weight < 1.0:
                     tot_mgc_weight = 1.0
-                mg_2_mgc_weight = {mg: mgc_2_uniquemapper_insert_counts.get(motusdb.get_mgc_by_mg(mg), 0.0) / tot_mgc_weight for mg in mg_2_blocks.keys()}
+                mg_2_mgc_weight = {mg: mgc_2_uniquemapper_insert_counts.get(MOTUS_DB.get_mgc_by_mg(mg), 0.0) / tot_mgc_weight for mg in mg_2_blocks.keys()}
                 if sum(mg_2_mgc_weight.values()) == 0.0:
                     multimapper_with_no_prior_mgc_abundance += 1
                     continue
@@ -1408,7 +842,7 @@ class InsertCounter:
         # alignments -> All alignments against a mg. One alignment represents multiple alignment blocks
         for mg, alignments in mg_2_alignments.items():
             first_allowed_base = min_alignment_length + 1
-            mg_len = motusdb.get_length_by_mg(mg)
+            mg_len = MOTUS_DB.get_length_by_mg(mg)
             last_allowed_base = mg_len - min_alignment_length - 1
             alignments_trunc = []
             for (alignment_blocks, weight) in alignments:
@@ -1442,13 +876,13 @@ class InsertCounter:
         mg_2_edge_corrected_base_counts = collections.Counter()
 
         for mg, trunc_insert_count in mg_2_trunc_insert_counts.items():
-            mg_len = motusdb.get_length_by_mg(mg)
+            mg_len = MOTUS_DB.get_length_by_mg(mg)
             mg_trunc_len = mg_len - 2 * min_alignment_length
             edge_corrected_insert_count = mg_len * (trunc_insert_count / mg_trunc_len)
             mg_2_edge_corrected_insert_counts[mg] = edge_corrected_insert_count
 
         for mg, trunc_base_count in mg_2_trunc_base_counts.items():
-            mg_len = motusdb.get_length_by_mg(mg)
+            mg_len = MOTUS_DB.get_length_by_mg(mg)
             mg_trunc_len = mg_len - 2 * min_alignment_length
             edge_corrected_base_count = mg_len * (trunc_base_count / mg_trunc_len)
             mg_2_edge_corrected_base_counts[mg] = edge_corrected_base_count
@@ -1526,11 +960,11 @@ class InsertCounter:
 
         """
         tot_cnt = float(sum(mg_2_raw_counts.values()))
-        denominator: float = sum([float(mgh_2_count[1]) / float(motusdb.get_length_by_mg(mgh_2_count[0])) for mgh_2_count in mg_2_raw_counts.items()])
+        denominator: float = sum([float(mgh_2_count[1]) / float(MOTUS_DB.get_length_by_mg(mgh_2_count[0])) for mgh_2_count in mg_2_raw_counts.items()])
         scaled_mg_2_counts = {}
         norm_mg_2_counts = {}
         for mg, count in mg_2_raw_counts.items():
-            numerator = float(count) / float(motusdb.get_length_by_mg(mg))
+            numerator = float(count) / float(MOTUS_DB.get_length_by_mg(mg))
             norm_count = numerator / denominator
             scaled_count = norm_count * tot_cnt
             scaled_mg_2_counts[mg] = scaled_count
@@ -1610,7 +1044,7 @@ class InsertCounter:
         if len(markergeneheader_2_best_alignments2) > 1 and random_mgc_resolver:
             mgc_2_mg = collections.defaultdict(list)
             for mg, alns in markergeneheader_2_best_alignments2.items():
-                mgc = motusdb.get_mgc_by_mg(mg)
+                mgc = MOTUS_DB.get_mgc_by_mg(mg)
                 mgc_2_mg[mgc].append(mg)
             for mgc, mgs in mgc_2_mg.items():
                 if len(mgs) == 1:
@@ -1637,9 +1071,9 @@ class InsertCounter:
 
         logging.info('Finished reading alignment file ...')
         logging.info(f'Read {self.get_unique_mapper_count() + self.get_multi_mapper_count()} aligned inserts of which {round(100.0 * self.get_multi_mapper_count() / (self.get_unique_mapper_count() + self.get_multi_mapper_count()),2)}% are multimappers')
-        inserts_file_writer = gzip.open(motusfiles.get_inserts_file(), 'wt')
-        self.correct_uniq_mapper_edges(inserts_file_writer, motusfiles.get_minimal_alignment_length())
-        self.correct_multi_mapper_edges(inserts_file_writer, motusfiles.get_minimal_alignment_length())
+        inserts_file_writer = gzip.open(MOTUS_PARAMETERS.get_inserts_file(), 'wt')
+        self.correct_uniq_mapper_edges(inserts_file_writer, MOTUS_PARAMETERS.get_minimal_alignment_length())
+        self.correct_multi_mapper_edges(inserts_file_writer, MOTUS_PARAMETERS.get_minimal_alignment_length())
         inserts_file_writer.close()
         self.combined_raw_counts()
         self.norm_and_scale_counts()
@@ -1660,13 +1094,13 @@ class MGCCounter:
         """
         mgc_2_count = {}
         for mgh, count in mgh_2_scaled_counts.items():
-            mgc = motusdb.get_mgc_by_mg(mgh)
+            mgc = MOTUS_DB.get_mgc_by_mg(mgh)
             [scaled, unscaled] = mgc_2_count.get(mgc, [0.0, 0.0])
             scaled = scaled + count
             mgc_2_count[mgc] = [scaled, unscaled]
 
         for mgh, count in mgh_2_unscaled_counts.items():
-            mgc = motusdb.get_mgc_by_mg(mgh)
+            mgc = MOTUS_DB.get_mgc_by_mg(mgh)
             [scaled, unscaled] = mgc_2_count.get(mgc, [0.0, 0.0])
             unscaled = unscaled + count
             mgc_2_count[mgc] = [scaled, unscaled]
@@ -1704,7 +1138,7 @@ class MGCCounter:
         all_mgcs = set()
         for (mg_data, mgc_data) in zip([insertcounter.get_mg_insert_raw(), insertcounter.get_mg_insert_norm(), insertcounter.get_mg_insert_scaled(), insertcounter.get_mg_base_raw(), insertcounter.get_mg_base_norm()], [mgc_insert_raw, mgc_insert_norm, mgc_insert_scaled, mgc_base_raw, mgc_base_norm]):
             for mg, abundance in mg_data.items():
-                mgc = motusdb.get_mgc_by_mg(mg)
+                mgc = MOTUS_DB.get_mgc_by_mg(mg)
                 mgc_data[mgc] = mgc_data[mgc] + abundance
                 all_mgcs.add(mgc)
 
@@ -1726,16 +1160,16 @@ class MGCCounter:
         finds the best alignment(s) per insert
         """
 
-        alignments = pysam.AlignmentFile(motusfiles.get_alignment_file(), 'r')
-        motus_version = [entry for entry in alignments.header.to_dict()['PG'] if entry['ID'] == motusdb.get_full_sam_id()]
+        alignments = pysam.AlignmentFile(MOTUS_PARAMETERS.get_alignment_file(), 'r')
+        motus_version = [entry for entry in alignments.header.to_dict()['PG'] if entry['ID'] == MOTUS_DB.get_full_sam_id()]
         header_valid = False
         if len(motus_version) > 0:
-            if motus_version[0]['VN'] == motusdb.get_full_version():
+            if motus_version[0]['VN'] == MOTUS_DB.get_full_version():
                 header_valid = True
         if not header_valid:
-            if motusfiles.is_strict_db_mode():
+            if MOTUS_PARAMETERS.is_strict_db_mode():
                 logging.error('mOTUs tool/database have changed and bam file is invalid. Please profile with updated database. Quitting ...')
-                shutdown(1)
+                mutils.shutdown(1)
             else:
                 logging.warning('mOTUs tool/database have changed and bam file is invalid. Lenient mode enabled, will continue but results might be broken ...')
 
@@ -1743,19 +1177,19 @@ class MGCCounter:
             alignment: pysam.AlignedSegment = next(alignments)
         except StopIteration:
             alignments.close()
-            logging.info(f'The alignmentfile {motusfiles.get_alignment_file()} has no valid alignments. Quitting ...')
-            shutdown(1)
+            logging.info(f'The alignmentfile {MOTUS_PARAMETERS.get_alignment_file()} has no valid alignments. Quitting ...')
+            mutils.shutdown(1)
             return
         current_name, orientation = _get_orientation_of_aligned_segment_by_name(alignment)
         current_insert = collections.defaultdict(list)
         orientations = set()
         orientations.add(orientation)
         current_insert[orientation].append(alignment)
-        minlength: int = motusfiles.get_minimal_alignment_length()
+        minlength: int = MOTUS_PARAMETERS.get_minimal_alignment_length()
         readname = None
 
         for alignment in alignments:
-            if motusdb.is_mg_blocked(alignment.reference_name):
+            if MOTUS_DB.is_mg_blocked(alignment.reference_name):
                 continue
             alnlength: int = sum(alignment.get_cigar_stats()[0][0:3])
             if alnlength < minlength:
@@ -1765,7 +1199,7 @@ class MGCCounter:
                 current_insert[orientation].append(alignment)
                 orientations.add(orientation)
             else:
-                if len(orientations) == 3 or (len(orientations) > 1 and SIDENTIFIER in orientations):
+                if len(orientations) == 3 or (len(orientations) > 1 and mentities.SIDENTIFIER in orientations):
                     raise Exception('An alignment cannot be Paired End and Single End at the same time. Problematic insert: {}'.format(readname))
 
                 yield current_name, current_insert
@@ -1775,7 +1209,7 @@ class MGCCounter:
                 current_insert[orientation].append(alignment)
                 orientations.add(orientation)
 
-        if len(orientations) == 3 or (len(orientations) > 1 and SIDENTIFIER in orientations):
+        if len(orientations) == 3 or (len(orientations) > 1 and mentities.SIDENTIFIER in orientations):
             raise Exception('An alignment cannot be Paired End and Single End at the same time. Problematic insert: {}'.format(readname))
         yield current_name, current_insert
         alignments.close()
@@ -1800,8 +1234,8 @@ def calc_mgc() -> None:
     mgc_counter = MGCCounter()
     mgc_2_counts = mgc_counter.count()
 
-    with open(motusfiles.get_mgc_file(), 'w') as handle:
-        header_line = motusdb.get_full_version()
+    with open(MOTUS_PARAMETERS.get_mgc_file(), 'w') as handle:
+        header_line = MOTUS_DB.get_full_version()
         handle.write(f'#{header_line}\n')
         handle.write('MGC\tINSERT_RAW\tINSERT_NORM\tINSERT_SCALED\tBASE_RAW\tBASE_NORM\n')
         for mgc in sorted(mgc_2_counts.keys()):
@@ -1821,24 +1255,24 @@ def calc_motu() -> None:
         None
     """
 
-    mgc_file = motusfiles.get_mgc_file()
+    mgc_file = MOTUS_PARAMETERS.get_mgc_file()
     has_header = False
     with open(mgc_file) as handle:
         first_line = handle.readline().strip()
         if first_line.startswith('#'):
             has_header = True
         motus_version = first_line.replace('#', '')
-        if motus_version == motusdb.get_full_version():
+        if motus_version == MOTUS_DB.get_full_version():
             header_valid = True
         if not header_valid:
-            if motusfiles.is_strict_db_mode():
+            if MOTUS_PARAMETERS.is_strict_db_mode():
                 logging.error('mOTUs tool/database have changed and bam file is invalid. Please profile with updated database. Quitting ...')
-                shutdown(1)
+                mutils.shutdown(1)
             else:
                 logging.warning('mOTUs tool/database have changed and bam file is invalid. Lenient mode enabled, will continue but results might be broken ...')
 
     mgc_2_count = {}
-    count_mode = motusfiles.get_count_mode()
+    count_mode = MOTUS_PARAMETERS.get_count_mode()
     with open(mgc_file) as handle:
         if has_header:
             handle.readline()
@@ -1847,26 +1281,26 @@ def calc_motu() -> None:
     motu_2_mgccounts = collections.defaultdict(lambda: collections.defaultdict(lambda: 0.0))
 
     for mgc, count in mgc_2_count.items():
-        motu = motusdb.get_motu_by_mgc(mgc)
-        mg = motusdb.get_mg_by_mgc(mgc)
+        motu = MOTUS_DB.get_motu_by_mgc(mgc)
+        mg = MOTUS_DB.get_mg_by_mgc(mgc)
         motu_2_mgccounts[motu][mg] += count
 
     motu_counts = {}
     for motu in sorted(list(motu_2_mgccounts.keys())):
         counts = list(motu_2_mgccounts[motu].values())
         median_count = statistics.median(counts)
-        if len(counts) >= motusfiles.get_min_mgcs() or motusdb.is_unassigned_motu(motu):
+        if len(counts) >= MOTUS_PARAMETERS.get_min_mgcs() or MOTUS_DB.is_unassigned_motu(motu):
             motu_counts[motu] = median_count
 
     mOTU_file = MotusFile()
     sample_2_motus_counts = {}
-    sample_2_motus_counts[motusfiles.get_sample_name()] = motu_counts
-    mOTU_file.set_mOTU_counts(sample_2_motus_counts, motusfiles.get_count_type())
-    mOTU_file.set_min_mgcs(motusfiles.get_min_mgcs())
-    mOTU_file.set_full_version(motusdb.get_full_version())
-    mOTU_file.set_count_mode(motusfiles.get_count_mode())
-    mOTU_file.write_mOTUs_file(motusfiles.get_motu_file(), False)
-    mOTU_file.write_mOTUs_file(motusfiles.get_motu_file_relab(), True)
+    sample_2_motus_counts[MOTUS_PARAMETERS.get_sample_name()] = motu_counts
+    mOTU_file.set_mOTU_counts(sample_2_motus_counts, MOTUS_PARAMETERS.get_count_type())
+    mOTU_file.set_min_mgcs(MOTUS_PARAMETERS.get_min_mgcs())
+    mOTU_file.set_full_version(MOTUS_DB.get_full_version())
+    mOTU_file.set_count_mode(MOTUS_PARAMETERS.get_count_mode())
+    mOTU_file.write_mOTUs_file(MOTUS_PARAMETERS.get_motu_file(), False)
+    mOTU_file.write_mOTUs_file(MOTUS_PARAMETERS.get_motu_file_relab(), True)
     return None
 
 
@@ -1879,7 +1313,7 @@ class CapitalisedHelpFormatter(argparse.HelpFormatter):
 
 def parse_map_tax():
     parser = argparse.ArgumentParser(usage = f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-Version: {MOTUS_VERSION}
+Version: {mutils.MOTUS_VERSION}
 Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
 taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
 doi: https://doi.org/10.1186/s40168-022-01410-z
@@ -1921,26 +1355,25 @@ Algorithm options:
     # print usage and exit if no arguments are passed
     if sys.argv[2:] == []:
         parser.print_usage()
-        shutdown(1)
+        mutils.shutdown(1)
 
     # convert string arguments into Pathlib objects
     forward_files = [pathlib.Path(el) for el in args.f]
     reverse_files = [pathlib.Path(el) for el in args.r]
     unpaired_files = [pathlib.Path(el) for el in args.s]
     alignment_file = pathlib.Path(args.o)
-    startup()
+    mutils.startup()
     threads = args.t
     min_alignment_length = args.l
 
+    MOTUS_DB.load_motus_db(mutils.DEFAULT_MOTUS_MGDB_LOCATION)
 
-    global motusdb
-    motusdb = MotusDB(DEFAULT_MOTUS_MGDB_LOCATION)
-    global motusfiles
-    motusfiles = MotusParameters()
-    motusfiles.set_read_files(forward_files, reverse_files, unpaired_files, check_files=True)
-    motusfiles.set_alignment_file(alignment_file, required_to_exist=False)
-    motusfiles.set_minimal_alignment_length(min_alignment_length)
-    motusfiles.set_threads(threads)
+
+
+    MOTUS_PARAMETERS.set_read_files(forward_files, reverse_files, unpaired_files, check_files=True)
+    MOTUS_PARAMETERS.set_alignment_file(alignment_file, required_to_exist=False)
+    MOTUS_PARAMETERS.set_minimal_alignment_length(min_alignment_length)
+    MOTUS_PARAMETERS.set_threads(threads)
     map_tax()
 
 
@@ -1953,7 +1386,7 @@ def parse_batch_profile():
     '''
 
     parser = argparse.ArgumentParser(usage=f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: {MOTUS_VERSION}
+    Version: {mutils.MOTUS_VERSION}
     Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
     taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
     doi: https://doi.org/10.1186/s40168-022-01410-z
@@ -1985,7 +1418,7 @@ def parse_batch_profile():
     args = parser.parse_args(sys.argv[2:])
     if sys.argv[2:] == []:
         parser.print_usage()
-        shutdown(1)
+        mutils.shutdown(1)
 
     map_file = args.f
     samplename_2_files = {}
@@ -1995,52 +1428,52 @@ def parse_batch_profile():
             bamfile = pathlib.Path(bamfile)
             if not bamfile.exists():
                 logging.error(f'Submitted BAM file {bamfile} does not exist. Quitting ...')
-                shutdown(1)
+                mutils.shutdown(1)
             if not str(bamfile).endswith('.bam'):
                 logging.error(f'Submitted BAM file {bamfile} does not end with .bam. Probably malformed file. Quitting ...')
-                shutdown(1)
+                mutils.shutdown(1)
 
             mgc_file = str(bamfile).rsplit('.bam', 1)[0] + '.mgc'
             inserts_file = str(bamfile).rsplit('.bam', 1)[0] + '.inserts.gz'
             motu_file = str(bamfile).rsplit('.bam', 1)[0]
             if samplename in samplename_2_files:
                 logging.error(f'Submitted samplename {samplename} duplicated. Quitting ...')
-                shutdown(1)
+                mutils.shutdown(1)
             for (obf,mf,mof,iof) in samplename_2_files.values(): #output_bam_file, mgc_file, motu_file, inserts_output_file
                 if obf.samefile(bamfile):
                     logging.error(f'Submitted BAM file {bamfile} duplicated. Quitting ...')
-                    shutdown(1)
+                    mutils.shutdown(1)
             samplename_2_files[samplename] = (bamfile, pathlib.Path(mgc_file), pathlib.Path(motu_file), pathlib.Path(inserts_file))
 
 
-    startup()
+    mutils.startup()
     threads = args.t
     min_alignment_length = args.l
 
-    global motusdb
-    motusdb = MotusDB(DEFAULT_MOTUS_MGDB_LOCATION)
+
+    MOTUS_DB.load_motus_db(mutils.DEFAULT_MOTUS_MGDB_LOCATION)
 
     for samplename, (bamfile, mgc_file, motu_file, inserts_file) in samplename_2_files.items():
 
-        global motusfiles
-        motusfiles = MotusParameters()
-        motusfiles.set_alignment_file(bamfile)
-        motusfiles.set_mgc_file(mgc_file, required_to_exist=False)
-        motusfiles.set_inserts_file(inserts_file, required_to_exist=False)
-        motusfiles.set_motu_file(motu_file, required_to_exist=False)
-        motusfiles.set_sample_name(samplename)
-        motusfiles.set_minimal_alignment_length(min_alignment_length)
-        motusfiles.set_threads(threads)
-        motusfiles.set_count_mode(args.y)
-        motusfiles.set_minimal_number_of_mgcs(args.g)
-        motusfiles.enable_lenient_mode()
+
+        MOTUS_PARAMETERS.set_alignment_file(bamfile)
+        MOTUS_PARAMETERS.set_mgc_file(mgc_file, required_to_exist=False)
+        MOTUS_PARAMETERS.set_inserts_file(inserts_file, required_to_exist=False)
+
+        MOTUS_PARAMETERS.set_motu_file(motu_file, required_to_exist=False)
+        MOTUS_PARAMETERS.set_sample_name(samplename)
+        MOTUS_PARAMETERS.set_minimal_alignment_length(min_alignment_length)
+        MOTUS_PARAMETERS.set_threads(threads)
+        MOTUS_PARAMETERS.set_count_mode(args.y)
+        MOTUS_PARAMETERS.set_minimal_number_of_mgcs(args.g)
+        MOTUS_PARAMETERS.enable_lenient_mode()
         calc_mgc()
         calc_motu()
-    shutdown(0)
+    mutils.shutdown(0)
 
 def parse_profile():
     parser = argparse.ArgumentParser(usage = f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-Version: {MOTUS_VERSION}
+Version: {mutils.MOTUS_VERSION}
 Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
 taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
 doi: https://doi.org/10.1186/s40168-022-01410-z
@@ -2082,7 +1515,7 @@ Algorithm options:
     args = parser.parse_args(sys.argv[2:])
     if sys.argv[2:] == []:
         parser.print_usage()
-        shutdown(1)
+        mutils.shutdown(1)
 
     forward_files = [pathlib.Path(el) for el in args.f]
     reverse_files = [pathlib.Path(el) for el in args.r]
@@ -2092,31 +1525,32 @@ Algorithm options:
     alignment_file = pathlib.Path(args.o + '.bam')
     mgc_file = pathlib.Path(args.o + '.mgc')
     inserts_file = pathlib.Path(args.o + '.inserts.gz')
-    startup()
+    mutils.startup()
     threads = args.t
     min_alignment_length = args.l
     samplename = args.n
 
-    global motusdb
-    motusdb = MotusDB(DEFAULT_MOTUS_MGDB_LOCATION)
-    global motusfiles
-    motusfiles = MotusParameters()
-    motusfiles.set_read_files(forward_files, reverse_files, unpaired_files, check_files=True)
-    motusfiles.set_alignment_file(alignment_file, required_to_exist=False)
-    motusfiles.set_mgc_file(mgc_file,required_to_exist=False)
-    motusfiles.set_inserts_file(inserts_file, required_to_exist=False)
-    motusfiles.set_motu_file(motu_file, required_to_exist=False)
-    motusfiles.set_sample_name(samplename)
-    motusfiles.set_minimal_alignment_length(min_alignment_length)
-    motusfiles.set_threads(threads)
 
-    motusfiles.set_count_mode(args.y)
-    motusfiles.set_minimal_number_of_mgcs(args.g)
+    MOTUS_DB.load_motus_db(mutils.DEFAULT_MOTUS_MGDB_LOCATION)
+
+
+    MOTUS_PARAMETERS.set_read_files(forward_files, reverse_files, unpaired_files, check_files=True)
+    MOTUS_PARAMETERS.set_alignment_file(alignment_file, required_to_exist=False)
+    MOTUS_PARAMETERS.set_mgc_file(mgc_file,required_to_exist=False)
+    MOTUS_PARAMETERS.set_inserts_file(inserts_file, required_to_exist=False)
+    MOTUS_PARAMETERS.set_motu_file(motu_file, required_to_exist=False)
+    MOTUS_PARAMETERS.set_sample_name(samplename)
+    MOTUS_PARAMETERS.set_minimal_alignment_length(min_alignment_length)
+    MOTUS_PARAMETERS.set_threads(threads)
+
+    MOTUS_PARAMETERS.set_count_mode(args.y)
+    MOTUS_PARAMETERS.set_minimal_number_of_mgcs(args.g)
+
     map_tax()
 
     calc_mgc()
     calc_motu()
-    shutdown(0)
+    mutils.shutdown(0)
 
 
 def parse_calc_mgc():
@@ -2147,26 +1581,25 @@ Algorithm options:
     # print usage and exit if no arguments are passed
     if sys.argv[2:] == []:
         parser.print_usage()
-        shutdown(1)
+        mutils.shutdown(1)
 
     alignment_file = pathlib.Path(args.i)
     mgc_file = pathlib.Path(args.o)
     inserts_file = pathlib.Path(args.o + '.inserts')
 
 
-    startup()
+    mutils.startup()
     min_alignment_length = args.l
-    global motusdb
-    motusdb = MotusDB(DEFAULT_MOTUS_MGDB_LOCATION)
-    global motusfiles
-    motusfiles = MotusParameters()
-    motusfiles.set_alignment_file(alignment_file, required_to_exist=True)
-    motusfiles.set_mgc_file(mgc_file,required_to_exist=False)
-    motusfiles.set_inserts_file(inserts_file, required_to_exist=False)
-    motusfiles.set_minimal_alignment_length(min_alignment_length)
-    motusfiles.set_threads(1)
+
+    MOTUS_DB.load_motus_db(mutils.DEFAULT_MOTUS_MGDB_LOCATION)
+
+    MOTUS_PARAMETERS.set_alignment_file(alignment_file, required_to_exist=True)
+    MOTUS_PARAMETERS.set_mgc_file(mgc_file,required_to_exist=False)
+    MOTUS_PARAMETERS.set_inserts_file(inserts_file, required_to_exist=False)
+    MOTUS_PARAMETERS.set_minimal_alignment_length(min_alignment_length)
+    MOTUS_PARAMETERS.set_threads(1)
     calc_mgc()
-    shutdown(0)
+    mutils.shutdown(0)
 
 def assign_taxonomy(input_motu_file: pathlib.Path, output_motu_file: pathlib.Path, aggregate: bool, use_representative_taxonomy: bool, taxonomy_to_use: str, taxonomic_rank: TaxonomicRank) -> None:
     """
@@ -2193,7 +1626,9 @@ def merge_profiles(motus_file_paths: List[pathlib.Path], output_motus_file_path:
     - Write the merged profile into the output file
 
     """
+
     #TODO check for empty motus files
+
     logging.info('Starting mOTUs - merge routine - Merging of mOTUs profile files ... ')
     motus_files = []
     logging.info(f'There are {len(motus_file_paths)} input profile files.')
@@ -2245,19 +1680,25 @@ def parse_merge():
 
     if sys.argv[2:] == []:
         parser.print_usage()
-        shutdown(1)
-    startup()
+        mutils.shutdown(1)
+
+    mutils.startup()
+
     input_mOTUs_files = [pathlib.Path(el) for el in args.i]
-    if len(input_mOTUs_files) == 1:
+    output_mOTUs_file = pathlib.Path(args.o)
+
+    if len(input_mOTUs_files) == 1: # this means that you provided a file with one line per motus profile
         input_mOTUs_files_tmp = []
         with open(input_mOTUs_files[0]) as handle:
             for line in handle:
                 input_mOTUs_files_tmp.append(pathlib.Path(line.strip()))
         input_mOTUs_files = input_mOTUs_files_tmp
-    output_mOTUs_file = pathlib.Path(args.o)
+
+
     input_mOTUs_files = sorted(input_mOTUs_files)
     merge_profiles(input_mOTUs_files, output_mOTUs_file)
-    shutdown(0)
+
+    mutils.shutdown(0)
 
 
 def download_genomes(keyword: str, motusSearchDB: MotusSearchDB, output_folder: pathlib.Path, output_file: pathlib.Path, download_representative_genomes_only: bool) -> None:
@@ -2277,7 +1718,7 @@ def download_genomes(keyword: str, motusSearchDB: MotusSearchDB, output_folder: 
     if output_folder:
         if output_folder.is_file():
             logging.error('Output Path exists and is file. Cannot download genomes to this location')
-            shutdown(1)
+            mutils.shutdown(1)
         logging.info(f'Downloading genomes to {output_folder}')
         output_folder.mkdir(exist_ok=True, parents=True)
         for cnt, genome in enumerate(genomes_to_download, 1):
@@ -2286,6 +1727,129 @@ def download_genomes(keyword: str, motusSearchDB: MotusSearchDB, output_folder: 
             logging.info(f'Downloading genome ({cnt} / {len(genomes_to_download)}) {genome} to {destpath}')
             urllib.request.urlretrieve(genome_path, destpath)
         logging.info(f'Finished downloading genomes')
+
+
+def parse_classify():
+    parser = argparse.ArgumentParser(usage=f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
+     Version: {MOTUS_VERSION}
+     Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
+     taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
+     doi: https://doi.org/10.1186/s40168-022-01410-z
+
+     motus classify [options]
+
+         Options:
+
+            -i        Text file with fasta formatted (gzip allowed) genome
+                      files which will be associated with existing mOTUs
+            -o        Output file. One line per genome with associated mOTU.
+            -t        Number of threads (default = 1)
+
+           ''', formatter_class=CapitalisedHelpFormatter, add_help=False)
+
+
+    parser.add_argument("-i", required=True)
+    parser.add_argument("-o", required=True)
+    parser.add_argument("-t", default=1, type=int)
+    args = parser.parse_args(sys.argv[2:])
+
+    if sys.argv[2:] == []:
+        parser.print_usage()
+        mutils.shutdown(1)
+    mutils.startup()
+
+    genome_files = []
+    with open(args.i) as handle:
+        for line in handle:
+            genome_file = pathlib.Path(line.strip())
+            if not genome_file.exists():
+                logging.error(f'Genome file: {line.strip()} does not exist. Quitting ...')
+                mutils.shutdown(1)
+            genome_files.append(genome_file)
+    output_file = args.o
+
+    classify(genome_files, output_file, args.t)
+    mutils.shutdown(0)
+
+
+
+def classify(genome_files: List[pathlib.Path], output_file: pathlib.Path, threads: int = 1):
+    """
+    Takes a list of genome files and associates them with existing mOTUs.
+    A genome can either be:
+    - classified with a mOTU (=mOTUXXX)
+    - not have enough markergenes to be classified (=notEnoughMGs)
+    - have enough markergenes to be classified but can not be represented by an existing mOTU (=Novel)
+
+    Params:
+        genome_files: A list with pathlib.Path objects all pointing to an existing genome file
+        output_file: The output file where the classification should be recorded
+    Returns:
+        None
+    """
+
+    logging.info(f'Starting mOTUs classify:')
+    logging.info(f'\tInput = {len(genome_files)} genomes.')
+    logging.info(f'\tOutput will be written to {output_file}')
+
+    logging.info(f'\t Running fetchMGs on genomes.')
+
+
+    from fetchmgs import fetchmgs
+    fetchmgs_tmp_folder = pathlib.Path(str(output_file) + '_classify_tmp')
+    if False:
+        fetchmgs.extraction_genomes(genome_files, fetchmgs_tmp_folder, 'genome', threads, True)
+    logging.info(f'\t Finished running fetchMGs on genomes.')
+    logging.info(f'\t Collecting fetchMGs results')
+
+
+    MOTUS_DB.load_motus_db(mutils.DEFAULT_MOTUS_MGDB_LOCATION, False)
+
+
+    genome_2_fetchmg_file = {}
+
+    for genome_fetchmgs_file in fetchmgs_tmp_folder.glob('**/*fetchMGs.fna'):
+        genome_name = str(genome_fetchmgs_file.name).replace('.fetchMGs.fna', '')
+        genome_2_fetchmg_file[genome_name] = genome_fetchmgs_file
+
+    genome_2_markergenes = collections.defaultdict(list)
+    motus_marker_genes = set(MOTUS_DB.get_core_motus_mgs())
+    for genome_file in genome_files:
+        genome_name = str(genome_file.name)
+        genome_fetchmgs_file = genome_2_fetchmg_file[genome_name]
+
+
+        with open(genome_fetchmgs_file) as handle:
+            for (header, sequence) in FastaIO.SimpleFastaParser(handle):
+                cog = header.rsplit('.', 1)[-1]
+                if cog in motus_marker_genes:
+                    genome_2_markergenes[genome_name].append((cog, sequence))
+    genomes_removed_notenoughmgs = 0
+    with open(fetchmgs_tmp_folder.joinpath('motus_classify.fna'), 'w') as seqhandle, open(fetchmgs_tmp_folder.joinpath('motus_classify.tsv'), 'w') as tsvhandle:
+        tsvhandle.write('GENOME\tNUM_MGS\tMGS\n')
+        for genome_name, cog_2_sequence in genome_2_markergenes.items():
+            if len(cog_2_sequence) > 5:
+                for cog, sequence in cog_2_sequence:
+                    seqhandle.write(f'>{genome_name}.{cog}\n{sequence}\n')
+            else:
+                genomes_removed_notenoughmgs += 1
+            cogs = sorted([x[0] for x in cog_2_sequence])
+            cogs_str = ','.join(cogs)
+            tsvhandle.write(f'{genome_name}\t{len(cogs)}\t{cogs_str}\n')
+    logging.info(f'\t Finished collecting fetchMGs results. Genomes = {len(genome_2_markergenes)}, Genomes with enough MGs = {len(genome_2_markergenes) - genomes_removed_notenoughmgs}')
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def parse_downloadDB():
@@ -2310,11 +1874,11 @@ def parse_downloadDB():
     if args.f:
         force_download = True
 
-    startup()
+    mutils.startup()
 
     if DEFAULT_MOTUS_MGDB_LOCATION_MARKER.exists() and not force_download:
         logging.info('Database already downloaded and -f not set. All good.')
-        shutdown(0)
+        mutils.shutdown(0)
     if DEFAULT_MOTUS_MGDB_LOCATION_MARKER.exists() and force_download:
         logging.info('Database already downloaded and -f set. Will delete current database and download again.')
         shutil.rmtree(DEFAULT_MOTUS_MGDB_LOCATION)
@@ -2334,7 +1898,7 @@ def parse_downloadDB():
         t.extractall(DEFAULT_MOTUS_MGDB_PARENT_LOCATION)
     DEFAULT_MOTUS_MGDB_LOCATION_MARKER.touch(exist_ok=True)
     logging.info('Finished untaring mOTUs marker gene database.')
-    shutdown(0)
+    mutils.shutdown(0)
 
 
 def parse_download():
@@ -2370,7 +1934,7 @@ def parse_download():
     args = parser.parse_args(sys.argv[2:])
     if sys.argv[2:] == []:
         parser.print_usage()
-        shutdown(1)
+        mutils.shutdown(1)
 
     output_folder = args.o
     output_file = pathlib.Path(args.s)
@@ -2383,22 +1947,22 @@ def parse_download():
         download_representative_genomes_only = True
     keyword = args.w
 
-    startup()
+    mutils.startup()
     if not download_genome_metadata_only:
         if not output_folder:
             logging.error('Output folder must be set unless -l flag is used. Quitting ...')
-            shutdown(1)
+            mutils.shutdown(1)
         output_folder = pathlib.Path(output_folder)
-    global motusdb
-    motusdb = MotusDB(DEFAULT_MOTUS_MGDB_LOCATION, load=False)
-    motus_search_db = MotusSearchDB(motusdb.motus_mv_taxonomy_file, motusdb.genome_metadata_file)
+
+    MOTUS_DB.load_motus_db(mutils.DEFAULT_MOTUS_MGDB_LOCATION, load=False)
+    motus_search_db = MotusSearchDB(MOTUS_DB.motus_mv_taxonomy_file, MOTUS_DB.genome_metadata_file)
     download_genomes(keyword, motus_search_db, output_folder, output_file, download_representative_genomes_only)
-    shutdown(0)
+    mutils.shutdown(0)
 
 
 def parse_taxonomy():
     parser = argparse.ArgumentParser(usage=f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: {MOTUS_VERSION}
+    Version: {mutils.MOTUS_VERSION}
     Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
     taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
     doi: https://doi.org/10.1186/s40168-022-01410-z
@@ -2431,7 +1995,7 @@ def parse_taxonomy():
 
     if sys.argv[2:] == []:
         parser.print_usage()
-        shutdown(1)
+        mutils.shutdown(1)
     input_motu_file = pathlib.Path(args.i)
     output_motu_file = pathlib.Path(args.o)
     aggregate = False
@@ -2444,23 +2008,23 @@ def parse_taxonomy():
         use_representative_taxonomy = True
     if args.t != 'GTDB':
         logging.error(f'Unknown taxonomy {args.t}. Quitting ...')
-        shutdown(1)
+        mutils.shutdown(1)
 
-    startup()
+    mutils.startup()
     if not input_motu_file.exists():
         logging.error(f'Input file {input_motu_file} does not exist. Quitting ...')
-        shutdown(1)
-    global motusdb
-    motusdb = MotusDB(DEFAULT_MOTUS_MGDB_LOCATION)
+        mutils.shutdown(1)
+
+    MOTUS_DB.load_motus_db(mutils.DEFAULT_MOTUS_MGDB_LOCATION)
     mf = MotusFile()
     mf.read_mOTUs_file(input_motu_file)
     assign_taxonomy(input_motu_file, output_motu_file, aggregate, use_representative_taxonomy, taxonomy_to_use, taxonomic_rank)
-    shutdown(0)
+    mutils.shutdown(0)
 
 
 def parse_calc_motu():
     parser = argparse.ArgumentParser(usage = f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-Version: {MOTUS_VERSION}
+Version: {mutils.MOTUS_VERSION}
 Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
 taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
 doi: https://doi.org/10.1186/s40168-022-01410-z
@@ -2493,31 +2057,30 @@ motus calc_motu [options]
     args = parser.parse_args(sys.argv[2:])
     if sys.argv[2:] == []:
         parser.print_usage()
-        shutdown(1)
+        mutils.shutdown(1)
 
 
     mgc_file = pathlib.Path(args.i)
     motu_file = pathlib.Path(args.o)
-    startup()
+    mutils.startup()
     samplename = args.n
 
-    global motusdb
-    motusdb = MotusDB(DEFAULT_MOTUS_MGDB_LOCATION)
-    global motusfiles
-    motusfiles = MotusParameters()
-    motusfiles.set_mgc_file(mgc_file, required_to_exist=True)
-    motusfiles.set_motu_file(motu_file, required_to_exist=False)
-    motusfiles.set_sample_name(samplename)
-    motusfiles.set_threads(1)
-    motusfiles.set_count_mode(args.y)
-    motusfiles.set_minimal_number_of_mgcs(args.g)
+
+    MOTUS_DB.load_motus_db(mutils.DEFAULT_MOTUS_MGDB_LOCATION)
+
+    MOTUS_PARAMETERS.set_mgc_file(mgc_file, required_to_exist=True)
+    MOTUS_PARAMETERS.set_motu_file(motu_file, required_to_exist=False)
+    MOTUS_PARAMETERS.set_sample_name(samplename)
+    MOTUS_PARAMETERS.set_threads(1)
+    MOTUS_PARAMETERS.set_count_mode(args.y)
+    MOTUS_PARAMETERS.set_minimal_number_of_mgcs(args.g)
     calc_motu()
-    shutdown(0)
+    mutils.shutdown(0)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(usage = f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-Version: {MOTUS_VERSION}
+Version: {mutils.MOTUS_VERSION}
 Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
 taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
 doi: https://doi.org/10.1186/s40168-022-01410-z
@@ -2535,13 +2098,13 @@ motus <command> [options]
           download    Download genomes associated with mOTUs
           downloadDB  Download the mOTUs marker gene database
           merge       Merge several taxonomic profiling results into one table
-          taxonomy    Add taxonomic information to mOTUs
+          classify    Add taxonomic information to mOTUs
 
 
     Type motus <command> to print the help menu for a specific command
     ''',formatter_class=CapitalisedHelpFormatter,add_help=False)
 
-    parser.add_argument('command', choices=["profile", "map_tax", "calc_mgc", "calc_motu", "download", "merge", "downloadDB", "batch_profile"])
+    parser.add_argument('command', choices=["profile", "map_tax", "calc_mgc", "calc_motu", "download", "merge", "downloadDB", "batch_profile", "classify"])
     args: argparse.Namespace = parser.parse_args(sys.argv[1:2])
     if args.command == 'profile':
         parse_profile()
@@ -2562,12 +2125,12 @@ motus <command> [options]
     # elif args.command == 'taxonomy':
     #     parse_taxonomy()
     #
-    # elif args.command == 'extend':
-    #     logging.error('Command extend not implemented yet')
+    elif args.command == 'classify':
+        parse_classify()
     # elif args.command == 'prep_long':
     #     logging.error('Command prep_long not implemented yet')
     else:
         parser.print_usage()
         print(f'Unrecognized command {args}')
-        shutdown(1)
-    shutdown(0)
+        mutils.shutdown(1)
+    mutils.shutdown(0)
