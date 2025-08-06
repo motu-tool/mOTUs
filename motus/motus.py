@@ -70,7 +70,7 @@ __author__ = ('Hans-Joachim Ruscheweyh (hansr@ethz.ch), '
               'Georg Zeller, '
               'Shinichi Sunagawa')
 __version__ = mutils.MOTUS_VERSION
-__date__ = '27 June 2024'
+__date__ = '06 August 2025'
 __license__ = "GPL - v3"
 __maintainer__ = "Hans-Joachim Ruscheweyh"
 
@@ -556,7 +556,7 @@ def map_tax() -> None:
         if not temp_bam_file_handle:
             alignmentfile_header = in_bam_file_handle.header.to_dict()
             pg_header = {}
-            pg_header['CL'] = 'motus.py map_tax '
+            pg_header['CL'] = f'motus.py map_tax -l {minlength}'
             pg_header['PN'] = 'motus.py'
             motus_version = MOTUS_DB.get_full_version()
             pg_header['VN'] = motus_version
@@ -1964,66 +1964,66 @@ def parse_download():
     mutils.shutdown(0)
 
 
-def parse_taxonomy():
-    parser = argparse.ArgumentParser(usage=f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: {mutils.MOTUS_VERSION}
-    Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
-    taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
-    doi: https://doi.org/10.1186/s40168-022-01410-z
-
-    motus taxonomy [options]
-
-        Input options:
-           -i  FILE  a mOTUs profile, produced by profile, calc_motu or merge
-
-        Output options:
-           -o  FILE  output file name       
-
-        Options:
-
-           -t   STR  Taxonomy to use [GTDB]
-           -l   STR  Taxonomy level [domain, phylum, class, order, family, genus, species]
-           -a        Aggregate values at taxonomic level
-           -r        Use taxonomy of representative. If not set, use the consensus taxonomy
-
-          ''', formatter_class=CapitalisedHelpFormatter, add_help=False)
-
-    parser.add_argument("-i", required=True)
-    parser.add_argument("-o", required=True)
-    parser.add_argument("-a", action="store_true")
-    parser.add_argument("-r", action="store_true")
-    parser.add_argument("-t", type=str, default='GTDB', choices=['GTDB'])
-    parser.add_argument("-l", type=int, default='species', choices=['domain', 'phylum', 'class', 'order', 'family', 'genus', 'species'])
-
-    args = parser.parse_args(sys.argv[2:])
-
-    if sys.argv[2:] == []:
-        parser.print_usage()
-        mutils.shutdown(1)
-    input_motu_file = pathlib.Path(args.i)
-    output_motu_file = pathlib.Path(args.o)
-    aggregate = False
-    use_representative_taxonomy = False
-    taxonomy_to_use = 'GTDB'
-    taxonomic_rank = args.l
-    if args.a:
-       aggregate = True
-    if args.r:
-        use_representative_taxonomy = True
-    if args.t != 'GTDB':
-        logging.error(f'Unknown taxonomy {args.t}. Quitting ...')
-        mutils.shutdown(1)
-
-    mutils.startup()
-    if not input_motu_file.exists():
-        logging.error(f'Input file {input_motu_file} does not exist. Quitting ...')
-        mutils.shutdown(1)
-
-    MOTUS_DB.load_motus_db(mutils.DEFAULT_MOTUS_MGDB_LOCATION)
-    mf = MotusFile()
-    mf.read_mOTUs_file(input_motu_file)
-    assign_taxonomy(input_motu_file, output_motu_file, aggregate, use_representative_taxonomy, taxonomy_to_use, taxonomic_rank)
-    mutils.shutdown(0)
+# def parse_taxonomy():
+#     parser = argparse.ArgumentParser(usage=f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
+#     Version: {mutils.MOTUS_VERSION}
+#     Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand
+#     taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022).
+#     doi: https://doi.org/10.1186/s40168-022-01410-z
+#
+#     motus taxonomy [options]
+#
+#         Input options:
+#            -i  FILE  a mOTUs profile, produced by profile, calc_motu or merge
+#
+#         Output options:
+#            -o  FILE  output file name
+#
+#         Options:
+#
+#            -t   STR  Taxonomy to use [GTDB]
+#            -l   STR  Taxonomy level [domain, phylum, class, order, family, genus, species]
+#            -a        Aggregate values at taxonomic level
+#            -r        Use taxonomy of representative. If not set, use the consensus taxonomy
+#
+#           ''', formatter_class=CapitalisedHelpFormatter, add_help=False)
+#
+#     parser.add_argument("-i", required=True)
+#     parser.add_argument("-o", required=True)
+#     parser.add_argument("-a", action="store_true")
+#     parser.add_argument("-r", action="store_true")
+#     parser.add_argument("-t", type=str, default='GTDB', choices=['GTDB'])
+#     parser.add_argument("-l", type=int, default='species', choices=['domain', 'phylum', 'class', 'order', 'family', 'genus', 'species'])
+#
+#     args = parser.parse_args(sys.argv[2:])
+#
+#     if sys.argv[2:] == []:
+#         parser.print_usage()
+#         mutils.shutdown(1)
+#     input_motu_file = pathlib.Path(args.i)
+#     output_motu_file = pathlib.Path(args.o)
+#     aggregate = False
+#     use_representative_taxonomy = False
+#     taxonomy_to_use = 'GTDB'
+#     taxonomic_rank = args.l
+#     if args.a:
+#        aggregate = True
+#     if args.r:
+#         use_representative_taxonomy = True
+#     if args.t != 'GTDB':
+#         logging.error(f'Unknown taxonomy {args.t}. Quitting ...')
+#         mutils.shutdown(1)
+#
+#     mutils.startup()
+#     if not input_motu_file.exists():
+#         logging.error(f'Input file {input_motu_file} does not exist. Quitting ...')
+#         mutils.shutdown(1)
+#
+#     MOTUS_DB.load_motus_db(mutils.DEFAULT_MOTUS_MGDB_LOCATION)
+#     mf = MotusFile()
+#     mf.read_mOTUs_file(input_motu_file)
+#     assign_taxonomy(input_motu_file, output_motu_file, aggregate, use_representative_taxonomy, taxonomy_to_use, taxonomic_rank)
+#     mutils.shutdown(0)
 
 
 def parse_calc_motu():
@@ -2085,9 +2085,7 @@ motus calc_motu [options]
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(usage = f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 Version: {mutils.MOTUS_VERSION}
-Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
-taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
-doi: https://doi.org/10.1186/s40168-022-01410-z
+{mutils.cite_text()}
     
 motus <command> [options]
     
@@ -2126,9 +2124,6 @@ motus <command> [options]
         parse_download()
     elif args.command == 'downloadDB':
         parse_downloadDB()
-    # elif args.command == 'taxonomy':
-    #     parse_taxonomy()
-    #
     elif args.command == 'classify':
         parse_classify()
     # elif args.command == 'prep_long':
