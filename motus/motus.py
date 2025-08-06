@@ -37,11 +37,10 @@
 
 
 
-import os
+
 import statistics
 import pysam
 import Bio.SeqIO.FastaIO as FastaIO
-import Bio.SeqIO.QualityIO as QualityIO
 import logging
 import pathlib
 import csv
@@ -515,7 +514,7 @@ class MotusSearchDB:
         report_genomes = sorted(list(report_genomes))
         return report_genomes
     def get_genome_path(self, genome:str):
-        p = MOTUS_GENOME_REMOTE_PREFIX + self._genome_2_path[genome]
+        p = mutils.MOTUS_GENOME_REMOTE_PREFIX + self._genome_2_path[genome]
         return p
     def get_genome_motu(self, genome: str):
         return self._genome_2_motu[genome]
@@ -812,10 +811,7 @@ class InsertCounter:
                         insert_file_writer.write(f'{insert_name}\t{mg}\t{round(mg_2_mgc_weight[mg], 4):.4f}\n')
                         mg_2_alignments[mg].append((alignment_blocks, mg_2_mgc_weight[mg]))
 
-
-
-
-
+        # TODO correct the minimum alignment length. It is set differently in the unique mapper routine
 
         logging.info(f'Processed {len(self._multi_mappers)} multimappers. {multimapper_with_no_prior_mgc_abundance} were discarded, {len(self._multi_mappers) - multimapper_with_no_prior_mgc_abundance} were used.')
         mg_2_edge_corrected_insert_counts, mg_2_edge_corrected_base_counts = self._correct_edges(mg_2_alignments,min_alignment_length)
@@ -825,7 +821,7 @@ class InsertCounter:
     def _correct_edges(self, mg_2_alignments, min_alignment_length):
         """Corrects for missing alignments towards the gene edges.
         Assuming you have a read which is only partly overlapping with a
-        markegene therefor the alignment is too short is filtered. This
+        markergene therefor the alignment is too short is filtered. This
         happens mostly at the edges of genes. We can correct for that by
         something we call inverse padding (formerly known as edge correction).
         We remove all aligned bases from the end regions of the gene and then
@@ -865,7 +861,7 @@ class InsertCounter:
 
                     aligned_bases_trunc += aln_end - aln_start
                 if aligned_bases_trunc != 0:
-                    alignments_trunc.append(aligned_bases_trunc / aligned_bases_untrunc)
+                    alignments_trunc.append(aligned_bases_trunc / aligned_bases_untrunc) # a value of 1 means that the alignment was not truncated. a value <1 means that the alignment was truncated
                 mg_2_untrunc_base_counts[mg] += aligned_bases_untrunc * weight
                 mg_2_trunc_base_counts[mg] += aligned_bases_trunc * weight
 
@@ -930,6 +926,9 @@ class InsertCounter:
             mg, alignment_blocks = bestAlignment.get_mg_and_blocks()
             inserts_file_writer.write(f'{insert_name}\t{mg}\t1.0000\n')
             mg_2_alignments[mg].append((alignment_blocks, 1.0))
+
+
+
         mg_2_edge_corrected_insert_counts, mg_2_edge_corrected_base_counts = self._correct_edges(mg_2_alignments, 30)
 
         self._mg_2_edge_corrected_raw_uniquemapper_insert_counts = mg_2_edge_corrected_insert_counts
@@ -1059,13 +1058,15 @@ class InsertCounter:
 
         return best_mgs
 
-    def count(self, bam_insert_iterator) -> None:
+    def count(self) -> None:
         """Umbrella count method
         Reads the alignments and stores them based on insert name.
         Then counts unique mappers and distributes multimappers
         based on the abundances of mgcs
 
         """
+
+        bam_insert_iterator = self._bam_insert_iterator()
         for insert_name, alignments in bam_insert_iterator:
             self.appendmapper(insert_name, self._filter_best_alignment(alignments))
 
@@ -1079,87 +1080,11 @@ class InsertCounter:
         self.norm_and_scale_counts()
 
 
-class MGCCounter:
-    """
-    A class which takes care of
-    reading, parsing and interpreting
-    the inserts mapped against the mOTUs
-    database.
-    """
-
-
-    def aggregate_mgc(self, mgh_2_scaled_counts, mgh_2_unscaled_counts):
-        """Aggregate counts by markergenes by markergeneclusters
-
-        """
-        mgc_2_count = {}
-        for mgh, count in mgh_2_scaled_counts.items():
-            mgc = MOTUS_DB.get_mgc_by_mg(mgh)
-            [scaled, unscaled] = mgc_2_count.get(mgc, [0.0, 0.0])
-            scaled = scaled + count
-            mgc_2_count[mgc] = [scaled, unscaled]
-
-        for mgh, count in mgh_2_unscaled_counts.items():
-            mgc = MOTUS_DB.get_mgc_by_mg(mgh)
-            [scaled, unscaled] = mgc_2_count.get(mgc, [0.0, 0.0])
-            unscaled = unscaled + count
-            mgc_2_count[mgc] = [scaled, unscaled]
-        return mgc_2_count
-
-
-    def count(self) -> Dict[str, Mgc_values]:
-        '''
-        Entry Level method for this class
-        Read the BAM file and counts abundances
-        using different modes (insert_raw, insert_scaled,...)
-        '''
-        insertcounter = InsertCounter()
-        logging.info('Reading alignment file ...')
-        insertcounter.count(self._bam_insert_iterator())
-        # now aggregate by MGC
-
-        '''
-        How to aggregate
-        1. for each counting method (insert, base, norm, scaled)
-            for each mg
-                find mgc
-                sum up value for mgc
-        2. report
-            for each counting method
-                for each mgc
-                one line with each counting method
-        '''
-
-        mgc_insert_raw = collections.defaultdict(lambda: 0.0)
-        mgc_insert_norm = collections.defaultdict(lambda: 0.0)
-        mgc_insert_scaled = collections.defaultdict(lambda: 0.0)
-        mgc_base_raw = collections.defaultdict(lambda: 0.0)
-        mgc_base_norm = collections.defaultdict(lambda: 0.0)
-        all_mgcs = set()
-        for (mg_data, mgc_data) in zip([insertcounter.get_mg_insert_raw(), insertcounter.get_mg_insert_norm(), insertcounter.get_mg_insert_scaled(), insertcounter.get_mg_base_raw(), insertcounter.get_mg_base_norm()], [mgc_insert_raw, mgc_insert_norm, mgc_insert_scaled, mgc_base_raw, mgc_base_norm]):
-            for mg, abundance in mg_data.items():
-                mgc = MOTUS_DB.get_mgc_by_mg(mg)
-                mgc_data[mgc] = mgc_data[mgc] + abundance
-                all_mgcs.add(mgc)
-
-        mgc_2_all_counts = {}
-        for mgc in all_mgcs:
-            #Mgc_values = collections.namedtuple("Mgc_values", "insert_raw insert_norm insert_scaled base_raw base_norm")
-            insert_raw = mgc_insert_raw[mgc]
-            insert_norm = mgc_insert_norm[mgc]
-            insert_scaled = mgc_insert_scaled[mgc]
-            base_raw = mgc_base_raw[mgc]
-            base_norm = mgc_base_norm[mgc]
-            mgc_vals = Mgc_values(insert_raw=insert_raw, insert_norm=insert_norm, insert_scaled=insert_scaled, base_raw=base_raw, base_norm=base_norm)
-            mgc_2_all_counts[mgc] = mgc_vals
-
-        return mgc_2_all_counts
 
     def _bam_insert_iterator(self) -> Generator[Tuple[str, Dict[str, List[pysam.AlignedSegment]]], None, None]:
         """Reads through a sorted BAM file and
         finds the best alignment(s) per insert
         """
-
         alignments = pysam.AlignmentFile(MOTUS_PARAMETERS.get_alignment_file(), 'r')
         motus_version = [entry for entry in alignments.header.to_dict()['PG'] if entry['ID'] == MOTUS_DB.get_full_sam_id()]
         header_valid = False
@@ -1213,6 +1138,85 @@ class MGCCounter:
             raise Exception('An alignment cannot be Paired End and Single End at the same time. Problematic insert: {}'.format(readname))
         yield current_name, current_insert
         alignments.close()
+
+
+class MGCCounter:
+    """
+    A class which takes care of
+    reading, parsing and interpreting
+    the inserts mapped against the mOTUs
+    database.
+    """
+
+
+    def aggregate_mgc(self, mgh_2_scaled_counts, mgh_2_unscaled_counts):
+        """Aggregate counts by markergenes by markergeneclusters
+
+        """
+        mgc_2_count = {}
+        for mgh, count in mgh_2_scaled_counts.items():
+            mgc = MOTUS_DB.get_mgc_by_mg(mgh)
+            [scaled, unscaled] = mgc_2_count.get(mgc, [0.0, 0.0])
+            scaled = scaled + count
+            mgc_2_count[mgc] = [scaled, unscaled]
+
+        for mgh, count in mgh_2_unscaled_counts.items():
+            mgc = MOTUS_DB.get_mgc_by_mg(mgh)
+            [scaled, unscaled] = mgc_2_count.get(mgc, [0.0, 0.0])
+            unscaled = unscaled + count
+            mgc_2_count[mgc] = [scaled, unscaled]
+        return mgc_2_count
+
+
+    def count(self) -> Dict[str, Mgc_values]:
+        '''
+        Entry Level method for this class
+        Read the BAM file and counts abundances
+        using different modes (insert_raw, insert_scaled,...)
+        '''
+        insertcounter = InsertCounter()
+        logging.info('Reading alignment file ...')
+        insertcounter.count()
+        # now aggregate by MGC
+
+        '''
+        How to aggregate
+        1. for each counting method (insert, base, norm, scaled)
+            for each mg
+                find mgc
+                sum up value for mgc
+        2. report
+            for each counting method
+                for each mgc
+                one line with each counting method
+        '''
+
+        mgc_insert_raw = collections.defaultdict(lambda: 0.0)
+        mgc_insert_norm = collections.defaultdict(lambda: 0.0)
+        mgc_insert_scaled = collections.defaultdict(lambda: 0.0)
+        mgc_base_raw = collections.defaultdict(lambda: 0.0)
+        mgc_base_norm = collections.defaultdict(lambda: 0.0)
+        all_mgcs = set()
+        for (mg_data, mgc_data) in zip([insertcounter.get_mg_insert_raw(), insertcounter.get_mg_insert_norm(), insertcounter.get_mg_insert_scaled(), insertcounter.get_mg_base_raw(), insertcounter.get_mg_base_norm()], [mgc_insert_raw, mgc_insert_norm, mgc_insert_scaled, mgc_base_raw, mgc_base_norm]):
+            for mg, abundance in mg_data.items():
+                mgc = MOTUS_DB.get_mgc_by_mg(mg)
+                mgc_data[mgc] = mgc_data[mgc] + abundance
+                all_mgcs.add(mgc)
+
+        mgc_2_all_counts = {}
+        for mgc in all_mgcs:
+            #Mgc_values = collections.namedtuple("Mgc_values", "insert_raw insert_norm insert_scaled base_raw base_norm")
+            insert_raw = mgc_insert_raw[mgc]
+            insert_norm = mgc_insert_norm[mgc]
+            insert_scaled = mgc_insert_scaled[mgc]
+            base_raw = mgc_base_raw[mgc]
+            base_norm = mgc_base_norm[mgc]
+            mgc_vals = Mgc_values(insert_raw=insert_raw, insert_norm=insert_norm, insert_scaled=insert_scaled, base_raw=base_raw, base_norm=base_norm)
+            mgc_2_all_counts[mgc] = mgc_vals
+
+        return mgc_2_all_counts
+
+
 
 def calc_mgc() -> None:
     """
@@ -1555,7 +1559,7 @@ Algorithm options:
 
 def parse_calc_mgc():
     parser = argparse.ArgumentParser(usage = f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-Version: {MOTUS_VERSION}
+Version: {mutils.MOTUS_VERSION}
 Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
 taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
 doi: https://doi.org/10.1186/s40168-022-01410-z
@@ -1655,7 +1659,7 @@ def merge_profiles(motus_file_paths: List[pathlib.Path], output_motus_file_path:
 
 def parse_merge():
     parser = argparse.ArgumentParser(usage=f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: {MOTUS_VERSION}
+    Version: {mutils.MOTUS_VERSION}
     Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
     taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
     doi: https://doi.org/10.1186/s40168-022-01410-z
@@ -1731,7 +1735,7 @@ def download_genomes(keyword: str, motusSearchDB: MotusSearchDB, output_folder: 
 
 def parse_classify():
     parser = argparse.ArgumentParser(usage=f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-     Version: {MOTUS_VERSION}
+     Version: {mutils.MOTUS_VERSION}
      Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
      taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
      doi: https://doi.org/10.1186/s40168-022-01410-z
@@ -1854,7 +1858,7 @@ def classify(genome_files: List[pathlib.Path], output_file: pathlib.Path, thread
 
 def parse_downloadDB():
     parser = argparse.ArgumentParser(usage=f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-     Version: {MOTUS_VERSION}
+     Version: {mutils.MOTUS_VERSION}
      Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
      taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
      doi: https://doi.org/10.1186/s40168-022-01410-z
@@ -1876,34 +1880,34 @@ def parse_downloadDB():
 
     mutils.startup()
 
-    if DEFAULT_MOTUS_MGDB_LOCATION_MARKER.exists() and not force_download:
+    if mutils.DEFAULT_MOTUS_MGDB_LOCATION_MARKER.exists() and not force_download:
         logging.info('Database already downloaded and -f not set. All good.')
         mutils.shutdown(0)
-    if DEFAULT_MOTUS_MGDB_LOCATION_MARKER.exists() and force_download:
+    if mutils.DEFAULT_MOTUS_MGDB_LOCATION_MARKER.exists() and force_download:
         logging.info('Database already downloaded and -f set. Will delete current database and download again.')
-        shutil.rmtree(DEFAULT_MOTUS_MGDB_LOCATION)
+        shutil.rmtree(mutils.DEFAULT_MOTUS_MGDB_LOCATION)
 
     logging.info('Start downloading mOTUs marker gene database. ~6GB')
-    dest_tar_gz_file = DEFAULT_MOTUS_MGDB_PARENT_LOCATION.joinpath('db_mOTU.tar.gz')
+    dest_tar_gz_file = mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION.joinpath('db_mOTU.tar.gz')
     if dest_tar_gz_file.is_file():
         dest_tar_gz_file.unlink()
-    urllib.request.urlretrieve(MOTUS_MGDB_REMOTE_LOCATION, str(dest_tar_gz_file))
+    urllib.request.urlretrieve(mutils.MOTUS_MGDB_REMOTE_LOCATION, str(dest_tar_gz_file))
     logging.info('Finished downloading mOTUs marker gene database.')
 
     logging.info('Start un-taring mOTUs marker gene database.')
-    if DEFAULT_MOTUS_MGDB_LOCATION.exists():
-        shutil.rmtree(DEFAULT_MOTUS_MGDB_LOCATION)
+    if mutils.DEFAULT_MOTUS_MGDB_LOCATION.exists():
+        shutil.rmtree(mutils.DEFAULT_MOTUS_MGDB_LOCATION)
 
     with tarfile.open(dest_tar_gz_file, 'r') as t:
-        t.extractall(DEFAULT_MOTUS_MGDB_PARENT_LOCATION)
-    DEFAULT_MOTUS_MGDB_LOCATION_MARKER.touch(exist_ok=True)
+        t.extractall(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION)
+    mutils.DEFAULT_MOTUS_MGDB_LOCATION_MARKER.touch(exist_ok=True)
     logging.info('Finished untaring mOTUs marker gene database.')
     mutils.shutdown(0)
 
 
 def parse_download():
     parser = argparse.ArgumentParser(usage=f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-     Version: {MOTUS_VERSION}
+     Version: {mutils.MOTUS_VERSION}
      Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
      taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
      doi: https://doi.org/10.1186/s40168-022-01410-z
