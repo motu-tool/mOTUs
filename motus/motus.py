@@ -1081,22 +1081,54 @@ class InsertCounter:
 
 
 
+    def check_validity_of_bam_file(self, pg_entries: List[Dict[str, str]]) -> None:
+        motus_found = False
+        database_tool = None
+        minlength = None
+
+        for pg_entry in pg_entries:
+            bamid = pg_entry.get('ID', None)
+            if bamid == 'mOTUs4':
+                motus_found = True
+                database_tool = pg_entry.get('VN', None)
+                minlength = pg_entry.get('CL', '')
+                if '-l' in minlength:
+                    minlength = int(minlength.split('-l')[-1].strip())
+        if motus_found:
+            if MOTUS_DB.get_full_version() != database_tool:
+                logging.error(f'Version of BAM file and databases don\'t match')
+                logging.error(f'BAM: {database_tool}')
+                logging.error(f'Database/Tool: {MOTUS_DB.get_full_version()}')
+                mutils.shutdown(1)
+            if minlength > MOTUS_PARAMETERS.get_minimal_alignment_length():
+                logging.info(f'Alignments in BAM have a minimum length of {minlength} which is above '
+                             f'the provided minimum alignment length of {MOTUS_PARAMETERS.get_minimal_alignment_length()}'
+                             f'. Increase minimum alignment length to continue.')
+                mutils.shutdown(1)
+        else:
+            logging.error(f'BAM file invalid as it was not generated with mOTUs4')
+            mutils.shutdown(1)
+
+
+
     def _bam_insert_iterator(self) -> Generator[Tuple[str, Dict[str, List[pysam.AlignedSegment]]], None, None]:
         """Reads through a sorted BAM file and
         finds the best alignment(s) per insert
         """
         alignments = pysam.AlignmentFile(MOTUS_PARAMETERS.get_alignment_file(), 'r')
-        motus_version = [entry for entry in alignments.header.to_dict()['PG'] if entry['ID'] == MOTUS_DB.get_full_sam_id()]
-        header_valid = False
-        if len(motus_version) > 0:
-            if motus_version[0]['VN'] == MOTUS_DB.get_full_version():
-                header_valid = True
-        if not header_valid:
-            if MOTUS_PARAMETERS.is_strict_db_mode():
-                logging.error('mOTUs tool/database have changed and bam file is invalid. Please profile with updated database. Quitting ...')
-                mutils.shutdown(1)
-            else:
-                logging.warning('mOTUs tool/database have changed and bam file is invalid. Lenient mode enabled, will continue but results might be broken ...')
+        pg_entries = alignments.header.get('PG', [])
+        self.check_validity_of_bam_file(pg_entries)
+        # motus_version = [entry for entry in alignments.header.to_dict()['PG'] if entry['ID'] == MOTUS_DB.get_full_sam_id()]
+        # header_valid = False
+        # if len(motus_version) > 0:
+        #     if motus_version[0]['VN'] == MOTUS_DB.get_full_version():
+        #         header_valid = True
+        # if not header_valid:
+        #     if MOTUS_PARAMETERS.is_strict_db_mode():
+        #         logging.error('mOTUs tool/database have changed and bam file is invalid. Please profile with updated database. Quitting ...')
+        #         mutils.shutdown(1)
+        #     else:
+        #         logging.warning('mOTUs tool/database have changed and bam file is invalid. Lenient mode enabled, will continue but results might be broken ...')
 
         try:
             alignment: pysam.AlignedSegment = next(alignments)
@@ -1835,17 +1867,6 @@ def classify(genome_files: List[pathlib.Path], output_file: pathlib.Path, thread
             cogs_str = ','.join(cogs)
             tsvhandle.write(f'{genome_name}\t{len(cogs)}\t{cogs_str}\n')
     logging.info(f'\t Finished collecting fetchMGs results. Genomes = {len(genome_2_markergenes)}, Genomes with enough MGs = {len(genome_2_markergenes) - genomes_removed_notenoughmgs}')
-
-
-
-
-
-
-
-
-
-
-
 
 
 
