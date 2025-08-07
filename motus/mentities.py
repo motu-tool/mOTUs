@@ -433,6 +433,11 @@ class MotusDB:
 
         return 'TOOL:' + mutils.MOTUS_VERSION + '_DB:' + self.database_version
 
+
+    def get_tool_version(self):
+        return mutils.MOTUS_VERSION
+    def get_database_version(self):
+        return self.database_version
     def get_full_sam_id(self):
         """
         Get the ID flag name for SAM/BAM header lines
