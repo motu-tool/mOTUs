@@ -1317,27 +1317,26 @@ class CapitalisedHelpFormatter(argparse.HelpFormatter):
 
 def parse_map_tax():
     parser = argparse.ArgumentParser(usage = f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-Version: {mutils.MOTUS_VERSION}
-Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
-taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
-doi: https://doi.org/10.1186/s40168-022-01410-z
+    Version: {mutils.MOTUS_VERSION}
     
-motus map_tax [options]
-
-Input options:
-   -f   FILE[ FILE]  input file(s) for reads in forward orientation, fastq(.gz)-formatted
-   -r   FILE[ FILE]  input file(s) for reads in reverse orientation, fastq(.gz)-formatted
-   -s   FILE[ FILE]  input file(s) for unpaired reads, fastq(.gz)-formatted
-
-
-Output options:
-   -o   FILE         output file name
-
-Algorithm options:
-   -l   INT          min length of the alignment (bp) [75]
-   -t   INT          number of threads [1]
-   -v   INT          verbosity level: 1=error, 2=warning, 3=message, 4+=debugging [3]
-      ''', formatter_class=CapitalisedHelpFormatter,add_help=False)
+    {mutils.cite_text()}
+        
+    motus map_tax [options]
+    
+    Input options:
+       -f   FILE[ FILE]  input file(s) for reads in forward orientation, fastq(.gz)-formatted
+       -r   FILE[ FILE]  input file(s) for reads in reverse orientation, fastq(.gz)-formatted
+       -s   FILE[ FILE]  input file(s) for unpaired reads, fastq(.gz)-formatted
+    
+    
+    Output options:
+       -o   FILE         output file name
+    
+    Algorithm options:
+       -l   INT          min length of the alignment (bp) [75]
+       -t   INT          number of threads [1]
+       -v   INT          verbosity level: 1=error, 2=warning, 3=message, 4+=debugging [3]
+          ''', formatter_class=CapitalisedHelpFormatter,add_help=False)
 
     # Input options
     parser.add_argument("-f", nargs="+",default=[])  # input files(s) for reads in forward orientation, fastq(.gz)-formatted
@@ -1391,9 +1390,8 @@ def parse_batch_profile():
 
     parser = argparse.ArgumentParser(usage=f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
     Version: {mutils.MOTUS_VERSION}
-    Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
-    taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
-    doi: https://doi.org/10.1186/s40168-022-01410-z
+
+    {mutils.cite_text()}
 
     motus batch_profile [options]
 
@@ -1477,30 +1475,29 @@ def parse_batch_profile():
 
 def parse_profile():
     parser = argparse.ArgumentParser(usage = f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-Version: {mutils.MOTUS_VERSION}
-Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
-taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
-doi: https://doi.org/10.1186/s40168-022-01410-z
+    Version: {mutils.MOTUS_VERSION}
     
-motus profile [options]
-
-Input options:
-   -f  FILE[ FILE]  input file(s) for reads in forward orientation, fastq(.gz)-formatted
-   -r  FILE[ FILE]  input file(s) for reads in reverse orientation, fastq(.gz)-formatted
-   -s  FILE[ FILE]  input file(s) for unpaired reads, fastq(.gz)-formatted
-   -n  STR          sample name ['unnamed sample']
-
-Output options:
-   -o  FILE         output file name [required]
-
-Algorithm options:
-   -g  INT          number of marker genes cutoff: 1=higher recall, 6=higher precision, 10=maximum [3]
-   -l  INT          min length of the alignment (bp) [75]
-   -t  INT          number of threads [1]
-   -v  INT          verbosity level: 1=error, 2=warning, 3=message, 4+=debugging [1]
-   -y  STR          type of read counts [INSERT_SCALED]
-                    Values: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
-]''', formatter_class=CapitalisedHelpFormatter,add_help=False)
+    {mutils.cite_text()}
+        
+    motus profile [options]
+    
+    Input options:
+       -f  FILE[ FILE]  input file(s) for reads in forward orientation, fastq(.gz)-formatted
+       -r  FILE[ FILE]  input file(s) for reads in reverse orientation, fastq(.gz)-formatted
+       -s  FILE[ FILE]  input file(s) for unpaired reads, fastq(.gz)-formatted
+       -n  STR          sample name ['unnamed sample']
+    
+    Output options:
+       -o  FILE         output file name [required]
+    
+    Algorithm options:
+       -g  INT          number of marker genes cutoff: 1=higher recall, 6=higher precision, 10=maximum [3]
+       -l  INT          min length of the alignment (bp) [75]
+       -t  INT          number of threads [1]
+       -v  INT          verbosity level: 1=error, 2=warning, 3=message, 4+=debugging [1]
+       -y  STR          type of read counts [INSERT_SCALED]
+                        Values: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
+    ''', formatter_class=CapitalisedHelpFormatter,add_help=False)
 
     # Input options
     parser.add_argument("-f", nargs="+", default=[])  # input file(s) for reads in forward direction
@@ -1559,22 +1556,21 @@ Algorithm options:
 
 def parse_calc_mgc():
     parser = argparse.ArgumentParser(usage = f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-Version: {mutils.MOTUS_VERSION}
-Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
-taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
-doi: https://doi.org/10.1186/s40168-022-01410-z
+    Version: {mutils.MOTUS_VERSION}
     
-motus calc_mgc [options]
-
-Input options:
-   -i  FILE         provide the SAM or BAM input file (output of motus map_tax)
-
-Output options:
-   -o  FILE         output file name
-
-Algorithm options:
-   -l  INT          min length of the alignment (bp) [75]
-   -v  INT          verbosity level: 1=error, 2=warning, 3=message, 4+=debugging [3]''', formatter_class=CapitalisedHelpFormatter,add_help=False)
+    {mutils.cite_text()}
+        
+    motus calc_mgc [options]
+    
+    Input options:
+       -i  FILE         provide the SAM or BAM input file (output of motus map_tax)
+    
+    Output options:
+       -o  FILE         output file name
+    
+    Algorithm options:
+       -l  INT          min length of the alignment (bp) [75]
+       -v  INT          verbosity level: 1=error, 2=warning, 3=message, 4+=debugging [3]''', formatter_class=CapitalisedHelpFormatter,add_help=False)
 
     parser.add_argument("-i", type=str, required=True)  # provide a SAM or BAM input file (or list of files) output of motus map_tax
     parser.add_argument("-o", required=True)  # output file name [stdout]
@@ -1660,9 +1656,8 @@ def merge_profiles(motus_file_paths: List[pathlib.Path], output_motus_file_path:
 def parse_merge():
     parser = argparse.ArgumentParser(usage=f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
     Version: {mutils.MOTUS_VERSION}
-    Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
-    taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
-    doi: https://doi.org/10.1186/s40168-022-01410-z
+    
+    {mutils.cite_text()}
 
     motus merge [options]
 
@@ -1735,10 +1730,9 @@ def download_genomes(keyword: str, motusSearchDB: MotusSearchDB, output_folder: 
 
 def parse_classify():
     parser = argparse.ArgumentParser(usage=f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-     Version: {mutils.MOTUS_VERSION}
-     Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
-     taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
-     doi: https://doi.org/10.1186/s40168-022-01410-z
+    Version: {mutils.MOTUS_VERSION}
+
+    {mutils.cite_text()}
 
      motus classify [options]
 
@@ -1858,10 +1852,9 @@ def classify(genome_files: List[pathlib.Path], output_file: pathlib.Path, thread
 
 def parse_downloadDB():
     parser = argparse.ArgumentParser(usage=f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-     Version: {mutils.MOTUS_VERSION}
-     Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
-     taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
-     doi: https://doi.org/10.1186/s40168-022-01410-z
+    Version: {mutils.MOTUS_VERSION}
+
+    {mutils.cite_text()}
 
      motus downloadDB [options]
      
@@ -1907,10 +1900,9 @@ def parse_downloadDB():
 
 def parse_download():
     parser = argparse.ArgumentParser(usage=f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-     Version: {mutils.MOTUS_VERSION}
-     Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
-     taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
-     doi: https://doi.org/10.1186/s40168-022-01410-z
+    Version: {mutils.MOTUS_VERSION}
+    
+    {mutils.cite_text()}
 
      motus download [options]
 
@@ -2028,28 +2020,27 @@ def parse_download():
 
 def parse_calc_motu():
     parser = argparse.ArgumentParser(usage = f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-Version: {mutils.MOTUS_VERSION}
-Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
-taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
-doi: https://doi.org/10.1186/s40168-022-01410-z
+    Version: {mutils.MOTUS_VERSION}
     
-motus calc_motu [options]
-
-    Input options:
-       -n  STR   sample name [unnamed sample]
-       -i  FILE  provide the mgc abundance table (output of motus calc_mgc)
+    {mutils.cite_text()}
+        
+    motus calc_motu [options]
     
-    Output options:
-       -o  FILE  output file name 
-       -c        print result as counts instead of relative abundances
-    
-    Algorithm options:
-       -g   INT   number of marker genes cutoff: 1=higher recall, 6=higher precision, 10=maximum [3]
-       -v   INT   verbosity level: 1=error, 2=warning, 3=message, 4+=debugging [3]
-       -y  STR    type of read counts [INSERT_SCALED]
-                    Values: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
-      
-      ''', formatter_class=CapitalisedHelpFormatter,add_help=False)
+        Input options:
+           -n  STR   sample name [unnamed sample]
+           -i  FILE  provide the mgc abundance table (output of motus calc_mgc)
+        
+        Output options:
+           -o  FILE  output file name 
+           -c        print result as counts instead of relative abundances
+        
+        Algorithm options:
+           -g   INT   number of marker genes cutoff: 1=higher recall, 6=higher precision, 10=maximum [3]
+           -v   INT   verbosity level: 1=error, 2=warning, 3=message, 4+=debugging [3]
+           -y  STR    type of read counts [INSERT_SCALED]
+                        Values: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
+          
+          ''', formatter_class=CapitalisedHelpFormatter,add_help=False)
 
 
     parser.add_argument("-n", type=str, default='unnamed sample')  # sample name
@@ -2084,27 +2075,28 @@ motus calc_motu [options]
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(usage = f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-Version: {mutils.MOTUS_VERSION}
-{mutils.cite_text()}
+    Version: {mutils.MOTUS_VERSION}
     
-motus <command> [options]
+    {mutils.cite_text()}
+        
+    motus <command> [options]
+        
+        -- Taxonomic profiling
+              profile     Perform taxonomic profiling (map_tax + calc_mgc + calc_motu) in a single step
     
-    -- Taxonomic profiling
-          profile     Perform taxonomic profiling (map_tax + calc_mgc + calc_motu) in a single step
-
-          map_tax     Map reads to the marker gene database
-          calc_mgc    Calculate marker gene cluster (MGC) abundance
-          calc_motu   Summarize MGC abundances into a mOTU profile
+              map_tax     Map reads to the marker gene database
+              calc_mgc    Calculate marker gene cluster (MGC) abundance
+              calc_motu   Summarize MGC abundances into a mOTU profile
+        
+        -- Utilities
+              download    Download genomes associated with mOTUs
+              downloadDB  Download the mOTUs marker gene database
+              merge       Merge several taxonomic profiling results into one table
+              classify    Add taxonomic information to mOTUs
     
-    -- Utilities
-          download    Download genomes associated with mOTUs
-          downloadDB  Download the mOTUs marker gene database
-          merge       Merge several taxonomic profiling results into one table
-          classify    Add taxonomic information to mOTUs
-
-
-    Type motus <command> to print the help menu for a specific command
-    ''',formatter_class=CapitalisedHelpFormatter,add_help=False)
+    
+        Type motus <command> to print the help menu for a specific command
+        ''',formatter_class=CapitalisedHelpFormatter,add_help=False)
 
     parser.add_argument('command', choices=["profile", "map_tax", "calc_mgc", "calc_motu", "download", "merge", "downloadDB", "batch_profile", "classify"])
     args: argparse.Namespace = parser.parse_args(sys.argv[1:2])
