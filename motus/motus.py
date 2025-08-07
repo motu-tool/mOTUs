@@ -1261,7 +1261,8 @@ def calc_mgc() -> None:
     mgc_2_counts = mgc_counter.count()
 
     with open(MOTUS_PARAMETERS.get_mgc_file(), 'w') as handle:
-        header_line = f'#tool_version={MOTUS_DB.get_tool_version()}\tdatabase_version={MOTUS_DB.get_database_version()}\tmin_alignment_length={MOTUS_PARAMETERS.get_minimal_alignment_length()}'
+        header_line = mutils.create_mgc_header_line()
+        #header_line = f'#tool_version={MOTUS_DB.get_tool_version()}\tdatabase_version={MOTUS_DB.get_database_version()}\tmin_alignment_length={MOTUS_PARAMETERS.get_minimal_alignment_length()}'
         handle.write(f'{header_line}\n')
         handle.write('MGC\tINSERT_RAW\tINSERT_NORM\tINSERT_SCALED\tBASE_RAW\tBASE_NORM\n')
         for mgc in sorted(mgc_2_counts.keys()):
@@ -1270,6 +1271,7 @@ def calc_mgc() -> None:
 
     logging.info('Finished mOTUs - calc_mgc routine - Calculating abundances per MGC ... ')
     return None
+
 
 
 def calc_motu() -> None:
@@ -1282,26 +1284,26 @@ def calc_motu() -> None:
     """
 
     mgc_file = MOTUS_PARAMETERS.get_mgc_file()
-    has_header = False
+#    has_header = False
     with open(mgc_file) as handle:
-        first_line = handle.readline().strip()
-        if first_line.startswith('#'):
-            has_header = True
-        motus_version = first_line.replace('#', '')
-        if motus_version == MOTUS_DB.get_full_version():
-            header_valid = True
-        if not header_valid:
-            if MOTUS_PARAMETERS.is_strict_db_mode():
-                logging.error('mOTUs tool/database have changed and bam file is invalid. Please profile with updated database. Quitting ...')
-                mutils.shutdown(1)
-            else:
-                logging.warning('mOTUs tool/database have changed and bam file is invalid. Lenient mode enabled, will continue but results might be broken ...')
+        header_line = handle.readline().strip()
+        mutils.check_validity_of_mgc_header(header_line)
+        # if first_line.startswith('#'):
+        #     has_header = True
+        # motus_version = first_line.replace('#', '')
+        # if motus_version == MOTUS_DB.get_full_version():
+        #     header_valid = True
+        # if not header_valid:
+        #     if MOTUS_PARAMETERS.is_strict_db_mode():
+        #         logging.error('mOTUs tool/database have changed and bam file is invalid. Please profile with updated database. Quitting ...')
+        #         mutils.shutdown(1)
+        #     else:
+        #         logging.warning('mOTUs tool/database have changed and bam file is invalid. Lenient mode enabled, will continue but results might be broken ...')
 
     mgc_2_count = {}
     count_mode = MOTUS_PARAMETERS.get_count_mode()
     with open(mgc_file) as handle:
-        if has_header:
-            handle.readline()
+        handle.readline()
         for entry in csv.DictReader(handle, delimiter='\t'):
             mgc_2_count[entry['MGC']] = float(entry[count_mode])
     motu_2_mgccounts = collections.defaultdict(lambda: collections.defaultdict(lambda: 0.0))
@@ -2048,7 +2050,7 @@ def parse_calc_motu():
         Algorithm options:
            -g   INT   number of marker genes cutoff: 1=higher recall, 6=higher precision, 10=maximum [3]
            -v   INT   verbosity level: 1=error, 2=warning, 3=message, 4+=debugging [3]
-           -y  STR    type of read counts [INSERT_SCALED]
+           -y   STR   type of read counts [INSERT_SCALED]
                         Values: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
           
           ''', formatter_class=CapitalisedHelpFormatter,add_help=False)

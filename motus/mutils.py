@@ -1,7 +1,8 @@
 import logging
 import sys
 import pathlib
-
+from mentities import MOTUS_PARAMETERS
+from mentities import MOTUS_DB
 
 SAM_ID_FLAG = 'mOTUs4'
 MOTUS_VERSION = '4.0.2'
@@ -50,3 +51,50 @@ def cite_text() -> str:
     doi: https://doi.org/10.1093/nar/gkae1004
     '''
     return tmp
+
+
+def check_validity_of_mgc_header(header_line: str) -> None:
+    '''check of the header line matches the parameters used in the current
+    call. Example:
+    #tool_version=4.0.2     database_version=4.0    min_alignment_length=110
+
+    what is checked?
+    1. tool_version
+    2. database_version
+
+    what is not checked
+    1. min_alignment_length: This method only makes sense for calc_motus and there
+        alignment length is not used. So it is ignored here
+
+    This method will kill the current job if parameters don\'t match
+
+    Returns:
+        None
+
+    '''
+
+    if not header_line or not header_line.startswith('#'):
+        logging.error(f'Header line: {header_line} doesn\'t look like a valid header')
+        shutdown()
+    header_line_splits = header_line.strip().split('\t')
+
+    tool = header_line_splits[0].strip().split('#tool_version=')[-1]
+    version = header_line_splits[1].strip().split('database_version=')[-1]
+    min_aln_length = int(header_line_splits[2].strip().split('min_alignment_length=')[-1])
+    if tool != MOTUS_DB.get_tool_version():
+        logging.error('MGC file was created with a different version of the tool.')
+        logging.error(f'Tool version in MGC file: {tool}')
+        logging.error(f'This tool version: {MOTUS_DB.get_tool_version()}')
+        shutdown(1)
+
+    if version != MOTUS_DB.get_database_version():
+        logging.error('MGC file was created with a different version of the database.')
+        logging.error(f'Database version in MGC file: {version}')
+        logging.error(f'This database version: {MOTUS_DB.get_database_version()}')
+        shutdown(1)
+    MOTUS_PARAMETERS.set_minimal_alignment_length(min_aln_length)
+
+
+def create_mgc_header_line():
+    header_line = f'#tool_version={MOTUS_DB.get_tool_version()}\tdatabase_version={MOTUS_DB.get_database_version()}\tmin_alignment_length={MOTUS_PARAMETERS.get_minimal_alignment_length()}'
+    return header_line
