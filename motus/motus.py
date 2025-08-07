@@ -1118,17 +1118,7 @@ class InsertCounter:
         alignments = pysam.AlignmentFile(MOTUS_PARAMETERS.get_alignment_file(), 'r')
         pg_entries = alignments.header.get('PG', [])
         self.check_validity_of_bam_file(pg_entries)
-        # motus_version = [entry for entry in alignments.header.to_dict()['PG'] if entry['ID'] == MOTUS_DB.get_full_sam_id()]
-        # header_valid = False
-        # if len(motus_version) > 0:
-        #     if motus_version[0]['VN'] == MOTUS_DB.get_full_version():
-        #         header_valid = True
-        # if not header_valid:
-        #     if MOTUS_PARAMETERS.is_strict_db_mode():
-        #         logging.error('mOTUs tool/database have changed and bam file is invalid. Please profile with updated database. Quitting ...')
-        #         mutils.shutdown(1)
-        #     else:
-        #         logging.warning('mOTUs tool/database have changed and bam file is invalid. Lenient mode enabled, will continue but results might be broken ...')
+        logging.warning('mOTUs tool/database have changed and bam file is invalid. Lenient mode enabled, will continue but results might be broken ...')
 
         try:
             alignment: pysam.AlignedSegment = next(alignments)
@@ -1271,8 +1261,8 @@ def calc_mgc() -> None:
     mgc_2_counts = mgc_counter.count()
 
     with open(MOTUS_PARAMETERS.get_mgc_file(), 'w') as handle:
-        header_line = MOTUS_DB.get_full_version()
-        handle.write(f'#{header_line}\n')
+        header_line = f'#tool_version={MOTUS_DB.get_tool_version()}\tdatabase_version={MOTUS_DB.get_database_version()}\tmin_alignment_length={MOTUS_PARAMETERS.get_minimal_alignment_length()}'
+        handle.write(f'{header_line}\n')
         handle.write('MGC\tINSERT_RAW\tINSERT_NORM\tINSERT_SCALED\tBASE_RAW\tBASE_NORM\n')
         for mgc in sorted(mgc_2_counts.keys()):
             counts = mgc_2_counts[mgc]
@@ -1617,7 +1607,7 @@ def parse_calc_mgc():
 
     alignment_file = pathlib.Path(args.i)
     mgc_file = pathlib.Path(args.o)
-    inserts_file = pathlib.Path(args.o + '.inserts')
+    inserts_file = pathlib.Path(args.o + '.inserts.gz')
 
 
     mutils.startup()
