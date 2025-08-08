@@ -408,6 +408,12 @@ class MotusDB:
                     self.motu_2_mv_gtdb_tax[motu] = gtdb_taxonomy
             logging.info(f'Loading database finished. Version {self.database_version} (version date: {self.database_date}) contains {len(self.motus)} mOTUs, {len(self.mgc_2_motu)} markergeneclusters and {len(self.mgh_2_mglength)} markergenes.')
 
+
+    def get_mv_tax_for_motu(self, motu: str) -> str:
+        if 'unassigned' in motu:
+            return 'd__;p___A;c__;o__;f__;g__;s__'
+        else:
+            return self.motu_2_mv_gtdb_tax[motu]
     def is_mg_blocked(self, mg: str) -> bool:
         """
         Checks if the markergene is in the blocklist
@@ -438,6 +444,18 @@ class MotusDB:
         return mutils.MOTUS_VERSION
     def get_database_version(self):
         return self.database_version
+
+    def is_valid_motu(self, motu: str):
+        """ checks if the text in the motu variable is
+        an actual mOTU in the current database
+
+        Params:
+            motu: Name of a mOTU
+        Returns:
+            if the motu is an actual motu
+        """
+        return motu in self.motus
+
     def get_full_sam_id(self):
         """
         Get the ID flag name for SAM/BAM header lines
@@ -567,6 +585,119 @@ class MotusDB:
         """
 
         return self._motus_core_mgs
+
+class SinglemOTUsFile:
+    # metadata
+    _count_mode = None
+    _count_mode_options = ['INSERT_RAW', 'INSERT_NORM', 'INSERT_SCALED', 'BASE_RAW', 'BASE_NORM']
+    _min_mgcs = None
+    _min_mgcs_options = [1,2,3,4,5,6,7,8,9,10]
+    _database_version = None
+    _tool_version = None
+    _min_alignment_length = None
+    _value_type = None
+    _value_type_options = ['counts', 'relative_abundances']
+    # descriptors
+    _samplename = None
+
+    # data
+    _motu_2_values = None
+
+
+
+    def __init__(self, motu_2_values: Dict[str, float], min_alignment_length: int, min_mgcs: int, count_mode:str, database_version: str, tool_version: str, value_type: str, samplename: str) -> None:
+        self._motu_2_values = {}
+
+        if count_mode not in self._count_mode_options:
+            logging.error(f'Unknown count mode: {count_mode}. Options: {self._count_mode_options}')
+            mutils.shutdown(1)
+        self._count_mode = count_mode
+
+        if value_type not in self._value_type_options:
+            logging.error(f'Unknown value type: {value_type}. Options: {self._value_type_options}')
+            mutils.shutdown(1)
+        self._value_type = value_type
+
+        if min_mgcs not in self._min_mgcs_options:
+            logging.error(f'Unknown number of MGCs: {min_mgcs}. Options: {self._min_mgcs_options}')
+            mutils.shutdown(1)
+        self._min_mgcs = min_mgcs
+
+        if database_version != MOTUS_DB.get_database_version():
+            logging.error(f'Invalid database version: {database_version}. Options: {MOTUS_DB.get_database_version()}')
+            mutils.shutdown(1)
+        self._database_version = database_version
+
+        if tool_version != MOTUS_DB.get_tool_version():
+            logging.error(f'Invalid tool version: {tool_version}. Options: {MOTUS_DB.get_tool_version()}')
+            mutils.shutdown(1)
+        self._tool_version = tool_version
+
+        self._min_alignment_length = min_alignment_length
+
+        self._samplename = samplename
+
+        for motu, value in motu_2_values.items():
+            if value != 0.0:
+                self._motu_2_values[motu] = value
+                if not MOTUS_DB.is_valid_motu(motu):
+                    logging.error(f'Unknown mOTU {motu}')
+                    mutils.shutdown(1)
+
+
+    #def get_motus_file_header(self, min_alignment_length: int, min_mgcs: int, count_mode:str, database_version: str, tool_version: str, value_type: str):
+
+    def get_motus_file_header(self):
+        tmp = f'#tool_version={self._tool_version}\tdatabase_version={self._database_version}\tmin_alignment_length={self._min_alignment_length}\t'
+        tmp = tmp + f'min_mgcs={self._min_mgcs}\tcount_mode={self._count_mode}\tvalue_type={self._value_type}'
+        return tmp
+
+
+    def write_to_file(self, output_file: pathlib.Path) -> None:
+        '''write the contents of this object to a
+        the output file
+        '''
+        sorted_motus = sorted(self._motu_2_values.keys())
+        header_line = self.get_motus_file_header()
+        with open(output_file, 'w') as outhandle:
+            outhandle.write(f'{header_line}\n')
+            outhandle.write(f'mOTU\tTaxonomy\t{self._samplename}\n')
+            for motu in sorted_motus:
+                tax = MOTUS_DB.get_mv_tax_for_motu(motu)
+                value = self._motu_2_values[motu]
+                if self._value_type == 'relative_abundances':
+                    report_value = '{number:.{digits}f}'.format(number=value, digits=8)
+                else:
+                    if 'NORM' in self._count_mode:
+                        report_value = '{number:.{digits}f}'.format(number=value, digits=8)
+                    else:
+                        report_value = round(value)
+                outhandle.write(f'{motu}\t{tax}\t{report_value}\n')
+
+
+
+
+
+
+    def get_relative_abundances(self) -> Self:
+        '''Uses the data in this object to create a new
+        or existing SingleMotus file object which has
+        relative abundances instead of counts as values
+
+        '''
+        if self._value_type == 'relative_abundances':
+            return self
+
+        motu_2_count = self._motu_2_values
+        motu_2_relab = {}
+        total = float(sum(motu_2_count.values()))
+        for motu, count in motu_2_count.items():
+            relab = float(count) / total
+            motu_2_relab[motu] = relab
+
+        smf = SinglemOTUsFile(motu_2_relab, self._min_alignment_length, self._min_mgcs, self._count_mode, self._database_version, self._tool_version, 'relative_abundances', self._samplename)
+        return smf
+
 
 
 

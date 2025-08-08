@@ -39,6 +39,8 @@
 
 
 import statistics
+from operator import countOf
+
 import pysam
 import Bio.SeqIO.FastaIO as FastaIO
 import logging
@@ -50,7 +52,7 @@ import collections
 import random
 import argparse
 import sys
-from typing import List, Dict, Set, Tuple, Generator, TextIO
+from typing import List, Dict, Set, Tuple, Generator, TextIO, Self
 import urllib.request
 import tarfile
 import shutil
@@ -103,17 +105,14 @@ class TaxonomicRank(Enum):
 
 
 
-class SinglemOTUsFile:
-    _count_mode = None
-    _min_mgcs = None
-    _full_version = None
-    _taxonomy = None
-    _taxonomy_level = None # TODO remove. we dont aggregate in motus
-    _counts_aggregated_by_taxonomy = None # TODO remove. we dont aggregate in motus
-    _motus_with_abundance = None
-    _samplename_2_motus_2_counts = None
-    _samplename_2_motus_2_relab = None
-    _motu_2_taxonomy = None # TODO not sure this will be needed
+
+
+
+
+
+
+
+
 
 
 
@@ -122,26 +121,22 @@ class SinglemOTUsFile:
 class MotusFile:
     _count_mode = None
     _min_mgcs = None
-    _full_version = None
-    _taxonomy = None
-    _taxonomy_level = None # TODO remove. we dont aggregate in motus
-    _counts_aggregated_by_taxonomy = None # TODO remove. we dont aggregate in motus
+    _database_version = None
+    _tool_version = None
     _motus_with_abundance = None
     _samplename_2_motus_2_counts = None
-    _samplename_2_motus_2_relab = None
-    _motu_2_taxonomy = None # TODO not sure this will be needed
 
-    def has_counts(self):
-        if self._samplename_2_motus_2_counts:
-            return True
-        else:
-            return False
+    # def has_counts(self):
+    #     if self._samplename_2_motus_2_counts:
+    #         return True
+    #     else:
+    #         return False
 
-    def has_motus_with_abundance(self):
-        if len(self._motus_with_abundance) == 0:
-            return False
-        else:
-            return True
+    # def has_motus_with_abundance(self):
+    #     if len(self._motus_with_abundance) == 0:
+    #         return False
+    #     else:
+    #         return True
 
     def set_mOTU_counts(self, samplename_2_motus_2_counts: Dict[str, float], count_type):
         self._motus_with_abundance = set()
@@ -1288,18 +1283,6 @@ def calc_motu() -> None:
     with open(mgc_file) as handle:
         header_line = handle.readline().strip()
         mutils.check_validity_of_mgc_header(header_line)
-        # if first_line.startswith('#'):
-        #     has_header = True
-        # motus_version = first_line.replace('#', '')
-        # if motus_version == MOTUS_DB.get_full_version():
-        #     header_valid = True
-        # if not header_valid:
-        #     if MOTUS_PARAMETERS.is_strict_db_mode():
-        #         logging.error('mOTUs tool/database have changed and bam file is invalid. Please profile with updated database. Quitting ...')
-        #         mutils.shutdown(1)
-        #     else:
-        #         logging.warning('mOTUs tool/database have changed and bam file is invalid. Lenient mode enabled, will continue but results might be broken ...')
-
     mgc_2_count = {}
     count_mode = MOTUS_PARAMETERS.get_count_mode()
     with open(mgc_file) as handle:
@@ -1319,16 +1302,10 @@ def calc_motu() -> None:
         median_count = statistics.median(counts)
         if len(counts) >= MOTUS_PARAMETERS.get_min_mgcs() or MOTUS_DB.is_unassigned_motu(motu):
             motu_counts[motu] = median_count
-
-    mOTU_file = MotusFile()
-    sample_2_motus_counts = {}
-    sample_2_motus_counts[MOTUS_PARAMETERS.get_sample_name()] = motu_counts
-    mOTU_file.set_mOTU_counts(sample_2_motus_counts, MOTUS_PARAMETERS.get_count_type())
-    mOTU_file.set_min_mgcs(MOTUS_PARAMETERS.get_min_mgcs())
-    mOTU_file.set_full_version(MOTUS_DB.get_full_version())
-    mOTU_file.set_count_mode(MOTUS_PARAMETERS.get_count_mode())
-    mOTU_file.write_mOTUs_file(MOTUS_PARAMETERS.get_motu_file(), False)
-    mOTU_file.write_mOTUs_file(MOTUS_PARAMETERS.get_motu_file_relab(), True)
+    counts_smf = mentities.SinglemOTUsFile(motu_counts,MOTUS_PARAMETERS.get_minimal_alignment_length(), MOTUS_PARAMETERS.get_min_mgcs(), count_mode, MOTUS_DB.get_database_version(), MOTUS_DB.get_tool_version(), 'counts', MOTUS_PARAMETERS.get_sample_name())
+    counts_smf.write_to_file(MOTUS_PARAMETERS.get_motu_file())
+    relab_smf = counts_smf.get_relative_abundances()
+    relab_smf.write_to_file(MOTUS_PARAMETERS.get_motu_file_relab())
     return None
 
 
@@ -1359,7 +1336,6 @@ def parse_map_tax():
     Algorithm options:
        -l   INT          min length of the alignment (bp) [75]
        -t   INT          number of threads [1]
-       -v   INT          verbosity level: 1=error, 2=warning, 3=message, 4+=debugging [3]
           ''', formatter_class=CapitalisedHelpFormatter,add_help=False)
 
     # Input options
@@ -1375,7 +1351,6 @@ def parse_map_tax():
     # ALgorithm options
     parser.add_argument("-l", type=int, default=75)  # min length of the alignment (bp) [75]
     parser.add_argument("-t", type=int, default=1)  # number of threads
-    parser.add_argument("-v", type=int, default=1)  # verbodisty level:
 
     args = parser.parse_args(sys.argv[2:])
 
@@ -1425,7 +1400,6 @@ def parse_batch_profile():
     Algorithm options:
        -g  INT          number of marker genes cutoff: 1=higher recall, 6=higher precision [3]
        -l  INT          min length of the alignment (bp) [75]
-       -v  INT          verbosity level: 1=error, 2=warning, 3=message, 4+=debugging [1]
        -y  STR          type of read counts [INSERT_SCALED]
                         Values: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
     ]''', formatter_class=CapitalisedHelpFormatter, add_help=False)
@@ -1437,7 +1411,6 @@ def parse_batch_profile():
                         choices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10])  # number of marker genes cutoff
     parser.add_argument("-l", type=int, default=75)  # min length of the alignment (bp) [75]
     parser.add_argument("-t", type=int, default=1)  # number of thread [1]
-    parser.add_argument("-v", type=int, default=1)  # verbosity level
     parser.add_argument("-y", type=str, default='INSERT_SCALED',
                         choices=['INSERT_RAW', 'INSERT_NORM', 'INSERT_SCALED', 'BASE_RAW', 'BASE_NORM'])
 
@@ -1518,7 +1491,6 @@ def parse_profile():
        -g  INT          number of marker genes cutoff: 1=higher recall, 6=higher precision, 10=maximum [3]
        -l  INT          min length of the alignment (bp) [75]
        -t  INT          number of threads [1]
-       -v  INT          verbosity level: 1=error, 2=warning, 3=message, 4+=debugging [1]
        -y  STR          type of read counts [INSERT_SCALED]
                         Values: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
     ''', formatter_class=CapitalisedHelpFormatter,add_help=False)
@@ -1534,7 +1506,6 @@ def parse_profile():
     parser.add_argument("-g", type=int, default=3, choices=[1,2,3,4,5,6,7,8,9,10])  # number of marker genes cutoff
     parser.add_argument("-l", type=int, default=75)  # min length of the alignment (bp) [75]
     parser.add_argument("-t", type=int, default=1)  # number of thread [1]
-    parser.add_argument("-v", type=int, default=1)  # verbosity level
     parser.add_argument("-y", type=str, default='INSERT_SCALED', choices=['INSERT_RAW', 'INSERT_NORM', 'INSERT_SCALED', 'BASE_RAW', 'BASE_NORM'])
 
     args = parser.parse_args(sys.argv[2:])
@@ -1593,13 +1564,11 @@ def parse_calc_mgc():
        -o  FILE         output file name
     
     Algorithm options:
-       -l  INT          min length of the alignment (bp) [75]
-       -v  INT          verbosity level: 1=error, 2=warning, 3=message, 4+=debugging [3]''', formatter_class=CapitalisedHelpFormatter,add_help=False)
+       -l  INT          min length of the alignment (bp) [75]''', formatter_class=CapitalisedHelpFormatter,add_help=False)
 
     parser.add_argument("-i", type=str, required=True)  # provide a SAM or BAM input file (or list of files) output of motus map_tax
     parser.add_argument("-o", required=True)  # output file name [stdout]
     parser.add_argument("-l", type=int, default=75)  # min length of the alignment (bp) [75]
-    parser.add_argument("-v", type=int, default=1)  # verbosity level
 
     args = parser.parse_args(sys.argv[2:])
     # print usage and exit if no arguments are passed
@@ -1625,56 +1594,40 @@ def parse_calc_mgc():
     calc_mgc()
     mutils.shutdown(0)
 
-def assign_taxonomy(input_motu_file: pathlib.Path, output_motu_file: pathlib.Path, aggregate: bool, use_representative_taxonomy: bool, taxonomy_to_use: str, taxonomic_rank: TaxonomicRank) -> None:
-    """
-    Assign taxonomy to existing motusfile and
-    potentially aggregate
-    Params:
-        input_motu_file: a file with motus abundances. can also be merged. Not allowed to be aggregate
-        output_motu_file: the output file where results will be stored
-        aggregate: should motus abundances be aggregated at the provided level
-        use_representative_taxonomy: mOTUs supports 2 taxonomy types. representative and concensus.
-            Setting this flag will disable consensus and enable representative taxonomy
-        taxonomy_to_use: The taxonomy to use. Currently only GTDB supported
-        taxonomic_rank: One of the standard ranks to report
-    """
-    mf = MotusFile()
-    mf.read_mOTUs_file(input_motu_file)
-    x = 0
 
-def merge_profiles(motus_file_paths: List[pathlib.Path], output_motus_file_path: pathlib.Path) -> None:
-    """Routine which merges mOTU profiles.
-
-    - Will read the mOTUs profiles into Motu_file objects
-    - Merge them into a new Motu_file object (only if parameters are the same, throw an exception instead)
-    - Write the merged profile into the output file
-
-    """
-
-    #TODO check for empty motus files
-
-    logging.info('Starting mOTUs - merge routine - Merging of mOTUs profile files ... ')
-    motus_files = []
-    logging.info(f'There are {len(motus_file_paths)} input profile files.')
-    for cnt, motus_file_path in enumerate(motus_file_paths, 1):
-        if cnt % 100 == 0:
-            logging.info(f'{cnt} / {len(motus_file_paths)} processed')
-        mf = MotusFile()
-        mf.read_mOTUs_file(motus_file_path)
-        if not mf.has_motus_with_abundance():
-            logging.info(f'mOTUs4 file has no mOTUs with abundance. Will be ignored. {motus_file_path}')
-            continue
-        motus_files.append(mf)
-    logging.info(f'{cnt} / {len(motus_file_paths)} processed')
-    mf = MotusFile()
-    mf.merge_profiles(motus_files)
-    if mf.has_counts():
-        mf.write_mOTUs_file(output_motus_file_path, relabundance=False)
-        mf.write_mOTUs_file(pathlib.Path(str(output_motus_file_path) + '.relab'), relabundance=True)
-    else:
-        #TODO shouldnt the relabundance be True here?
-        mf.write_mOTUs_file(output_motus_file_path, relabundance=False)
-    logging.info('Finished mOTUs - merge routine - Merging of mOTUs profile files ... ')
+# def merge_profiles(motus_file_paths: List[pathlib.Path], output_motus_file_path: pathlib.Path) -> None:
+#     """Routine which merges mOTU profiles.
+#
+#     - Will read the mOTUs profiles into Motu_file objects
+#     - Merge them into a new Motu_file object (only if parameters are the same, throw an exception instead)
+#     - Write the merged profile into the output file
+#
+#     """
+#
+#     #TODO check for empty motus files
+#
+#     logging.info('Starting mOTUs - merge routine - Merging of mOTUs profile files ... ')
+#     motus_files = []
+#     logging.info(f'There are {len(motus_file_paths)} input profile files.')
+#     for cnt, motus_file_path in enumerate(motus_file_paths, 1):
+#         if cnt % 100 == 0:
+#             logging.info(f'{cnt} / {len(motus_file_paths)} processed')
+#         mf = MotusFile()
+#         mf.read_mOTUs_file(motus_file_path)
+#         if not mf.has_motus_with_abundance():
+#             logging.info(f'mOTUs4 file has no mOTUs with abundance. Will be ignored. {motus_file_path}')
+#             continue
+#         motus_files.append(mf)
+#     logging.info(f'{cnt} / {len(motus_file_paths)} processed')
+#     mf = MotusFile()
+#     mf.merge_profiles(motus_files)
+#     if mf.has_counts():
+#         mf.write_mOTUs_file(output_motus_file_path, relabundance=False)
+#         mf.write_mOTUs_file(pathlib.Path(str(output_motus_file_path) + '.relab'), relabundance=True)
+#     else:
+#         #TODO shouldnt the relabundance be True here?
+#         mf.write_mOTUs_file(output_motus_file_path, relabundance=False)
+#     logging.info('Finished mOTUs - merge routine - Merging of mOTUs profile files ... ')
 
 
 def parse_merge():
@@ -1710,16 +1663,16 @@ def parse_merge():
     input_mOTUs_files = [pathlib.Path(el) for el in args.i]
     output_mOTUs_file = pathlib.Path(args.o)
 
-    if len(input_mOTUs_files) == 1: # this means that you provided a file with one line per motus profile
-        input_mOTUs_files_tmp = []
-        with open(input_mOTUs_files[0]) as handle:
-            for line in handle:
-                input_mOTUs_files_tmp.append(pathlib.Path(line.strip()))
-        input_mOTUs_files = input_mOTUs_files_tmp
-
-
-    input_mOTUs_files = sorted(input_mOTUs_files)
-    merge_profiles(input_mOTUs_files, output_mOTUs_file)
+    # if len(input_mOTUs_files) == 1: # this means that you provided a file with one line per motus profile
+    #     input_mOTUs_files_tmp = []
+    #     with open(input_mOTUs_files[0]) as handle:
+    #         for line in handle:
+    #             input_mOTUs_files_tmp.append(pathlib.Path(line.strip()))
+    #     input_mOTUs_files = input_mOTUs_files_tmp
+    #
+    #
+    # input_mOTUs_files = sorted(input_mOTUs_files)
+    # merge_profiles(input_mOTUs_files, output_mOTUs_file)
 
     mutils.shutdown(0)
 
@@ -1969,66 +1922,7 @@ def parse_download():
     mutils.shutdown(0)
 
 
-# def parse_taxonomy():
-#     parser = argparse.ArgumentParser(usage=f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-#     Version: {mutils.MOTUS_VERSION}
-#     Reference: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand
-#     taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022).
-#     doi: https://doi.org/10.1186/s40168-022-01410-z
-#
-#     motus taxonomy [options]
-#
-#         Input options:
-#            -i  FILE  a mOTUs profile, produced by profile, calc_motu or merge
-#
-#         Output options:
-#            -o  FILE  output file name
-#
-#         Options:
-#
-#            -t   STR  Taxonomy to use [GTDB]
-#            -l   STR  Taxonomy level [domain, phylum, class, order, family, genus, species]
-#            -a        Aggregate values at taxonomic level
-#            -r        Use taxonomy of representative. If not set, use the consensus taxonomy
-#
-#           ''', formatter_class=CapitalisedHelpFormatter, add_help=False)
-#
-#     parser.add_argument("-i", required=True)
-#     parser.add_argument("-o", required=True)
-#     parser.add_argument("-a", action="store_true")
-#     parser.add_argument("-r", action="store_true")
-#     parser.add_argument("-t", type=str, default='GTDB', choices=['GTDB'])
-#     parser.add_argument("-l", type=int, default='species', choices=['domain', 'phylum', 'class', 'order', 'family', 'genus', 'species'])
-#
-#     args = parser.parse_args(sys.argv[2:])
-#
-#     if sys.argv[2:] == []:
-#         parser.print_usage()
-#         mutils.shutdown(1)
-#     input_motu_file = pathlib.Path(args.i)
-#     output_motu_file = pathlib.Path(args.o)
-#     aggregate = False
-#     use_representative_taxonomy = False
-#     taxonomy_to_use = 'GTDB'
-#     taxonomic_rank = args.l
-#     if args.a:
-#        aggregate = True
-#     if args.r:
-#         use_representative_taxonomy = True
-#     if args.t != 'GTDB':
-#         logging.error(f'Unknown taxonomy {args.t}. Quitting ...')
-#         mutils.shutdown(1)
-#
-#     mutils.startup()
-#     if not input_motu_file.exists():
-#         logging.error(f'Input file {input_motu_file} does not exist. Quitting ...')
-#         mutils.shutdown(1)
-#
-#     MOTUS_DB.load_motus_db(mutils.DEFAULT_MOTUS_MGDB_LOCATION)
-#     mf = MotusFile()
-#     mf.read_mOTUs_file(input_motu_file)
-#     assign_taxonomy(input_motu_file, output_motu_file, aggregate, use_representative_taxonomy, taxonomy_to_use, taxonomic_rank)
-#     mutils.shutdown(0)
+
 
 
 def parse_calc_motu():
@@ -2045,11 +1939,9 @@ def parse_calc_motu():
         
         Output options:
            -o  FILE  output file name 
-           -c        print result as counts instead of relative abundances
         
         Algorithm options:
            -g   INT   number of marker genes cutoff: 1=higher recall, 6=higher precision, 10=maximum [3]
-           -v   INT   verbosity level: 1=error, 2=warning, 3=message, 4+=debugging [3]
            -y   STR   type of read counts [INSERT_SCALED]
                         Values: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
           
@@ -2104,8 +1996,8 @@ if __name__ == '__main__':
         -- Utilities
               download    Download genomes associated with mOTUs
               downloadDB  Download the mOTUs marker gene database
-              merge       Merge several taxonomic profiling results into one table
-              classify    Add taxonomic information to mOTUs
+              merge       Merge multiple taxonomic profiling results into one table
+              classify    Classify user genomes into mOTUs
     
     
         Type motus <command> to print the help menu for a specific command
