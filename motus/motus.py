@@ -15,7 +15,7 @@
 #
 # Type "motus" for usage help
 #
-# Copyright (c) ${2024} ${SunagawaLab}.
+# Copyright (c) ${2025} ${SunagawaLab}.
 #
 # This file is part of ${projectname}
 # (see ${https://motus-tool.org/}).
@@ -39,8 +39,6 @@
 
 
 import statistics
-from operator import countOf
-
 import pysam
 import Bio.SeqIO.FastaIO as FastaIO
 import logging
@@ -92,341 +90,6 @@ motu = Top level unit, species level cluster
 
 
 Mgc_values = collections.namedtuple("Mgc_values", "insert_raw insert_norm insert_scaled base_raw base_norm")
-
-
-class TaxonomicRank(Enum):
-    DOMAIN = 'domain'
-    PHYLUM = 'phylum'
-    CLASS = 'class'
-    ORDER = 'order'
-    FAMILY = 'family'
-    GENUS = 'genus'
-    SPECIES = 'species'
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-class MotusFile:
-    _count_mode = None
-    _min_mgcs = None
-    _database_version = None
-    _tool_version = None
-    _motus_with_abundance = None
-    _samplename_2_motus_2_counts = None
-
-    # def has_counts(self):
-    #     if self._samplename_2_motus_2_counts:
-    #         return True
-    #     else:
-    #         return False
-
-    # def has_motus_with_abundance(self):
-    #     if len(self._motus_with_abundance) == 0:
-    #         return False
-    #     else:
-    #         return True
-
-    def set_mOTU_counts(self, samplename_2_motus_2_counts: Dict[str, float], count_type):
-        self._motus_with_abundance = set()
-        self._samplename_2_motus_2_counts = {}
-        for samplename, motu_2_counts in samplename_2_motus_2_counts.items():
-            self._samplename_2_motus_2_counts[samplename] = {}
-            for motu, count in motu_2_counts.items():
-                self._motus_with_abundance.add(motu)
-                if count_type == 'int':
-                    count = round(count)
-                    self._samplename_2_motus_2_counts[samplename][motu] = count
-                else:
-                    self._samplename_2_motus_2_counts[samplename][motu] = count
-        self._motus_with_abundance = sorted(list(self._motus_with_abundance))
-
-        self._samplename_2_motus_2_relab = {}
-
-        for samplename, motus_2_counts in samplename_2_motus_2_counts.items():
-            self._samplename_2_motus_2_relab[samplename] = {}
-            tot_abundance = sum(motus_2_counts.values())
-            for motu, value in motus_2_counts.items():
-                self._samplename_2_motus_2_relab[samplename][motu] = value / tot_abundance #'{number:.{digits}f}'.format(number=value / tot_abundance, digits=8)
-
-    def set_sample_name(self, sample_name):
-        self._samplename = sample_name
-
-    def set_count_mode(self, count_mode):
-        self._count_mode = count_mode
-
-    def set_min_mgcs(self, min_mgcs):
-        self._min_mgcs = min_mgcs
-
-    def set_full_version(self, full_version):
-        self._full_version = full_version
-
-    def get_mOTUs_file_header(self, relabundance=False) -> str:
-
-        relab = relabundance
-        min_mgcs = self._min_mgcs
-        count_mode = self._count_mode
-        full_version = self._full_version
-        if not min_mgcs:
-            logging.error('min_mgcs parameter not set. Can\'t create header. Quitting...')
-        if not full_version:
-            logging.error('full_version parameter not set. Can\'t create header. Quitting...')
-        if not count_mode:
-            logging.error('count_mode parameter not set. Can\'t create header. Quitting...')
-
-        if relab:
-            relab = 'relative_abundance'
-        else:
-            relab = 'counts'
-        header = f'#{full_version}\treport_mode={relab}\tcount_mode={count_mode}\tmin_mgcs={min_mgcs}'
-        return header
-
-    def merge_profiles(self, motus_files) -> None: # Typing --> This is a List[MotusFile]
-        """ merge multiple profiles into one
-        Will also check if profiles are compatible
-
-        Params:
-            motus_files: A list with MotusFile objects, each containing
-                        one or multiple motus profiles
-
-        Returns:
-            None, will update the MotusFile object
-        """
-
-        if not motus_files or len(motus_files) == 0:
-            logging.error(f'No MotusFiles found to merge. Quitting ...')
-            mutils.shutdown(1)
-
-        # check if versions are compatible
-        versions = set([mf._full_version for mf in motus_files])
-        if len(versions) != 1:
-            logging.error(f'Incompatible versions in profiles that should be merged. versions = {versions}')
-            mutils.shutdown(1)
-
-        # check if count_mode is compatible
-        count_modes = set([mf._count_mode for mf in motus_files])
-        if len(count_modes) != 1:
-            logging.error(f'Incompatible count modes in profiles that should be merged. count modes = {count_modes}')
-            mutils.shutdown(1)
-
-        # check if num_mgcs is compatible
-        min_mgcs = set([mf._min_mgcs for mf in motus_files])
-        if len(min_mgcs) != 1:
-            logging.error(f'Incompatible min mgcs in profiles that should be merged. min mgcs = {min_mgcs}')
-            mutils.shutdown(1)
-
-        # check if all or none have counts --> either all or none have to have counts1
-        # if none have counts --> report rel abundances, if all have counts --> report counts
-
-        total_motus_files = len(motus_files)
-        total_motus_files_w_counts = len([mf for mf in motus_files if mf._samplename_2_motus_2_counts])
-        total_motus_files_w_relab = len([mf for mf in motus_files if mf._samplename_2_motus_2_relab])
-        report_counts = False
-        report_relab = False
-        if total_motus_files_w_counts == 0:
-            report_relab = True
-        elif total_motus_files_w_counts != total_motus_files:
-            logging.info('Profile files are mixed. Some are reported as counts, some as relative abundances. Quitting ...')
-            mutils.shutdown(1)
-        else:
-            report_counts = True
-            report_relab = True
-
-        # check if all sample names are distinct
-        samplenames = collections.Counter()
-        if report_relab:
-            for mf in motus_files:
-                for samplename in mf._samplename_2_motus_2_relab.keys():
-                    samplenames[samplename] += 1
-        for samplename, samplename_count in samplenames.items():
-            if samplename_count != 1:
-                logging.error(f'Samplename duplicated: {samplename}. Quitting ...')
-                mutils.shutdown(1)
-        present_motus = set()
-        merged_sample_2_motus_counts = None
-        merged_sample_2_motus_relab = {}
-        if report_counts:
-            merged_sample_2_motus_counts = {}
-            for mf in motus_files:
-                for sample, motu_2_counts in mf._samplename_2_motus_2_counts.items():
-                    merged_sample_2_motus_counts[sample] = {}
-                    for motu, count in motu_2_counts.items():
-                        present_motus.add(motu)
-                        merged_sample_2_motus_counts[sample][motu] = count
-        for mf in motus_files:
-            for sample, motu_2_relab in mf._samplename_2_motus_2_relab.items():
-                merged_sample_2_motus_relab[sample] = {}
-                for motu, relab in motu_2_relab.items():
-                    present_motus.add(motu)
-                    merged_sample_2_motus_relab[sample][motu] = relab
-        present_motus = sorted(list(present_motus))
-
-        self._motus_with_abundance = present_motus
-        self._samplename_2_motus_2_relab = merged_sample_2_motus_relab
-        self._samplename_2_motus_2_counts = merged_sample_2_motus_counts
-        self._count_mode = count_modes.pop()
-        self._full_version = versions.pop()
-        self._min_mgcs = min_mgcs.pop()
-
-    def read_mOTUs_file(self, mOTUs_file: pathlib.Path) -> None:
-        """
-        Read the mOTUs_file into this object.
-        """
-        with open(mOTUs_file) as handle:
-            header = handle.readline().strip()
-            splits = header.split('\t')
-
-            if len(splits) == 4:
-                [full_version, report_mode, count_mode, min_mgcs] = splits
-                taxonomy = None
-                aggregated = False
-                level = None
-            elif len(splits) == 7:
-                [full_version, report_mode, count_mode, min_mgcs, taxonomy, aggregated, level] = splits
-            else:
-                logging.error('The header of this mOTUs file looks malformed. Expected 7 columns. Please check. Quitting ...')
-                logging.error(f'{header}')
-                mutils.shutdown(1)
-
-            if not full_version.startswith('#TOOL'):
-                logging.error('The header of this mOTUs file looks malformed. #TOOL token is missing. Please check. Quitting ...')
-                logging.error('Malformed header:')
-                logging.error(f'{header}')
-                mutils.shutdown(1)
-            full_version = full_version[1:]
-
-            if 'report_mode' not in report_mode:
-                logging.error('The header of this mOTUs file looks malformed. report_mode token missing. Please check. Quitting ...')
-                logging.error('Malformed header:')
-                logging.error(f'{header}')
-                mutils.shutdown(1)
-            report_mode = report_mode.split('=')[1]
-
-            if 'count_mode' not in count_mode:
-                logging.error('The header of this mOTUs file looks malformed. count_mode token missing. Please check. Quitting ...')
-                logging.error('Malformed header:')
-                logging.error(f'{header}')
-                mutils.shutdown(1)
-            count_mode = count_mode.split('=')[1]
-
-            if 'min_mgcs' not in min_mgcs:
-                logging.error('The header of this mOTUs file looks malformed. min_mgcs token missing. Please check. Quitting ...')
-                logging.error('Malformed header:')
-                logging.error(f'{header}')
-                mutils.shutdown(1)
-            min_mgcs = int(min_mgcs.split('=')[1])
-
-            if taxonomy:
-                if 'taxonomy' not in taxonomy:
-                    logging.error('The header of this mOTUs file looks malformed. taxonomy token missing. Please check. Quitting ...')
-                    logging.error('Malformed header:')
-                    logging.error(f'{header}')
-                    mutils.shutdown(1)
-                taxonomy = taxonomy.split('=')[1]
-
-            if level:
-                if 'level' not in level:
-                    logging.error('The header of this mOTUs file looks malformed. level token missing. Please check. Quitting ...')
-                    logging.error('Malformed header:')
-                    logging.error(f'{header}')
-                    mutils.shutdown(1)
-                level = level.split('=')[1]
-            if aggregated:
-                if 'aggregated' not in aggregated:
-                    logging.error('The header of this mOTUs file looks malformed. aggregated token missing. Please check. Quitting ...')
-                    logging.error('Malformed header:')
-                    logging.error(f'{header}')
-                    mutils.shutdown(1)
-                aggregated = aggregated.split('=')[1]
-                if bool(aggregated):
-                    logging.error(f'The mOTUs profile ({mOTUs_file}) has values aggregated at non-mOTU level ({level}). This table is an endproduct and cannot be used in mOTUs anymore. Quitting ...')
-                    mutils.shutdown(1)
-
-            self._count_mode = count_mode
-            self._min_mgcs = min_mgcs
-            self._full_version = full_version
-            self._taxonomy = taxonomy
-            self._taxonomy_level = level
-            self._counts_aggregated_by_taxonomy = None
-            self._motus_with_abundance = set()
-            if taxonomy:
-                self._motu_2_taxonomy = {}
-                self._taxonomy = taxonomy
-                self._taxonomy_level = level
-                self._counts_aggregated_by_taxonomy = bool(aggregated)
-            else:
-                self._motu_2_taxonomy = None
-                self._taxonomy = None
-                self._taxonomy_level = None
-                self._counts_aggregated_by_taxonomy = None
-
-            sample_2_motu_2_cnts = {}
-            for entry in csv.DictReader(handle, delimiter='\t'):
-                motu = entry.pop('MOTU')
-                self._motus_with_abundance.add(motu)
-                if taxonomy:
-                    taxstring = entry.pop('TAXONOMY')
-                    self._motu_2_taxonomy[motu] = taxstring
-                for sample, counts in entry.items():
-                    if sample not in sample_2_motu_2_cnts:
-                        sample_2_motu_2_cnts[sample] = {}
-                    sample_2_motu_2_cnts[sample][motu] = float(counts)
-
-            if report_mode == 'counts':
-                self._samplename_2_motus_2_counts = sample_2_motu_2_cnts
-                self._samplename_2_motus_2_relab = {}
-
-                for samplename, motus_2_counts in sample_2_motu_2_cnts.items():
-                    self._samplename_2_motus_2_relab[samplename] = {}
-                    tot_abundance = sum(motus_2_counts.values())
-                    for motu, value in motus_2_counts.items():
-                        if int(value) == 0:
-                            self._samplename_2_motus_2_relab[samplename][motu] = 0.0
-                        else:
-                            self._samplename_2_motus_2_relab[samplename][motu] = value / tot_abundance
-            elif report_mode == 'relative_abundance':
-                self._samplename_2_motus_2_counts = None
-                self._samplename_2_motus_2_relab = sample_2_motu_2_cnts
-            else:
-                logging.error(f'Report mode can only be counts or relative_abundance but is {report_mode}. Quitting ...')
-                mutils.shutdown(1)
-
-            self._motus_with_abundance = sorted(list(self._motus_with_abundance))
-
-    def write_mOTUs_file(self, filename, relabundance) -> None:
-        # currently implemented without taxonomy
-        with open(filename, 'w') as handle:
-            sample_2_motu_2_report_vals = self._samplename_2_motus_2_counts
-            if relabundance:
-                sample_2_motu_2_report_vals = self._samplename_2_motus_2_relab
-            handle.write(self.get_mOTUs_file_header(relabundance=relabundance) + '\n')
-            samplenames = sorted(list(sample_2_motu_2_report_vals.keys()))
-            tmp = '\t'.join(samplenames)
-            handle.write(f'MOTU\t{tmp}\n')
-
-            for motu in self._motus_with_abundance:
-                tmp = [motu]
-                for samplename in samplenames:
-                    if relabundance:
-                        abundance = '{number:.{digits}f}'.format(number=sample_2_motu_2_report_vals[samplename].get(motu, 0), digits=8)
-                    else:
-                        abundance = sample_2_motu_2_report_vals[samplename].get(motu, 0)
-                        if not 'NORM' in self._count_mode:
-                            abundance = int(abundance)
-                    tmp.append(str(abundance))
-                tmp = '\t'.join(tmp)
-                handle.write(f'{tmp}\n')
 
 
 
@@ -1113,7 +776,7 @@ class InsertCounter:
         alignments = pysam.AlignmentFile(MOTUS_PARAMETERS.get_alignment_file(), 'r')
         pg_entries = alignments.header.get('PG', [])
         self.check_validity_of_bam_file(pg_entries)
-        logging.warning('mOTUs tool/database have changed and bam file is invalid. Lenient mode enabled, will continue but results might be broken ...')
+        #logging.warning('mOTUs tool/database have changed and bam file is invalid. Lenient mode enabled, will continue but results might be broken ...')
 
         try:
             alignment: pysam.AlignedSegment = next(alignments)
@@ -1304,8 +967,9 @@ def calc_motu() -> None:
             motu_counts[motu] = median_count
     counts_smf = mentities.SinglemOTUsFile(motu_counts,MOTUS_PARAMETERS.get_minimal_alignment_length(), MOTUS_PARAMETERS.get_min_mgcs(), count_mode, MOTUS_DB.get_database_version(), MOTUS_DB.get_tool_version(), 'counts', MOTUS_PARAMETERS.get_sample_name())
     counts_smf.write_to_file(MOTUS_PARAMETERS.get_motu_file())
-    relab_smf = counts_smf.get_relative_abundances()
-    relab_smf.write_to_file(MOTUS_PARAMETERS.get_motu_file_relab())
+    if MOTUS_PARAMETERS._write_relative_abundances:
+        relab_smf = counts_smf.get_relative_abundances()
+        relab_smf.write_to_file(MOTUS_PARAMETERS.get_motu_file_relab())
     return None
 
 
@@ -1486,6 +1150,7 @@ def parse_profile():
     
     Output options:
        -o  FILE         output file name [required]
+       -c               Write second output file with relative abundances
     
     Algorithm options:
        -g  INT          number of marker genes cutoff: 1=higher recall, 6=higher precision, 10=maximum [3]
@@ -1542,6 +1207,9 @@ def parse_profile():
     MOTUS_PARAMETERS.set_count_mode(args.y)
     MOTUS_PARAMETERS.set_minimal_number_of_mgcs(args.g)
 
+    if args.c:
+        MOTUS_PARAMETERS.set_write_relabundances()
+
     map_tax()
 
     calc_mgc()
@@ -1595,39 +1263,10 @@ def parse_calc_mgc():
     mutils.shutdown(0)
 
 
-# def merge_profiles(motus_file_paths: List[pathlib.Path], output_motus_file_path: pathlib.Path) -> None:
-#     """Routine which merges mOTU profiles.
-#
-#     - Will read the mOTUs profiles into Motu_file objects
-#     - Merge them into a new Motu_file object (only if parameters are the same, throw an exception instead)
-#     - Write the merged profile into the output file
-#
-#     """
-#
-#     #TODO check for empty motus files
-#
-#     logging.info('Starting mOTUs - merge routine - Merging of mOTUs profile files ... ')
-#     motus_files = []
-#     logging.info(f'There are {len(motus_file_paths)} input profile files.')
-#     for cnt, motus_file_path in enumerate(motus_file_paths, 1):
-#         if cnt % 100 == 0:
-#             logging.info(f'{cnt} / {len(motus_file_paths)} processed')
-#         mf = MotusFile()
-#         mf.read_mOTUs_file(motus_file_path)
-#         if not mf.has_motus_with_abundance():
-#             logging.info(f'mOTUs4 file has no mOTUs with abundance. Will be ignored. {motus_file_path}')
-#             continue
-#         motus_files.append(mf)
-#     logging.info(f'{cnt} / {len(motus_file_paths)} processed')
-#     mf = MotusFile()
-#     mf.merge_profiles(motus_files)
-#     if mf.has_counts():
-#         mf.write_mOTUs_file(output_motus_file_path, relabundance=False)
-#         mf.write_mOTUs_file(pathlib.Path(str(output_motus_file_path) + '.relab'), relabundance=True)
-#     else:
-#         #TODO shouldnt the relabundance be True here?
-#         mf.write_mOTUs_file(output_motus_file_path, relabundance=False)
-#     logging.info('Finished mOTUs - merge routine - Merging of mOTUs profile files ... ')
+def merge_profiles(motus_file_paths: List[pathlib.Path], output_motus_file_path: pathlib.Path) -> None:
+    merged_motu_file = mentities.MergedmOTUsFile(motus_file_paths)
+    merged_motu_file.write_to_file(output_motus_file_path)
+
 
 
 def parse_merge():
@@ -1663,16 +1302,19 @@ def parse_merge():
     input_mOTUs_files = [pathlib.Path(el) for el in args.i]
     output_mOTUs_file = pathlib.Path(args.o)
 
-    # if len(input_mOTUs_files) == 1: # this means that you provided a file with one line per motus profile
-    #     input_mOTUs_files_tmp = []
-    #     with open(input_mOTUs_files[0]) as handle:
-    #         for line in handle:
-    #             input_mOTUs_files_tmp.append(pathlib.Path(line.strip()))
-    #     input_mOTUs_files = input_mOTUs_files_tmp
-    #
-    #
-    # input_mOTUs_files = sorted(input_mOTUs_files)
-    # merge_profiles(input_mOTUs_files, output_mOTUs_file)
+    if len(input_mOTUs_files) == 1: # this means that you provided a file with one line per motus profile
+        input_mOTUs_files_tmp = []
+        with open(input_mOTUs_files[0]) as handle:
+            for line in handle:
+                input_mOTUs_files_tmp.append(pathlib.Path(line.strip()))
+        input_mOTUs_files = input_mOTUs_files_tmp
+
+
+    input_mOTUs_files = sorted(input_mOTUs_files)
+
+    MOTUS_DB.load_motus_db(mutils.DEFAULT_MOTUS_MGDB_LOCATION)
+
+    merge_profiles(input_mOTUs_files, output_mOTUs_file)
 
     mutils.shutdown(0)
 
@@ -1939,7 +1581,8 @@ def parse_calc_motu():
         
         Output options:
            -o  FILE  output file name 
-        
+           -c        Write second output file with relative abundances
+       
         Algorithm options:
            -g   INT   number of marker genes cutoff: 1=higher recall, 6=higher precision, 10=maximum [3]
            -y   STR   type of read counts [INSERT_SCALED]
@@ -1953,6 +1596,8 @@ def parse_calc_motu():
     parser.add_argument("-o", required=True)  # output fil name [stdout]
     parser.add_argument("-y", type=str, default='INSERT_SCALED', choices=['INSERT_RAW', 'INSERT_NORM', 'INSERT_SCALED', 'BASE_RAW', 'BASE_NORM'])
     parser.add_argument("-g", type=int, default=3, choices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10])  # number of marker genes cutoff
+    parser.add_argument("-c", action="store_true",help="Write second output file with relative abundances")
+    parser.add_argument("-c", action="store_true", help="Write second output file with relative abundances")
 
     args = parser.parse_args(sys.argv[2:])
     if sys.argv[2:] == []:
@@ -1974,6 +1619,10 @@ def parse_calc_motu():
     MOTUS_PARAMETERS.set_threads(1)
     MOTUS_PARAMETERS.set_count_mode(args.y)
     MOTUS_PARAMETERS.set_minimal_number_of_mgcs(args.g)
+
+    if args.c:
+        MOTUS_PARAMETERS.set_write_relabundances()
+
     calc_motu()
     mutils.shutdown(0)
 

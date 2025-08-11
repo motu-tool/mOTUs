@@ -1,4 +1,4 @@
-from typing import List, Tuple, Dict, Set
+from typing import List, Tuple, Dict, Set, Self
 import pathlib
 import logging
 import os
@@ -29,6 +29,8 @@ class MotusParameters:
     _min_alignment_length: int = 0
     _threads: int = 1
     _is_strict_db_mode = True
+
+    _write_relative_abundances = False
 
     _count_mode: str = 'INSERT_SCALED'
 
@@ -86,6 +88,9 @@ class MotusParameters:
             return 'float'
         else:
             return 'int'
+
+    def set_write_relabundances(self):
+        self._write_relative_abundances = True
 
     def set_minimal_alignment_length(self, minimal_alignment_length: int):
         if minimal_alignment_length < 30:
@@ -645,7 +650,47 @@ class SinglemOTUsFile:
                     mutils.shutdown(1)
 
 
-    #def get_motus_file_header(self, min_alignment_length: int, min_mgcs: int, count_mode:str, database_version: str, tool_version: str, value_type: str):
+
+
+    @staticmethod
+    def read_motus_file(motus_file: pathlib.Path) -> 'SinglemOTUsFile':
+        '''Read the input path into
+        a SinglemOTUsFile object.
+        Does also perform standard checks
+        Params:
+            motus_file: A file path to the single motus file
+        Returns:
+            A SinglemOTUsFile object
+
+        '''
+
+        if mutils.is_gzipped(motus_file):
+            fo = gzip.open(motus_file, 'rt')
+        else:
+            fo = open(motus_file, 'r')
+        # #tool_version=4.0.2     database_version=4.0    min_alignment_length=110        min_mgcs=3      count_mode=INSERT_NORM  value_type=counts
+        header = fo.readline()
+        [tool_version, database_version, min_alignment_length, min_mgcs, count_mode, value_type] = header.strip().split('\t')
+        tool_version = tool_version.replace('#tool_version=', '')
+        database_version = database_version.replace('database_version=', '')
+        min_alignment_length = int(min_alignment_length.replace('min_alignment_length=', ''))
+        min_mgcs = int(min_mgcs.replace('min_mgcs=', ''))
+        count_mode = count_mode.replace('count_mode=', '')
+        value_type = value_type.replace('value_type=', '')
+
+        header2 = fo.readline()
+        [motu, taxonomy, samplename] = header2.strip().split('\t')
+
+        motu_2_values = {}
+        for line in fo:
+            [motu, _, value] = line.strip().split('\t')
+            motu_2_values[motu] = float(value)
+        fo.close()
+
+        smf = SinglemOTUsFile(motu_2_values, min_alignment_length, min_mgcs, count_mode, database_version, tool_version, value_type, samplename)
+        return smf
+
+
 
     def get_motus_file_header(self):
         tmp = f'#tool_version={self._tool_version}\tdatabase_version={self._database_version}\tmin_alignment_length={self._min_alignment_length}\t'
@@ -699,8 +744,81 @@ class SinglemOTUsFile:
         return smf
 
 
+class MergedmOTUsFile:
+    # data
+    _singlemotusfiles = {}
+
+    def __init__(self, motus_files: List[pathlib.Path]) -> None:
+        # check that there are >1 motus files
+        if not motus_files or len(motus_files) < 2:
+            logging.error(f'Provide at least 2 mOTUs files for merging.')
+            mutils.shutdown(1)
+        # load the individual motus files
+        singlemotusfiles = []
+        for motus_file in motus_files:
+            smf = SinglemOTUsFile.read_motus_file(motus_file)
+            singlemotusfiles.append(smf)
+
+        # check that they're mergable
+        # 1. headers have to be the same
+
+        fields = {
+            "count_mode": set([smf._count_mode for smf in singlemotusfiles]),
+            "min_mgcs": set([smf._min_mgcs for smf in singlemotusfiles]),
+            "database_version": set([smf._database_version for smf in singlemotusfiles]),
+            "tool_version": set([smf._tool_version for smf in singlemotusfiles]),
+            "min_alignment_length": set([smf._min_alignment_length for smf in singlemotusfiles]),
+            "value_type": set([smf._value_type for smf in singlemotusfiles]),
+        }
+        samplenames = set([smf._samplename for smf in singlemotusfiles])
+
+        killnow = False
+        for name, values in fields.items():
+            if len(values) > 1:
+                logging.error(f"Different {name} detected: {values}")
+                killnow = True
+        # 2. different sample names
+        if len(samplenames) != len(singlemotusfiles):
+            logging.error(f"Duplicated sample names detected.")
+            killnow = True
+        if killnow:
+            mutils.shutdown(1)
+        # Then merge into this object
+        for smf in singlemotusfiles:
+            self._singlemotusfiles[smf._samplename] = smf
+
+    def write_to_file(self, output_file: pathlib.Path) -> None:
+
+        sorted_motus = set()
+        random_smf = None
+        for _, smf in self._singlemotusfiles.items():
+            random_smf = smf
+
+            for k, v in smf._motu_2_values.items():
+                sorted_motus.add(k)
 
 
+        sorted_motus = sorted(list(sorted_motus))
+        sorted_samples = sorted(self._singlemotusfiles.keys())
+
+        with open(output_file, 'w') as outhandle:
+            outhandle.write(f'{random_smf.get_motus_file_header()}\n')
+            outhandle.write(f'mOTU\tTaxonomy\t{"\t".join(sorted_samples)}\n')
+            for motu in sorted_motus:
+                tax = MOTUS_DB.get_mv_tax_for_motu(motu)
+                values = []
+                for samplename in sorted_samples:
+                    values.append(self._singlemotusfiles[samplename]._motu_2_values.get(motu, 0.0))
+                if random_smf._value_type == 'relative_abundances':
+                    report_values = ['{number:.{digits}f}'.format(number=v, digits=8) for v in values]
+                else:
+                    if 'NORM' in random_smf._count_mode:
+                        report_values = ['{number:.{digits}f}'.format(number=v, digits=8) for v in values]
+                    else:
+                        report_values = [round(v) for v in values]
+                tmp = [motu, tax] + report_values
+                tmp = '\t'.join([str(t) for t in tmp])
+                outhandle.write(tmp + '\n')
 
 
 MOTUS_PARAMETERS = MotusParameters()

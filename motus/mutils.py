@@ -98,3 +98,12 @@ def check_validity_of_mgc_header(header_line: str) -> None:
 def create_mgc_header_line():
     header_line = f'#tool_version={MOTUS_DB.get_tool_version()}\tdatabase_version={MOTUS_DB.get_database_version()}\tmin_alignment_length={MOTUS_PARAMETERS.get_minimal_alignment_length()}'
     return header_line
+
+
+def is_gzipped(filename: pathlib.Path):
+    """
+    Check if a file is gzipped by inspecting its magic number.
+    """
+    with open(filename, 'rb') as f:
+        magic = f.read(2)
+    return magic == b'\x1f\x8b'
