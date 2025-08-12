@@ -54,11 +54,12 @@ from typing import List, Dict, Set, Tuple, Generator, TextIO, Self
 import urllib.request
 import tarfile
 import shutil
-from enum import Enum
 import mutils
 from mentities import MOTUS_PARAMETERS
 from mentities import MOTUS_DB
 import mentities
+from rapidfuzz import process, fuzz
+import polars as pl
 
 
 __author__ = ('Hans-Joachim Ruscheweyh (hansr@ethz.ch), '
@@ -117,7 +118,7 @@ class MotusSearchDB:
                 self._tax_2_motu_and_genome[genus].add(motu)
                 self._tax_2_motu_and_genome[species].add(motu)
         if True:
-            import polars as pl
+
             df = pl.scan_csv(genome_metadata_file, separator="\t", has_header=True, infer_schema_length=0).select(["GENOME", "LOCATION", "MOTU4", 'MOTU4_STATUS', 'DOMAIN', 'PHYLUM', 'CLASS', 'ORDER', 'FAMILY', 'GENUS', 'SPECIES']).collect()
 
             for row in df.iter_rows():
@@ -135,7 +136,7 @@ class MotusSearchDB:
                 self._tax_2_motu_and_genome[family].add(genome)
                 self._tax_2_motu_and_genome[genus].add(genome)
                 self._tax_2_motu_and_genome[species].add(genome)
-        else:
+        else: # this section can be removed if polars has been tested
             with gzip.open(genome_metadata_file, 'rt') as handle:
                 for entry in csv.DictReader(handle, delimiter='\t'):
                     genome = entry['GENOME']
@@ -171,11 +172,14 @@ class MotusSearchDB:
         Returns:
             a set with all genomes that have been found
         """
+
         genomes = set()
-        for genome in self._motu_2_genome.get(keyword, []):
+        for genome in self._motu_2_genome.get(keyword, []): # if the submitted keyword is a motu
             genomes.add(genome)
-        if keyword in self._genome_2_path:
+
+        if keyword in self._genome_2_path: # if the submitted keyword is a genome name
             genomes.add(self._genome_2_path[keyword])
+
         for genome_or_motu in self._tax_2_motu_and_genome.get(keyword, []):
             if genome_or_motu in self._genome_2_path:
                 genomes.add(genome_or_motu)
@@ -189,7 +193,17 @@ class MotusSearchDB:
         else:
             report_genomes = genomes
         report_genomes = sorted(list(report_genomes))
+        if len(report_genomes) == 0:
+            logging.info(f'No exact matches found for term "{keyword}". Starting fuzzy search on {len(self._tax_2_motu_and_genome.keys())} keywords.')
+
+            matches = process.extract(keyword, self._tax_2_motu_and_genome.keys(), scorer=fuzz.WRatio, processor=str.lower, limit=10000000,score_cutoff=70)
+            logging.info(f'Finished fuzzy search. Found {len(matches)} hits - Results sorted by score:')
+
+            for (token, score, _) in sorted(matches, key=lambda match: match[1], reverse=True):
+                logging.info(f'\t{token} --> {len(self._tax_2_motu_and_genome[token])} genomes/mOTUs to download.')
+            mutils.shutdown(1)
         return report_genomes
+
     def get_genome_path(self, genome:str):
         p = mutils.MOTUS_GENOME_REMOTE_PREFIX + self._genome_2_path[genome]
         return p
