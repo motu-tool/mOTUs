@@ -7,6 +7,7 @@ import Bio.SeqIO.FastaIO as FastaIO
 import Bio.SeqIO.QualityIO as QualityIO
 import gzip
 import csv
+import polars as pl
 
 R1IDENTIFIER = '1'
 R2IDENTIFIER = '2'
@@ -385,16 +386,32 @@ class MotusDB:
         self.genome_metadata_file = genome_data_file
 
         if load:
-            with gzip.open(mgs_file, 'rt') as handle:
-                for entry in  csv.DictReader(handle, delimiter='\t'):
-                    self.mgh_2_mgc[entry['MG']] = entry['MGC']
-                    self.mgh_2_mglength[entry['MG']] = int(entry['LENGTH'])
-                    self.mgc_2_motu[entry['MGC']] = entry['#MOTU']
-                    self.mgh_2_mg[entry['MG']] = entry['COG']
-                    self.motus.add(entry['#MOTU'])
-                    self.mgc_2_mg[entry['MGC']] = entry['COG']
-                    if 'unassigned' in entry['#MOTU']:
-                        self._unassigned_motu_name = entry['#MOTU']
+            if True:
+                df = pl.scan_csv(mgs_file, separator="\t", has_header=True, infer_schema_length=0,
+                                 schema_overrides={'LENGTH': pl.UInt32}).select(
+                    ['#MOTU', 'MGC', 'COG', 'MG', 'LENGTH']).collect()
+                for row in df.iter_rows():
+                    [motu, mgc, cog, mg, length] = row
+                    self.mgh_2_mgc[mg] = mgc
+                    self.mgh_2_mglength[mg] = length
+                    self.mgc_2_motu[mgc] = motu
+                    self.mgh_2_mg[mg] = cog
+                    self.motus.add(motu)
+                    self.mgc_2_mg[mgc] = cog
+                    if 'unassigned' in motu:
+                        self._unassigned_motu_name = motu
+            else: # can be removed once polars mode has been tested
+                with gzip.open(mgs_file, 'rt') as handle:
+                    for entry in  csv.DictReader(handle, delimiter='\t'):
+                        self.mgh_2_mgc[entry['MG']] = entry['MGC']
+                        self.mgh_2_mglength[entry['MG']] = int(entry['LENGTH'])
+                        self.mgc_2_motu[entry['MGC']] = entry['#MOTU']
+                        self.mgh_2_mg[entry['MG']] = entry['COG']
+                        self.motus.add(entry['#MOTU'])
+                        self.mgc_2_mg[entry['MGC']] = entry['COG']
+                        if 'unassigned' in entry['#MOTU']:
+                            self._unassigned_motu_name = entry['#MOTU']
+
             with gzip.open(blocklist_file, 'rt') as handle:
                 for line in handle:
                     self.blocklist_mg.add(line.strip())

@@ -1205,6 +1205,7 @@ def parse_profile():
     parser.add_argument("-l", type=int, default=75)  # min length of the alignment (bp) [75]
     parser.add_argument("-t", type=int, default=1)  # number of thread [1]
     parser.add_argument("-y", type=str, default='INSERT_SCALED', choices=['INSERT_RAW', 'INSERT_NORM', 'INSERT_SCALED', 'BASE_RAW', 'BASE_NORM'])
+    parser.add_argument("-c", action="store_true", help="Write second output file with relative abundances")
 
     args = parser.parse_args(sys.argv[2:])
     if sys.argv[2:] == []:
@@ -1629,7 +1630,6 @@ def parse_calc_motu():
     parser.add_argument("-y", type=str, default='INSERT_SCALED', choices=['INSERT_RAW', 'INSERT_NORM', 'INSERT_SCALED', 'BASE_RAW', 'BASE_NORM'])
     parser.add_argument("-g", type=int, default=3, choices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10])  # number of marker genes cutoff
     parser.add_argument("-c", action="store_true",help="Write second output file with relative abundances")
-    parser.add_argument("-c", action="store_true", help="Write second output file with relative abundances")
 
     args = parser.parse_args(sys.argv[2:])
     if sys.argv[2:] == []:
