@@ -116,19 +116,18 @@ class MotusSearchDB:
                 self._tax_2_motu_and_genome[family].add(motu)
                 self._tax_2_motu_and_genome[genus].add(motu)
                 self._tax_2_motu_and_genome[species].add(motu)
-        with gzip.open(genome_metadata_file, 'rt') as handle:
-            for entry in csv.DictReader(handle, delimiter='\t'):
-                genome = entry['GENOME']
-                location = entry['LOCATION']
-                motu = entry['MOTU4']
+        if True:
+            import polars as pl
+            df = pl.scan_csv(genome_metadata_file, separator="\t", has_header=True, infer_schema_length=0).select(["GENOME", "LOCATION", "MOTU4", 'MOTU4_STATUS', 'DOMAIN', 'PHYLUM', 'CLASS', 'ORDER', 'FAMILY', 'GENUS', 'SPECIES']).collect()
+
+            for row in df.iter_rows():
+                [genome, location, motu, motu4_status, domain, phylum, class_rank, order, family, genus, species] = row
                 self._genome_2_motu[genome] = motu
                 self._motu_2_genome[motu].add(genome)
                 self._genome_2_path[genome] = location
-                if 'representative' in entry['MOTU4_STATUS']:
+                if 'representative' in motu4_status:
                     self._representative_genomes.add(genome)
-                [domain, phylum, class_rank, order, family, genus, species] = [entry['DOMAIN'], entry['PHYLUM'], entry['CLASS'], entry['ORDER'], entry['FAMILY'], entry['GENUS'], entry['SPECIES']]
                 self._genome_2_tax[genome] = '\t'.join([domain, phylum, class_rank, order, family, genus, species])
-
                 self._tax_2_motu_and_genome[domain].add(genome)
                 self._tax_2_motu_and_genome[phylum].add(genome)
                 self._tax_2_motu_and_genome[class_rank].add(genome)
@@ -136,6 +135,26 @@ class MotusSearchDB:
                 self._tax_2_motu_and_genome[family].add(genome)
                 self._tax_2_motu_and_genome[genus].add(genome)
                 self._tax_2_motu_and_genome[species].add(genome)
+        else:
+            with gzip.open(genome_metadata_file, 'rt') as handle:
+                for entry in csv.DictReader(handle, delimiter='\t'):
+                    genome = entry['GENOME']
+                    location = entry['LOCATION']
+                    motu = entry['MOTU4']
+                    self._genome_2_motu[genome] = motu
+                    self._motu_2_genome[motu].add(genome)
+                    self._genome_2_path[genome] = location
+                    if 'representative' in entry['MOTU4_STATUS']:
+                        self._representative_genomes.add(genome)
+                    [domain, phylum, class_rank, order, family, genus, species] = [entry['DOMAIN'], entry['PHYLUM'], entry['CLASS'], entry['ORDER'], entry['FAMILY'], entry['GENUS'], entry['SPECIES']]
+                    self._genome_2_tax[genome] = '\t'.join([domain, phylum, class_rank, order, family, genus, species])
+                    self._tax_2_motu_and_genome[domain].add(genome)
+                    self._tax_2_motu_and_genome[phylum].add(genome)
+                    self._tax_2_motu_and_genome[class_rank].add(genome)
+                    self._tax_2_motu_and_genome[order].add(genome)
+                    self._tax_2_motu_and_genome[family].add(genome)
+                    self._tax_2_motu_and_genome[genus].add(genome)
+                    self._tax_2_motu_and_genome[species].add(genome)
 
         logging.info(f'Finished initialising the mOTUs search database. Found {len(self._motu_2_genome)} mOTUs, {len(self._genome_2_path)} genomes and {len(self._tax_2_motu_and_genome)} taxonomy search words.')
 
@@ -1211,7 +1230,6 @@ def parse_profile():
         MOTUS_PARAMETERS.set_write_relabundances()
 
     map_tax()
-
     calc_mgc()
     calc_motu()
     mutils.shutdown(0)
@@ -1520,10 +1538,10 @@ def parse_download():
                       -l is not set     
 
          Options:
-
             -l        Skip genome download. Only create genome report file
             -r        Download only representative genomes
-            -w   STR  Keyword: Can be mOTU, genome name or taxonomy 
+            -w   STR  Keyword: Can be mOTU, genome name or taxonomy. 
+                        Fuzzy search enabled for taxonomy 
 
            ''', formatter_class=CapitalisedHelpFormatter, add_help=False)
 

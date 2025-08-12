@@ -69,7 +69,7 @@ class MotusParameters:
     count_mode_base_raw_mode: str = 'BASE_RAW'
     count_mode_base_norm_mode: str = 'BASE_NORM'
 
-    _min_mgcs: str = 3
+    _min_mgcs: int = 3
 
     def is_strict_db_mode(self):
         return self._is_strict_db_mode
