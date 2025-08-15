@@ -1,0 +1,15 @@
+name: mOTUs
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python==3.12.0
+  - bwa==0.7.19
+  - pip
+  - pip:
+      - fetchmgs==2.1.0
+      - pysam==0.23.3
+      - polars==1.32.2
+      - rapidfuzz==3.13.0
+      - biopython==1.85
