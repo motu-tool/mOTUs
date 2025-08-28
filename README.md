@@ -130,6 +130,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
               downloadDB  Download the mOTUs marker gene database
               merge       Merge multiple taxonomic profiling results into one table
               classify    Classify user genomes into mOTUs
+              prep_long   Prepare long reads to be profiled by mOTUs
 
 
         Type motus <command> to print the help menu for a specific command
@@ -448,6 +449,72 @@ Output:`-o`: The output file, containing one line per genome with its associated
 
 
 ---
+
+
+
+### prep_long
+
+```bash
+$ motus prep_long
+```
+
+<details>
+<summary>prep_long cli options</summary>
+
+```bash
+Program: motus - a tool for marker gene-based OTU (mOTU) profiling
+    Version: 4.0.2
+
+
+    References:
+
+    Profiler: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand
+    taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022).
+    doi: https://doi.org/10.1186/s40168-022-01410-z
+
+    Database: Dmitrijeva, Ruscheweyh et al. The mOTUs online database provides web-accessible
+    genomic context to taxonomic profiling of microbial communities. Nuclic Acids Research (2025).
+    doi: https://doi.org/10.1093/nar/gkae1004
+
+
+     motus prep_long [options]
+
+        Input options:
+           -i  FILE   long read file to convert, can be fasta(.gz) or fastq(.gz)
+        Output options:
+           -o  FILE   converted file, ready to be used by motus profile
+        Algorithm options:
+           -sl INT    splitting length for the long reads. (default = 300)
+           -ml INT    minimum read length, shorter are discarded. (default = 50)
+
+           
+      motus.py: error: the following arguments are required: -i, -o
+```
+</details>
+
+
+
+#### Required arguments
+
+
+Input: `-i`: The input file containing long reads. It can be in fastA(.gz) or fastQ(.gz) format.
+
+Output: `-o`: The output file where the converted reads will be stored in fastA format.  
+
+  
+#### 🔧 Options
+
+| Option               | Description                                                                                                                                                                                                                                                                |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `-i`     | **Input file**: The input file containing long reads. It can be in fastA(.gz) or fastQ(.gz) format.
+| `-o`     | **Output file**: The output file where the converted reads will be stored in fastA format.
+| `-sl`     | **Split length**: The length of short reads. The default value is 300.
+| `-ml`     | **Minimum length**: Reads shorter than this length will not be written to the output. The default value is 75.
+
+
+
+
+
 
 
 ## ❓ Need Help?
