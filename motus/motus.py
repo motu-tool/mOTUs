@@ -1380,6 +1380,71 @@ def download_genomes(keyword: str, motusSearchDB: MotusSearchDB, output_folder: 
         logging.info(f'Finished downloading genomes')
 
 
+def prep_long(input_sequence_file: pathlib.Path, output_sequence_file: pathlib.Path, minlength: int = 50, split_length: int = 300) -> None:
+    logging.info('Starting mOTUs - prep_long')
+    logging.info(f'Input file: {input_sequence_file}')
+    logging.info(f'Output file: {output_sequence_file}')
+
+    total_bases_written = 0
+    total_bases_seen = 0
+    total_long_reads = 0
+    total_short_reads = 0
+    with open(output_sequence_file, 'w') as outhandle:
+        for header, long_sequence in mutils.yield_reads(input_sequence_file):
+            total_long_reads += 1
+            total_bases_seen += len(long_sequence)
+            substrings = [long_sequence[i:i + split_length - 1] for i in range(0, len(long_sequence), split_length)]
+            fill_length = len(str(len(substrings))) + 1
+            for cnt, substring in enumerate(substrings, 1):
+                if len(substring) >= minlength:
+                    header_st = f'{header}_st-{str(cnt).zfill(fill_length)}'
+                    outhandle.write(f'>{header_st}\n{substring}\n')
+                    total_short_reads += 1
+                    total_bases_written += len(substring)
+    logging.info(f'{total_long_reads:,} long reads, split into {total_short_reads:,} short reads')
+    logging.info(f'Long reads had {total_bases_seen:,} bases. {total_bases_seen - total_bases_written:,} ({round(100.0 * (total_bases_seen - total_bases_written) / (total_bases_seen), 2)}%) bases were removed due to minimum length cutoff.')
+
+
+
+
+def parse_prep_long():
+    parser = argparse.ArgumentParser(usage=f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
+    Version: {mutils.MOTUS_VERSION}
+
+    {mutils.cite_text()}
+
+     motus prep_long [options]
+
+        Input options:
+           -i  FILE   long read file to convert, can be fasta(.gz) or fastq(.gz)
+        Output options:
+           -o  FILE   converted file, ready to be used by motus profile
+        Algorithm options:
+           -sl INT    splitting length for the long reads. (default = 300)
+           -ml INT    minimum read length, shorter are discarded. (default = 50)
+
+           ''', formatter_class=CapitalisedHelpFormatter, add_help=False)
+
+
+    parser.add_argument("-i", required=True)
+    parser.add_argument("-o", required=True)
+    parser.add_argument("-sl", default=300, type=int)
+    parser.add_argument("-ml", default=50, type=int)
+    args = parser.parse_args(sys.argv[2:])
+
+    if sys.argv[2:] == []:
+        parser.print_usage()
+        mutils.shutdown(1)
+    mutils.startup()
+
+    input_sequence_file = pathlib.Path(args.i)
+    output_sequence_file = pathlib.Path(args.o)
+    minlength = args.ml
+    split_length = args.sl
+
+    prep_long(input_sequence_file, output_sequence_file, minlength=minlength, split_length=split_length)
+
+
 def parse_classify():
     parser = argparse.ArgumentParser(usage=f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
     Version: {mutils.MOTUS_VERSION}
@@ -1679,12 +1744,13 @@ if __name__ == '__main__':
               downloadDB  Download the mOTUs marker gene database
               merge       Merge multiple taxonomic profiling results into one table
               classify    Classify user genomes into mOTUs
+              prep_long   Prepare long reads to be profiled by mOTUs
     
     
         Type motus <command> to print the help menu for a specific command
         ''',formatter_class=CapitalisedHelpFormatter,add_help=False)
 
-    parser.add_argument('command', choices=["profile", "map_tax", "calc_mgc", "calc_motu", "download", "merge", "downloadDB", "batch_profile", "classify"])
+    parser.add_argument('command', choices=["profile", "map_tax", "calc_mgc", "calc_motu", "download", "merge", "downloadDB", "batch_profile", "classify", 'prep_long'])
     args: argparse.Namespace = parser.parse_args(sys.argv[1:2])
     if args.command == 'profile':
         parse_profile()
@@ -1704,8 +1770,8 @@ if __name__ == '__main__':
         parse_downloadDB()
     elif args.command == 'classify':
         parse_classify()
-    # elif args.command == 'prep_long':
-    #     logging.error('Command prep_long not implemented yet')
+    elif args.command == 'prep_long':
+        parse_prep_long()
     else:
         parser.print_usage()
         print(f'Unrecognized command {args}')

@@ -3,6 +3,9 @@ import sys
 import pathlib
 from mentities import MOTUS_PARAMETERS
 from mentities import MOTUS_DB
+import Bio.SeqIO.FastaIO as FastaIO
+import Bio.SeqIO.QualityIO as QualityIO
+import gzip
 
 SAM_ID_FLAG = 'mOTUs4'
 MOTUS_VERSION = '4.0.2'
@@ -107,3 +110,36 @@ def is_gzipped(filename: pathlib.Path):
     with open(filename, 'rb') as f:
         magic = f.read(2)
     return magic == b'\x1f\x8b'
+
+
+def yield_reads(reads_file: pathlib.Path):
+    allowed_file_fq_endings = ['fq.gz', 'fq', 'fastq', 'fastq.gz']
+    allowed_file_fa_endings = ['fa', 'fa.gz', 'fasta', 'fasta.gz', 'fna', 'fna.gz']
+    is_fq = False
+    is_fa = False
+    is_gz = False
+    if is_gzipped(reads_file):
+        is_gz = True
+
+    for allowed_file_fa_ending in allowed_file_fa_endings:
+        if str(reads_file).endswith(allowed_file_fa_ending):
+            is_fa = True
+    for allowed_file_fq_ending in allowed_file_fq_endings:
+        if str(reads_file).endswith(allowed_file_fq_ending):
+            is_fq = True
+
+    if is_gz:
+        of = gzip.open(reads_file, 'rt')
+    else:
+        of = open(reads_file, 'r')
+
+    if is_fa:
+        for (header, sequence) in FastaIO.SimpleFastaParser(of):
+            yield (header.strip().split()[0], sequence)
+    elif is_fq:
+        for header, sequence, qual in QualityIO.FastqGeneralIterator(of):
+            yield (header.strip().split()[0], sequence)
+    else:
+        logging.error(f'Unknown file format: {reads_file}. Expecting a fasta or fastq file, can be gzipped.')
+        shutdown(1)
+    of.close()
