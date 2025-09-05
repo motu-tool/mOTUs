@@ -8,12 +8,15 @@ import Bio.SeqIO.QualityIO as QualityIO
 import gzip
 
 SAM_ID_FLAG = 'mOTUs4'
-MOTUS_VERSION = '4.0.2'
+MOTUS_VERSION = '4.0.3'
 DEFAULT_MOTUS_MGDB_PARENT_LOCATION = pathlib.Path(__file__).resolve().parent
 DEFAULT_MOTUS_MGDB_LOCATION = DEFAULT_MOTUS_MGDB_PARENT_LOCATION.joinpath('db_mOTU')
 DEFAULT_MOTUS_MGDB_LOCATION_MARKER = DEFAULT_MOTUS_MGDB_LOCATION.joinpath('db_mOTU.downloaded')
+DEFAULT_MOTUS_ANNODB_LOCATION = DEFAULT_MOTUS_MGDB_LOCATION.joinpath('mOTUsv4.0.annotation.db')
+DEFAULT_MOTUS_ANNODB_LOCATION_MARKER = DEFAULT_MOTUS_MGDB_LOCATION.joinpath('mOTUsv4.0.annotation.db.downloaded')
 MOTUS_MGDB_REMOTE_LOCATION = 'https://sunagawalab.ethz.ch/share/MOTUS/database/4.0/data/mOTUS-MGDB/current/db_mOTU.tar.gz'
 MOTUS_GENOME_REMOTE_PREFIX = 'https://sunagawalab.ethz.ch/share/MOTUS/database/4.0/data/genomes/'
+MOTUS_ANNODB_REMOTE_LOCATION = 'https://sunagawalab.ethz.ch/share/MOTUS/database/4.0/data/mOTUS-ANNODB/mOTUsv4.0.annotation.db'
 
 
 def shutdown(exitcode: int) -> None:
@@ -30,18 +33,21 @@ def shutdown(exitcode: int) -> None:
 
 
 def startup() -> None:
+    """A method to group all functions that should be
+    executed during startup of the mOTU tool
     """
-    A method to group all functions that should be
-    executed during startup of the mOTU tool.
-    Returns:
-        None
-    """
+
     logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=logging.INFO, datefmt='%Y-%m-%d,%H:%M:%S')
 
     #TODO TEST if bwa is installed and working
     logging.info(f'mOTU tool starting - {SAM_ID_FLAG}:{MOTUS_VERSION}')
 
 def cite_text() -> str:
+    """Returns the mOTUs4 citations
+
+    Returns:
+        str: mOTUs4 citation text
+    """    
     tmp = '''
     References:
     
@@ -57,7 +63,7 @@ def cite_text() -> str:
 
 
 def check_validity_of_mgc_header(header_line: str) -> None:
-    '''check of the header line matches the parameters used in the current
+    """check of the header line matches the parameters used in the current
     call. Example:
     #tool_version=4.0.2     database_version=4.0    min_alignment_length=110
 
@@ -71,10 +77,9 @@ def check_validity_of_mgc_header(header_line: str) -> None:
 
     This method will kill the current job if parameters don\'t match
 
-    Returns:
-        None
-
-    '''
+    Args:
+        header_line (str): The header line of an MGC file
+    """    
 
     if not header_line or not header_line.startswith('#'):
         logging.error(f'Header line: {header_line} doesn\'t look like a valid header')
@@ -99,6 +104,7 @@ def check_validity_of_mgc_header(header_line: str) -> None:
 
 
 def create_mgc_header_line():
+
     header_line = f'#tool_version={MOTUS_DB.get_tool_version()}\tdatabase_version={MOTUS_DB.get_database_version()}\tmin_alignment_length={MOTUS_PARAMETERS.get_minimal_alignment_length()}'
     return header_line
 

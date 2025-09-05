@@ -36,8 +36,6 @@
 # ============================================================================ #
 
 
-
-
 import statistics
 import pysam
 import Bio.SeqIO.FastaIO as FastaIO
@@ -50,7 +48,7 @@ import collections
 import random
 import argparse
 import sys
-from typing import List, Dict, Set, Tuple, Generator, TextIO, Self
+from typing import List, Dict, Set, Tuple, Generator, TextIO
 import urllib.request
 import tarfile
 import shutil
@@ -58,8 +56,7 @@ import mutils
 from mentities import MOTUS_PARAMETERS
 from mentities import MOTUS_DB
 import mentities
-from rapidfuzz import process, fuzz
-import polars as pl
+import mfind
 
 
 __author__ = ('Hans-Joachim Ruscheweyh (hansr@ethz.ch), '
@@ -71,7 +68,9 @@ __author__ = ('Hans-Joachim Ruscheweyh (hansr@ethz.ch), '
               'Georg Zeller, '
               'Shinichi Sunagawa')
 __version__ = mutils.MOTUS_VERSION
-__date__ = '06 August 2025'
+
+
+__date__ = '05 September 2025'
 __license__ = "GPL - v3"
 __maintainer__ = "Hans-Joachim Ruscheweyh"
 
@@ -86,131 +85,11 @@ motu = Top level unit, species level cluster
 """
 
 
-
-
-
-
 Mgc_values = collections.namedtuple("Mgc_values", "insert_raw insert_norm insert_scaled base_raw base_norm")
 
 
 
-class MotusSearchDB:
-    _motu_2_genome = collections.defaultdict(set)
-    _tax_2_motu_and_genome = collections.defaultdict(set)
-    _genome_2_motu = {}
-    _genome_2_path = {}
-    _genome_2_tax = {}
-    _representative_genomes = set()
 
-    def __init__(self, motu_taxonomy_file: pathlib.Path, genome_metadata_file: pathlib.Path) -> None:
-
-        logging.info('Initialising the mOTUs search database.')
-        with gzip.open(motu_taxonomy_file, 'rt') as handle:
-            handle.readline()
-            for line in handle:
-                [motu, gtdb] = line.strip().split('\t')
-                [domain, phylum, class_rank, order, family, genus, species] = [x.split('__')[1] for x in gtdb.split(';')]
-                self._tax_2_motu_and_genome[domain].add(motu)
-                self._tax_2_motu_and_genome[phylum].add(motu)
-                self._tax_2_motu_and_genome[class_rank].add(motu)
-                self._tax_2_motu_and_genome[order].add(motu)
-                self._tax_2_motu_and_genome[family].add(motu)
-                self._tax_2_motu_and_genome[genus].add(motu)
-                self._tax_2_motu_and_genome[species].add(motu)
-        if True:
-
-            df = pl.scan_csv(genome_metadata_file, separator="\t", has_header=True, infer_schema_length=0).select(["GENOME", "LOCATION", "MOTU4", 'MOTU4_STATUS', 'DOMAIN', 'PHYLUM', 'CLASS', 'ORDER', 'FAMILY', 'GENUS', 'SPECIES']).collect()
-
-            for row in df.iter_rows():
-                [genome, location, motu, motu4_status, domain, phylum, class_rank, order, family, genus, species] = row
-                self._genome_2_motu[genome] = motu
-                self._motu_2_genome[motu].add(genome)
-                self._genome_2_path[genome] = location
-                if 'representative' in motu4_status:
-                    self._representative_genomes.add(genome)
-                self._genome_2_tax[genome] = '\t'.join([domain, phylum, class_rank, order, family, genus, species])
-                self._tax_2_motu_and_genome[domain].add(genome)
-                self._tax_2_motu_and_genome[phylum].add(genome)
-                self._tax_2_motu_and_genome[class_rank].add(genome)
-                self._tax_2_motu_and_genome[order].add(genome)
-                self._tax_2_motu_and_genome[family].add(genome)
-                self._tax_2_motu_and_genome[genus].add(genome)
-                self._tax_2_motu_and_genome[species].add(genome)
-        else: # this section can be removed if polars has been tested
-            with gzip.open(genome_metadata_file, 'rt') as handle:
-                for entry in csv.DictReader(handle, delimiter='\t'):
-                    genome = entry['GENOME']
-                    location = entry['LOCATION']
-                    motu = entry['MOTU4']
-                    self._genome_2_motu[genome] = motu
-                    self._motu_2_genome[motu].add(genome)
-                    self._genome_2_path[genome] = location
-                    if 'representative' in entry['MOTU4_STATUS']:
-                        self._representative_genomes.add(genome)
-                    [domain, phylum, class_rank, order, family, genus, species] = [entry['DOMAIN'], entry['PHYLUM'], entry['CLASS'], entry['ORDER'], entry['FAMILY'], entry['GENUS'], entry['SPECIES']]
-                    self._genome_2_tax[genome] = '\t'.join([domain, phylum, class_rank, order, family, genus, species])
-                    self._tax_2_motu_and_genome[domain].add(genome)
-                    self._tax_2_motu_and_genome[phylum].add(genome)
-                    self._tax_2_motu_and_genome[class_rank].add(genome)
-                    self._tax_2_motu_and_genome[order].add(genome)
-                    self._tax_2_motu_and_genome[family].add(genome)
-                    self._tax_2_motu_and_genome[genus].add(genome)
-                    self._tax_2_motu_and_genome[species].add(genome)
-
-        logging.info(f'Finished initialising the mOTUs search database. Found {len(self._motu_2_genome)} mOTUs, {len(self._genome_2_path)} genomes and {len(self._tax_2_motu_and_genome)} taxonomy search words.')
-
-    def search_for_genomes(self, keyword, only_representatives = False) -> List[str]:
-        """
-        Search for genomes in the mOTUs database using an exact keyword
-        Search is exact but tolerates upper/lowercase differences
-
-        Params:
-            keyword: a string of at least one word, has to match
-                    exactly a mOTU, genome name or a taxon in GTDB
-            only_representative: If True, only return representative
-                    genomes
-        Returns:
-            a set with all genomes that have been found
-        """
-
-        genomes = set()
-        for genome in self._motu_2_genome.get(keyword, []): # if the submitted keyword is a motu
-            genomes.add(genome)
-
-        if keyword in self._genome_2_path: # if the submitted keyword is a genome name
-            genomes.add(self._genome_2_path[keyword])
-
-        for genome_or_motu in self._tax_2_motu_and_genome.get(keyword, []):
-            if genome_or_motu in self._genome_2_path:
-                genomes.add(genome_or_motu)
-            for genome in self._motu_2_genome.get(genome_or_motu, []):
-                genomes.add(genome)
-        report_genomes = set()
-        if only_representatives:
-            for genome in genomes:
-                if genome in self._representative_genomes:
-                    report_genomes.add(genome)
-        else:
-            report_genomes = genomes
-        report_genomes = sorted(list(report_genomes))
-        if len(report_genomes) == 0:
-            logging.info(f'No exact matches found for term "{keyword}". Starting fuzzy search on {len(self._tax_2_motu_and_genome.keys())} keywords.')
-
-            matches = process.extract(keyword, self._tax_2_motu_and_genome.keys(), scorer=fuzz.WRatio, processor=str.lower, limit=10000000,score_cutoff=70)
-            logging.info(f'Finished fuzzy search. Found {len(matches)} hits - Results sorted by score:')
-
-            for (token, score, _) in sorted(matches, key=lambda match: match[1], reverse=True):
-                logging.info(f'\t{token} --> {len(self._tax_2_motu_and_genome[token])} genomes/mOTUs to download.')
-            mutils.shutdown(1)
-        return report_genomes
-
-    def get_genome_path(self, genome:str):
-        p = mutils.MOTUS_GENOME_REMOTE_PREFIX + self._genome_2_path[genome]
-        return p
-    def get_genome_motu(self, genome: str):
-        return self._genome_2_motu[genome]
-    def get_genome_tax(self, genome: str):
-        return self._genome_2_tax[genome]
 
 def map_tax() -> None:
     """
@@ -1352,32 +1231,52 @@ def parse_merge():
     mutils.shutdown(0)
 
 
-def download_genomes(keyword: str, motusSearchDB: MotusSearchDB, output_folder: pathlib.Path, output_file: pathlib.Path, download_representative_genomes_only: bool) -> None:
-    logging.info(f'Searching for keyword: {keyword}.')
-    genomes_to_download = motusSearchDB.search_for_genomes(keyword, only_representatives=download_representative_genomes_only)
-    logging.info(f'Found: {len(genomes_to_download)} hits.')
+def download_genomes(genomes_to_download: List[str], genome_locator: mentities.GenomeLocator, output_folder: pathlib.Path, download_representative_genomes_only: bool) -> None:
+    """Takes a list of genomes and downloads them to the 
+    output folder. Only start downloading if all genome
+    names are valid. Otherwise program will terminate
+    with an error
 
-    logging.info(f'Found {len(genomes_to_download)} genomes. Writing genome information to {output_file}')
-    with open(output_file, 'w') as handle:
-        handle.write('GENOME\tMOTU\tPATH\tDOMAIN\tPHYLUM\tCLASS\tORDER\tFAMILY\tGENUS\tSPECIES\n')
+    Args:
+        genomes_to_download (List[str]): A list of genome names (1-n)
+        genome_locator (GenomeLocator): Object which maps genome names to URLs 
+        output_folder (pathlib.Path): The output folder. Will be created if it doesnt exist
+        download_representative_genomes_only (bool): Only download representative genomes if set to True
+    Returns:
+        None None: None
+    """    
+    
+    genomes_to_download = set(genomes_to_download)
+    logging.info(f'Checking existence of {len(genomes_to_download)} genome names.')
+    
+
+    filtered_genomes_to_download = set()
+    if download_representative_genomes_only:
         for genome in genomes_to_download:
-            genome_path = motusSearchDB.get_genome_path(genome)
-            genome_motu = motusSearchDB.get_genome_motu(genome)
-            genome_tax = motusSearchDB.get_genome_tax(genome)
-            handle.write(f'{genome}\t{genome_motu}\t{genome_path}\t{genome_tax}\n')
-    logging.info(f'Finished writing genome information to {output_file}')
-    if output_folder:
-        if output_folder.is_file():
-            logging.error('Output Path exists and is file. Cannot download genomes to this location')
-            mutils.shutdown(1)
-        logging.info(f'Downloading genomes to {output_folder}')
-        output_folder.mkdir(exist_ok=True, parents=True)
-        for cnt, genome in enumerate(genomes_to_download, 1):
-            genome_path = str(motusSearchDB.get_genome_path(genome))
-            destpath = str(output_folder) + '/' + str(genome_path).split('/')[-1]
-            logging.info(f'Downloading genome ({cnt} / {len(genomes_to_download)}) {genome} to {destpath}')
-            urllib.request.urlretrieve(genome_path, destpath)
-        logging.info(f'Finished downloading genomes')
+            if genome_locator.is_represenative_genome(genome):
+                filtered_genomes_to_download.add(genome)
+        logging.info(f'Filtered for representative genomes. Remaining genomes: {len(filtered_genomes_to_download)}')
+    else:
+        filtered_genomes_to_download = genomes_to_download
+
+
+    if len(filtered_genomes_to_download) == 0:
+        logging.error('No genomes to download. Quitting')
+        mutils.shutdown(1)
+
+    genome_2_url = {}
+    for genome in filtered_genomes_to_download:
+        genome_2_url[genome] = genome_locator.get_genome_path(genome)
+    
+    logging.info(f'Downloading {len(genome_2_url)} genomes to {output_folder}')
+
+    output_folder.mkdir(exist_ok=True, parents=True)
+
+    for cnt, (genome, genome_path) in enumerate(genome_2_url.items(), 1):
+        destpath = str(output_folder) + '/' + str(genome_path).split('/')[-1]
+        logging.info(f'Downloading genome ({cnt} / {len(genome_2_url)}) {genome} to {destpath}')
+        urllib.request.urlretrieve(genome_path, destpath)
+    logging.info(f'Finished downloading genomes')
 
 
 def prep_long(input_sequence_file: pathlib.Path, output_sequence_file: pathlib.Path, minlength: int = 50, split_length: int = 300) -> None:
@@ -1443,6 +1342,67 @@ def parse_prep_long():
     split_length = args.sl
 
     prep_long(input_sequence_file, output_sequence_file, minlength=minlength, split_length=split_length)
+
+
+def parse_find():
+    parser = argparse.ArgumentParser(usage=f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
+    Version: {mutils.MOTUS_VERSION}
+
+    {mutils.cite_text()}
+
+     motus find [options]
+
+        Input options:
+            -i  FILE/STR Can be either a list of search tokens (1-n) or 
+                            a text file with tokens. One line 
+                            per token name. Tokens can be genome names,
+                            PFAM, KEGG or EGGNOG ids or GTDB taxonomy
+                            names. Will offer suggestions if tokens dont
+                            match database entries exactly.
+        Output options:
+            -o  FILE     Genome names with or without annotations that were
+                            found to match search tokens
+        Algorithm options:
+            -r            Enable rich report mode. Will write also taxonomic
+                            and functional annotation to output file.
+                            
+
+
+           ''', formatter_class=CapitalisedHelpFormatter, add_help=False)
+
+
+    parser.add_argument("-i", required=True, nargs="+")
+    parser.add_argument("-o", required=True)
+    parser.add_argument("-r", action="store_true")
+
+    args = parser.parse_args(sys.argv[2:])
+
+    if sys.argv[2:] == []:
+        parser.print_usage()
+        mutils.shutdown(1)
+    mutils.startup()
+
+
+    output_file = pathlib.Path(args.o)
+    search_tokens_tmp = args.i
+    report_mode_rich = False
+    if args.r:
+        report_mode_rich = True
+
+    search_tokens = []
+    if len(search_tokens_tmp) == 1: # can be a file or a token
+        search_token = search_tokens_tmp[0]
+        if pathlib.Path(search_token).exists(): # is a file with search tokens
+            with open(search_token) as handle:
+                for line in handle:
+                    search_tokens.append(line.strip())
+        else:
+            search_tokens.append(search_token)
+    else: # list of genomes
+        search_tokens = search_tokens_tmp
+
+    mfind.find_genomes(search_tokens, output_file, report_mode_rich)
+    mutils.shutdown(0)
 
 
 def parse_classify():
@@ -1612,53 +1572,56 @@ def parse_download():
 
      motus download [options]
 
+         Input options:
+            -i  FILE/STR Can be either a list of genome names (1-n) or 
+                            a text file with genomes to download. One line 
+                            per genome name. The input file is c
+                            ompatible with the output of motus find.
+
          Output options:
-            -s  FILE  Genome metadata file
-            -o  PATH  Genome output folder. Only required when 
-                      -l is not set     
+            -o  PATH     Output folder.
 
          Options:
-            -l        Skip genome download. Only create genome report file
-            -r        Download only representative genomes
-            -w   STR  Keyword: Can be mOTU, genome name or taxonomy. 
-                        Fuzzy search enabled for taxonomy 
+            -r           Download only representative genomes.
 
            ''', formatter_class=CapitalisedHelpFormatter, add_help=False)
 
-    # Output options
-    parser.add_argument("-o", required=False)
-    parser.add_argument("-s", required=True)
 
-    parser.add_argument("-l", action="store_true")
+    parser.add_argument("-o", required=True)
+    parser.add_argument("-i", required=True, nargs="+")
     parser.add_argument("-r", action="store_true")
-    parser.add_argument("-w", type=str, required=True)
+
 
     args = parser.parse_args(sys.argv[2:])
     if sys.argv[2:] == []:
         parser.print_usage()
         mutils.shutdown(1)
+    mutils.startup()
 
-    output_folder = args.o
-    output_file = pathlib.Path(args.s)
-    download_genome_metadata_only = False
+
+    output_folder = pathlib.Path(args.o)
+    input_items = args.i
     download_representative_genomes_only = False
-    if args.l:
-        download_genome_metadata_only = True
-        output_folder = None
     if args.r:
         download_representative_genomes_only = True
-    keyword = args.w
-
-    mutils.startup()
-    if not download_genome_metadata_only:
-        if not output_folder:
-            logging.error('Output folder must be set unless -l flag is used. Quitting ...')
-            mutils.shutdown(1)
-        output_folder = pathlib.Path(output_folder)
+    
+    genomes_to_download = []
+    if len(input_items) == 1: # can be a single genome or a file with genomes
+        input_item = input_items[0]
+        if pathlib.Path(input_item).exists(): # is a file with genome names
+            with open(input_item) as handle:
+                for line in handle:
+                    if line.strip().startswith('GENOME'):
+                        continue
+                    genomes_to_download.append(line.strip().split('\t')[0])
+        else:
+            genomes_to_download.append(input_item)
+    else: # list of genomes
+        genomes_to_download = input_items
 
     MOTUS_DB.load_motus_db(mutils.DEFAULT_MOTUS_MGDB_LOCATION, load=False)
-    motus_search_db = MotusSearchDB(MOTUS_DB.motus_mv_taxonomy_file, MOTUS_DB.genome_metadata_file)
-    download_genomes(keyword, motus_search_db, output_folder, output_file, download_representative_genomes_only)
+    motus_search_db = mentities.GenomeLocator(MOTUS_DB.genome_metadata_file)
+    download_genomes(genomes_to_download, motus_search_db, output_folder, download_representative_genomes_only)
     mutils.shutdown(0)
 
 
@@ -1745,12 +1708,13 @@ if __name__ == '__main__':
               merge       Merge multiple taxonomic profiling results into one table
               classify    Classify user genomes into mOTUs
               prep_long   Prepare long reads to be profiled by mOTUs
+              find        Find genomes by name, functional or taxonomic annotation
     
     
         Type motus <command> to print the help menu for a specific command
         ''',formatter_class=CapitalisedHelpFormatter,add_help=False)
 
-    parser.add_argument('command', choices=["profile", "map_tax", "calc_mgc", "calc_motu", "download", "merge", "downloadDB", "batch_profile", "classify", 'prep_long'])
+    parser.add_argument('command', choices=["profile", "map_tax", "calc_mgc", "calc_motu", "download", "merge", "downloadDB", "batch_profile", "classify", 'prep_long', 'find'])
     args: argparse.Namespace = parser.parse_args(sys.argv[1:2])
     if args.command == 'profile':
         parse_profile()
@@ -1772,6 +1736,8 @@ if __name__ == '__main__':
         parse_classify()
     elif args.command == 'prep_long':
         parse_prep_long()
+    elif args.command == 'find':
+        parse_find()
     else:
         parser.print_usage()
         print(f'Unrecognized command {args}')
