@@ -582,6 +582,77 @@ The `-o` parameter specifies the output folder where the genomes will be downloa
 | `-r`     | **representative only**: Download only representative genomes.
 
 
+---
+
+
+
+### find
+
+```bash
+$ motus find
+```
+
+<details>
+<summary>find cli options</summary>
+
+```bash
+Program: motus - a tool for marker gene-based OTU (mOTU) profiling
+    Version: 4.0.3
+
+    
+    References:
+    
+    Profiler: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
+    taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
+    doi: https://doi.org/10.1186/s40168-022-01410-z
+
+    Database: Dmitrijeva, Ruscheweyh et al. The mOTUs online database provides web-accessible 
+    genomic context to taxonomic profiling of microbial communities. Nuclic Acids Research (2025). 
+    doi: https://doi.org/10.1093/nar/gkae1004
+    
+
+     motus find [options]
+
+        Input options:
+            -i  FILE/STR Can be either a list of search tokens (1-n) or 
+                            a text file with tokens. One line 
+                            per token name. Tokens can be genome names,
+                            PFAM, KEGG or EGGNOG ids or GTDB taxonomy
+                            names. Will offer suggestions if tokens dont
+                            match database entries exactly.
+        Output options:
+            -o  FILE     Genome names with or without annotations that were
+                            found to match search tokens
+        Algorithm options:
+            -r            Enable rich report mode. Will write also taxonomic
+                            and functional annotation to output file.
+                            
+
+           
+motus.py: error: the following arguments are required: -i, -o
+```
+    
+
+</details>
+
+
+
+#### Required arguments
+
+
+The `-i` parameter allows you to specify the tokens used to search for genomes. You can provide a single token, multiple tokens, or a file containing tokens, with one name per line. Tokens can be genome names, GTDB taxonomy or annotation identifiers such as KEGG, PFAM or EGGNOG. Tokens that dont match the database exactly will be used to suggest alternatives using fuzzy search.
+
+The `-o` parameter specifies the output file where genomes with or without annotations will be stored.  
+ 
+
+  
+#### 🔧 Options
+
+| Option               | Description                                                                                                                                                                                                                                                                |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `-i`     | **Search Tokens**: allows you to specify the tokens used to search for genomes. You can provide a single token, multiple tokens, or a file containing tokens, with one name per line. 
+| `-o`     | **Output file**: This parameter specifies the output file where genomes with or without annotations will be stored.
+| `-r`     | **rich**: Report, besides genome names, also taxonomic and functional annotations
 
 
 
