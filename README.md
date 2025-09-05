@@ -512,6 +512,74 @@ Output: `-o`: The output file where the converted reads will be stored in fastA 
 | `-ml`     | **Minimum length**: Reads shorter than this length will not be written to the output. The default value is 75.
 
 
+---
+
+
+
+### download
+
+```bash
+$ motus download
+```
+
+<details>
+<summary>download cli options</summary>
+
+```bash
+python motus.py download
+Program: motus - a tool for marker gene-based OTU (mOTU) profiling
+    Version: 4.0.2
+    
+    
+    References:
+    
+    Profiler: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
+    taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
+    doi: https://doi.org/10.1186/s40168-022-01410-z
+
+    Database: Dmitrijeva, Ruscheweyh et al. The mOTUs online database provides web-accessible 
+    genomic context to taxonomic profiling of microbial communities. Nuclic Acids Research (2025). 
+    doi: https://doi.org/10.1093/nar/gkae1004
+    
+
+     motus download [options]
+
+         Input options:
+            -i  FILE/STR Can be either a list of genome names (1-n) or 
+                            a text file with genomes to download. One line 
+                            per genome name. The input file is c
+                            ompatible with the output of motus find.
+
+         Output options:
+            -o  PATH     Output folder.
+
+         Options:
+            -r           Download only representative genomes.
+
+           
+motus.py: error: the following arguments are required: -o, -i
+```
+</details>
+
+
+
+#### Required arguments
+
+
+The `-i` parameter allows you to specify the names of the genomes to download. You can provide a single genome name, multiple genome names, or a file containing genome names, with one name per line. The output file of `motus find` is compatible with this parameter.
+
+
+The `-o` parameter specifies the output folder where the genomes will be downloaded. If the folder doesn’t exist, it will be created. Files with the same names in this folder will be overwritten without warning.  
+ 
+
+  
+#### 🔧 Options
+
+| Option               | Description                                                                                                                                                                                                                                                                |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `-i`     | **Genomes**: This parameter allows you to specify the names of the genomes to download. You can provide a single genome name, multiple genome names, or a file containing genome names, with one name per line.
+| `-o`     | **Output folder**: This parameter specifies the output folder where the genomes will be downloaded to.
+| `-r`     | **representative only**: Download only representative genomes.
 
 
 
