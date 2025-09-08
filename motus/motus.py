@@ -1412,12 +1412,16 @@ def parse_classify():
     {mutils.cite_text()}
 
      motus classify [options]
-
-         Options:
+        Input options:
 
             -i        Text file with fasta formatted (gzip allowed) genome
-                      files which will be associated with existing mOTUs
-            -o        Output file. One line per genome with associated mOTU.
+        
+        Output options:
+
+           -o  FILE  Output file. One line per genome with associated mOTU 
+       
+        Options:
+
             -t        Number of threads (default = 1)
 
            ''', formatter_class=CapitalisedHelpFormatter, add_help=False)
@@ -1449,69 +1453,203 @@ def parse_classify():
 
 
 def classify(genome_files: List[pathlib.Path], output_file: pathlib.Path, threads: int = 1):
-    """
-    Takes a list of genome files and associates them with existing mOTUs.
+    """Takes a list of genome files and associates them with existing mOTUs.
     A genome can either be:
     - classified with a mOTU (=mOTUXXX)
     - not have enough markergenes to be classified (=notEnoughMGs)
     - have enough markergenes to be classified but can not be represented by an existing mOTU (=Novel)
 
-    Params:
-        genome_files: A list with pathlib.Path objects all pointing to an existing genome file
-        output_file: The output file where the classification should be recorded
-    Returns:
-        None
-    """
+    Args:
+        genome_files (List[pathlib.Path]): A list with pathlib.Path objects all pointing to an existing genome file
+        output_file (pathlib.Path): Main output file of motus classify
+        threads (int, optional): Number of threads. Defaults to 1.
+    """    
+
+    genome_files = sorted(genome_files)
+    root_tmp_folder =  pathlib.Path(str(output_file) + '_classify_tmp')
+
 
     logging.info(f'Starting mOTUs classify:')
+    MOTUS_DB.load_motus_db(mutils.DEFAULT_MOTUS_MGDB_LOCATION, True)
     logging.info(f'\tInput = {len(genome_files)} genomes.')
     logging.info(f'\tOutput will be written to {output_file}')
+    logging.info(f'\tTemporary files will be written to {root_tmp_folder}')
+    logging.info(f'\tRunning fetchMGs on genomes.')
 
-    logging.info(f'\t Running fetchMGs on genomes.')
-
-
-    from fetchmgs import fetchmgs
-    fetchmgs_tmp_folder = pathlib.Path(str(output_file) + '_classify_tmp')
-    if False:
-        fetchmgs.extraction_genomes(genome_files, fetchmgs_tmp_folder, 'genome', threads, True)
-    logging.info(f'\t Finished running fetchMGs on genomes.')
-    logging.info(f'\t Collecting fetchMGs results')
-
-
-    MOTUS_DB.load_motus_db(mutils.DEFAULT_MOTUS_MGDB_LOCATION, False)
-
-
-    genome_2_fetchmg_file = {}
-
-    for genome_fetchmgs_file in fetchmgs_tmp_folder.glob('**/*fetchMGs.fna'):
-        genome_name = str(genome_fetchmgs_file.name).replace('.fetchMGs.fna', '')
-        genome_2_fetchmg_file[genome_name] = genome_fetchmgs_file
-
-    genome_2_markergenes = collections.defaultdict(list)
-    motus_marker_genes = set(MOTUS_DB.get_core_motus_mgs())
-    for genome_file in genome_files:
-        genome_name = str(genome_file.name)
-        genome_fetchmgs_file = genome_2_fetchmg_file[genome_name]
+    
+    fetchmgs_tmp_folder = root_tmp_folder.joinpath('fetchmgs')
+    fetchmgs_marker = root_tmp_folder.joinpath('fetchmgs.done')
+    fetchmgs_fna = root_tmp_folder.joinpath('motus_classify.fna')
+    fetchmgs_tsv = root_tmp_folder.joinpath('motus_classify.tsv')
+    fetchmgs_genomes_done = []
+    if fetchmgs_marker.exists():
+        with open(fetchmgs_marker) as handle:
+            for line in handle:
+                fetchmgs_genomes_done.append(line.strip())
 
 
-        with open(genome_fetchmgs_file) as handle:
+    if set(fetchmgs_genomes_done) != set([str(x) for x in genome_files]):
+        from fetchmgs import fetchmgs
+        fetchmgs.extraction_genomes(genome_files, fetchmgs_tmp_folder, 'genome', threads, True) # TODO rewrite with a Processpool to accelerate for larger number of genomes
+        logging.info(f'\tFinished running fetchMGs on genomes.')
+        logging.info(f'\tCollecting fetchMGs results')
+        genome_2_fetchmg_file = {}
+        for genome_fetchmgs_file in fetchmgs_tmp_folder.glob('**/*fetchMGs.fna'):
+            genome_name = str(genome_fetchmgs_file.name).replace('.fetchMGs.fna', '')
+            genome_2_fetchmg_file[genome_name] = genome_fetchmgs_file
+        genome_2_markergenes = collections.defaultdict(list)
+        motus_marker_genes = set(MOTUS_DB.get_core_motus_mgs())
+        for genome_file in genome_files:
+            genome_name = str(genome_file.name)
+            genome_fetchmgs_file = genome_2_fetchmg_file[genome_name]
+            with open(genome_fetchmgs_file) as handle:
+                for (header, sequence) in FastaIO.SimpleFastaParser(handle):
+                    cog = header.rsplit('.', 1)[-1]
+                    if cog in motus_marker_genes:
+                        genome_2_markergenes[genome_name].append((cog, sequence))
+        genomes_removed_notenoughmgs = 0
+        with open(fetchmgs_fna, 'w') as seqhandle, open(fetchmgs_tsv, 'w') as tsvhandle:
+            tsvhandle.write('GENOME\tNUM_MGS\tMGS\n')
+            for genome_name, cog_2_sequence in genome_2_markergenes.items():
+                if len(cog_2_sequence) > 5:
+                    for cog, sequence in cog_2_sequence:
+                        seqhandle.write(f'>{genome_name}.{cog}\n{sequence}\n')
+                else:
+                    genomes_removed_notenoughmgs += 1
+                cogs = sorted([x[0] for x in cog_2_sequence])
+                cogs_str = ','.join(cogs)
+                tsvhandle.write(f'{genome_name}\t{len(cogs)}\t{cogs_str}\n')
+        with open(fetchmgs_marker, 'w') as outhandle:
+            for genome_file in genome_files:
+                outhandle.write(f'{genome_file}\n')
+        logging.info(f'\tFinished collecting fetchMGs results. Genomes = {len(genome_2_markergenes)}, Genomes with enough MGs = {len(genome_2_markergenes) - genomes_removed_notenoughmgs}')
+    else:
+        logging.info('Reusing fetchMGs from previous run')
+
+
+    logging.info(f'\tMatching genomes against the mOTUs database')
+    alignment_m8 = root_tmp_folder.joinpath('motus_classify.align_vs_motu.m8')
+    combined_distances_file = root_tmp_folder.joinpath('motus_classify.cd_vs_motu.tsv')
+    if True:  # if the marker file with all genomes exists?
+        logging.info(f'\tAligning genome marker genes against the mOTUs marker gene database using vsearch')
+        vsearch_command = f'vsearch --threads {threads} --usearch_global {str(fetchmgs_fna)} --db {MOTUS_DB.get_bwa_index()} --strand both --id 0.8 --maxaccepts 2000 --maxrejects 2000 --mincols 20 --userout {str(alignment_m8)} --userfields query+target+id+alnlen+mism+ids+ql+tl --mincols 40'
+        try:
+            subprocess.run(vsearch_command,shell=True, stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,check=True)
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Command {vsearch_command} failed") from e
+        logging.info(f'\tFinished alignment')
+
+        logging.info(f'\tCombining individual marker gene distances into genome to genome distances')
+        query_genome_2_unfilt_hits = collections.defaultdict(list)
+        with open(alignment_m8) as handle:
+            for line in handle:
+                [query, target, percid, alignment_length, mismatches, matches, query_length, target_length] = line.strip().split()
+                [genome, cog] = query.rsplit('.', 1)
+                if 'unassigned' in target:
+                    continue
+                query_genome_2_unfilt_hits[genome].append([cog, target, float(percid), int(alignment_length), int(mismatches), int(matches), int(query_length), int(target_length)])
+        
+        query_genome_2_cogs = collections.defaultdict(dict)
+        with open(fetchmgs_fna) as handle:
             for (header, sequence) in FastaIO.SimpleFastaParser(handle):
-                cog = header.rsplit('.', 1)[-1]
-                if cog in motus_marker_genes:
-                    genome_2_markergenes[genome_name].append((cog, sequence))
-    genomes_removed_notenoughmgs = 0
-    with open(fetchmgs_tmp_folder.joinpath('motus_classify.fna'), 'w') as seqhandle, open(fetchmgs_tmp_folder.joinpath('motus_classify.tsv'), 'w') as tsvhandle:
-        tsvhandle.write('GENOME\tNUM_MGS\tMGS\n')
-        for genome_name, cog_2_sequence in genome_2_markergenes.items():
-            if len(cog_2_sequence) > 5:
-                for cog, sequence in cog_2_sequence:
-                    seqhandle.write(f'>{genome_name}.{cog}\n{sequence}\n')
-            else:
-                genomes_removed_notenoughmgs += 1
-            cogs = sorted([x[0] for x in cog_2_sequence])
-            cogs_str = ','.join(cogs)
-            tsvhandle.write(f'{genome_name}\t{len(cogs)}\t{cogs_str}\n')
-    logging.info(f'\t Finished collecting fetchMGs results. Genomes = {len(genome_2_markergenes)}, Genomes with enough MGs = {len(genome_2_markergenes) - genomes_removed_notenoughmgs}')
+                [genome, cog] = header.rsplit('.', 1)
+                query_genome_2_cogs[genome][cog] = len(sequence)
+        motu_2_cogs = MOTUS_DB.get_motu_2_median_mgc_gene_length()
+        genome_2_motus = {}
+        for query_genome, query_cog_2_length in query_genome_2_cogs.items():
+            alignment_unfiltered_hits = query_genome_2_unfilt_hits[query_genome]
+            motu_2_cog_2_alignments = collections.defaultdict(lambda : collections.defaultdict(list))
+            for [query_cog, motu_mg, percid, alignment_length, mismatches, matches, query_length, target_length] in alignment_unfiltered_hits:
+                motu = motu_mg.rsplit('.', 2)[0]
+                motu_cog = motu_mg.rsplit('.', 2)[1].split('_')[1]
+                if motu_cog != query_cog:
+                    continue
+                motu_2_cog_2_alignments[motu][motu_cog].append([percid, alignment_length, mismatches, matches, query_length, target_length])
+            motu_2_cog_2_bestalignment = {}
+            for motu, cog_2_alignments in motu_2_cog_2_alignments.items():
+                cog_2_best_aln = {}
+                for cog, alignments in cog_2_alignments.items():
+                    most_matches = max([x[3] for x in alignments])
+                    best_alignment = [x for x in alignments if x[3] == most_matches][0]
+                    # remove anything with an alignment length < 80%
+                    alignment_length = best_alignment[1]
+                    query_length = best_alignment[-2]
+                    target_length = best_alignment[-1]
+                    shorter_sequence_length = query_length
+                    if target_length < query_length:
+                        shorter_sequence_length = target_length
+                    alignment_coverage = alignment_length * 100.0 / shorter_sequence_length
+                    if alignment_coverage >= 80.0:
+                        cog_2_best_aln[cog] = [best_alignment[3], shorter_sequence_length, True]
+                motu_2_cog_2_bestalignment[motu] = cog_2_best_aln
+            # top up alignments by fake alignments
+            query_genome_cogs = query_genome_2_cogs[query_genome]
+            motu_2_combined_distance = {}
+            for motu, cog_2_bestalignment in motu_2_cog_2_bestalignment.items():
+                if len(cog_2_bestalignment) < 6:
+                    continue
+                motu_cogs = motu_2_cogs[motu]
+                combined_cogs = collections.Counter(list(motu_cogs.keys()) + list(query_genome_cogs.keys()))
+                for cog, count in combined_cogs.items():
+                    if count == 1:
+                        continue
+                    if cog in cog_2_bestalignment:
+                        continue
+                    motu_cog_length = motu_cogs[cog]
+                    genome_cog_length = query_genome_cogs[cog]
+                    shorter_sequence_length = motu_cog_length
+                    if genome_cog_length< shorter_sequence_length:
+                        shorter_sequence_length = genome_cog_length
+                    matches = int(shorter_sequence_length * 0.8)
+                    cog_2_bestalignment[cog] = [matches, shorter_sequence_length, False]
+                tot_matches = 0
+                tot_length = 0
+                for cog, best_aln in cog_2_bestalignment.items():
+                    tot_matches += best_aln[0]
+                    tot_length += best_aln[1]
+                combined_distance = tot_matches * 100.0 / tot_length
+                if combined_distance >= 96.5:
+                    motu_2_combined_distance[motu] = combined_distance
+            if len(motu_2_combined_distance) == 0:
+                motu_2_combined_distance['Unknown'] = -1.0
+            genome_2_motus[query_genome] = motu_2_combined_distance
+        
+        with open(combined_distances_file, 'w') as handle:
+            for genome, motus in genome_2_motus.items():
+                for (motu, dist) in motus.items():
+                    handle.write(f'{genome}\t{motu}\t{round(dist, 2)}\n')
+        logging.info(f'\tFinished combining')
+    
+
+    genome_2_motus = collections.defaultdict(list)
+    with open(combined_distances_file) as handle:
+        for line in handle:
+            [genome, motu, dist] = line.strip().split('\t')
+            dist = float(dist)
+            genome_2_motus[genome].append((motu, dist))
+    
+    genome_2_best_motu = {}
+    for genome, motus in genome_2_motus.items():
+        best_dist = max([x[1] for x in motus])
+        best_motu = sorted([x for x in motus if x[1] == best_dist])[0]
+        genome_2_best_motu[genome] = best_motu #(motu, dist)
+    with open(fetchmgs_tsv) as handle, open(output_file, 'w') as outhandle:
+        outhandle.write('GENOME\tMOTU\tSIMILARITY\tNUM_MGS\n')
+        handle.readline()
+        for line in handle:
+            [genome, num_mgs, mgs] = line.strip().split('\t')
+            (motu, dist) = genome_2_best_motu.get(genome, ('<6MGs-no_mOTU', '-1'))
+            if motu == 'Unknown':
+                motu = 'Novel-no_mOTU'
+            tmp = '\t'.join([genome, motu, str(dist), num_mgs])
+            outhandle.write(f'{tmp}\n')
+            
+        
+    
+    
+
+
+
 
 
 

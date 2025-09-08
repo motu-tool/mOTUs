@@ -9,6 +9,7 @@ import gzip
 import csv
 import polars as pl
 import collections
+import statistics
 
 R1IDENTIFIER = '1'
 R2IDENTIFIER = '2'
@@ -398,12 +399,16 @@ class MotusDB:
     index_location: pathlib.Path = None
     _motus_core_mgs = ['COG0012','COG0016','COG0018','COG0172','COG0215','COG0495','COG0525','COG0533','COG0541','COG0552']
     _unassigned_motu_name = None
+    _mOTUsdb_folder: pathlib.Path = None
 
     motus_mv_taxonomy_file = None
     genome_metadata_file = None
 
     def __init__(self):
         x = 0
+
+
+
 
     def load_motus_db(self, mOTUsdb_folder: pathlib.Path, load=True) -> None:
         """Collect the mOTUs MGDB files, check their existence and,
@@ -431,6 +436,8 @@ class MotusDB:
         gtdb_taxonomy_file_reps = mOTUsdb_folder.joinpath('mOTUsv4.0.gtdb.taxonomy.rep.tsv.gz').resolve()
         gtdb_taxonomy_file_mv = mOTUsdb_folder.joinpath('mOTUsv4.0.gtdb.taxonomy.80mv.tsv.gz').resolve()
         genome_data_file = mOTUsdb_folder.joinpath('mOTUsv4.0.genomes.tsv.gz').resolve()
+
+        self._mOTUsdb_folder = mOTUsdb_folder
 
         with open(versions_file) as handle:
             self.database_version = handle.readline().strip().split()[-1]
@@ -488,6 +495,31 @@ class MotusDB:
                     [motu, gtdb_taxonomy] = line.strip().split('\t')
                     self.motu_2_mv_gtdb_tax[motu] = gtdb_taxonomy
             logging.info(f'Loading database finished. Version {self.database_version} (version date: {self.database_date}) contains {len(self.motus)} mOTUs, {len(self.mgc_2_motu)} markergeneclusters and {len(self.mgh_2_mglength)} markergenes.')
+
+
+    def get_motu_2_median_mgc_gene_length(self) -> Dict[str, Dict[str, int]]:
+        """Get for every MGC the median
+        gene length and store by motu_2_mgc dict
+        Caution: Ignores the unassigned mOTU
+
+        Returns:
+            Dict[str, Dict[str, int]]: motu --> mgcs --> median_length
+        """
+
+        mgc_2_lengths = collections.defaultdict(list)
+        for mgh, mgc in self.mgh_2_mgc.items():
+            if 'unassigned' in mgc:
+                continue
+            mgh_length = self.mgh_2_mglength[mgh]
+            mgc_2_lengths[mgc].append(mgh_length)
+        motu_2_cog = collections.defaultdict(lambda: {})
+
+        for mgc, lengths in mgc_2_lengths.items():
+            cog = self.mgc_2_mg[mgc]
+            motu = self.mgc_2_motu[mgc]
+            motu_2_cog[motu][cog] = int(statistics.median(lengths))
+
+        return motu_2_cog
 
 
     def get_mv_tax_for_motu(self, motu: str) -> str:
