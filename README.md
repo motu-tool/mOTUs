@@ -614,18 +614,19 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
      motus find [options]
 
         Input options:
-            -i  FILE/STR Can be either a list of search tokens (1-n) or 
-                            a text file with tokens. One line 
-                            per token name. Tokens can be genome names,
+            -i  FILE/STR Can be either a list of search queries (1-n) or
+                            a text file with queries. One line
+                            per query name. Queries can be genome names,
                             PFAM, KEGG or EGGNOG ids or GTDB taxonomy
-                            names. Will offer suggestions if tokens dont
+                            names. Will offer suggestions if queries dont
                             match database entries exactly.
         Output options:
             -o  FILE     Genome names with or without annotations that were
-                            found to match search tokens
-        Algorithm options:
-            -r            Enable rich report mode. Will write also taxonomic
-                            and functional annotation to output file.
+                            found to match search queries.
+
+            -r  STR,[STR] Annotation to report. Choose any combination of
+                            [KEGG, PFAM, EGGNOG, TAXONOMY], e.g.
+                            -r KEGG,PFAM
                             
 
            
