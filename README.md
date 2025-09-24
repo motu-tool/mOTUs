@@ -641,7 +641,7 @@ motus.py: error: the following arguments are required: -i, -o
 #### Required arguments
 
 
-The `-i` parameter allows you to specify the tokens used to search for genomes. You can provide a single token, multiple tokens, or a file containing tokens, with one name per line. Tokens can be genome names, GTDB taxonomy or annotation identifiers such as KEGG, PFAM or EGGNOG. Tokens that dont match the database exactly will be used to suggest alternatives using fuzzy search.
+The `-i` parameter allows you to specify the queries used to search for genomes. You can provide a single query, multiple queries, or a file containing queries, with one name per line. Queries can be genome names, GTDB taxonomy or annotation identifiers such as KEGG, PFAM or EGGNOG. Queries that dont match the database exactly will be used to suggest alternatives using fuzzy search.
 
 The `-o` parameter specifies the output file where genomes with or without annotations will be stored.  
  
@@ -653,7 +653,7 @@ The `-o` parameter specifies the output file where genomes with or without annot
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `-i`     | **Search Tokens**: allows you to specify the tokens used to search for genomes. You can provide a single token, multiple tokens, or a file containing tokens, with one name per line. 
 | `-o`     | **Output file**: This parameter specifies the output file where genomes with or without annotations will be stored.
-| `-r`     | **rich**: Report, besides genome names, also taxonomic and functional annotations
+| `-r`     | **Report**: Decide on which annotations to report. Can be any combination of [KEGG, PFAM, EGGNOG, TAXONOMY], e.g. -r KEGG,PFAM
 
 
 
