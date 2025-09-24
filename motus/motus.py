@@ -1353,27 +1353,26 @@ def parse_find():
      motus find [options]
 
         Input options:
-            -i  FILE/STR Can be either a list of search tokens (1-n) or 
-                            a text file with tokens. One line 
-                            per token name. Tokens can be genome names,
+            -i  FILE/STR Can be either a list of search queries (1-n) or 
+                            a text file with queries. One line 
+                            per query name. Queries can be genome names,
                             PFAM, KEGG or EGGNOG ids or GTDB taxonomy
-                            names. Will offer suggestions if tokens dont
+                            names. Will offer suggestions if queries dont
                             match database entries exactly.
         Output options:
             -o  FILE     Genome names with or without annotations that were
-                            found to match search tokens
-        Algorithm options:
-            -r            Enable rich report mode. Will write also taxonomic
-                            and functional annotation to output file.
+                            found to match search queries.
+
+            -r  STR,[STR] Annotation to report. Choose any combination of
+                            [KEGG, PFAM, EGGNOG, TAXONOMY], e.g. 
+                            -r KEGG,PFAM
                             
-
-
            ''', formatter_class=CapitalisedHelpFormatter, add_help=False)
 
 
     parser.add_argument("-i", required=True, nargs="+")
     parser.add_argument("-o", required=True)
-    parser.add_argument("-r", action="store_true")
+    parser.add_argument("-r", default='')
 
     args = parser.parse_args(sys.argv[2:])
 
@@ -1384,24 +1383,31 @@ def parse_find():
 
 
     output_file = pathlib.Path(args.o)
-    search_tokens_tmp = args.i
-    report_mode_rich = False
-    if args.r:
-        report_mode_rich = True
+    search_queries_tmp = args.i
+    annotations_to_report_tmp = set(args.r.split(','))
+    allowed_annotations = ['KEGG', 'EGGNOG', 'PFAM', 'TAXONOMY']
+    annotations_to_report = []
+    for annotation in annotations_to_report_tmp:
+        if len(annotation) == 0:
+            continue
+        if annotation not in allowed_annotations:
+            logging.error(f'Unknown annotation to report: {annotation}. Allowed annotations: {allowed_annotations}')
+            mutils.shutdown(1)
+        annotations_to_report.append(annotation)
 
-    search_tokens = []
-    if len(search_tokens_tmp) == 1: # can be a file or a token
-        search_token = search_tokens_tmp[0]
-        if pathlib.Path(search_token).exists(): # is a file with search tokens
-            with open(search_token) as handle:
+    search_queries = []
+    if len(search_queries_tmp) == 1: # can be a file or a query
+        search_query = search_queries_tmp[0]
+        if pathlib.Path(search_query).exists(): # is a file with search queries
+            with open(search_query) as handle:
                 for line in handle:
-                    search_tokens.append(line.strip())
+                    search_queries.append(line.strip())
         else:
-            search_tokens.append(search_token)
+            search_queries.append(search_query)
     else: # list of genomes
-        search_tokens = search_tokens_tmp
+        search_queries = search_queries_tmp
 
-    mfind.find_genomes(search_tokens, output_file, report_mode_rich)
+    mfind.find_genomes(search_queries, output_file, annotations_to_report)
     mutils.shutdown(0)
 
 

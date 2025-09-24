@@ -263,7 +263,7 @@ class SearchDB:
 
 
 
-def find_genomes(search_tokens: List[str], output_file:pathlib.Path, report_rich:bool = False) -> None:
+def find_genomes(search_tokens: List[str], output_file:pathlib.Path, annotations_to_report: List[str]) -> None:
     """Get a list of search tokens and find
     associated genomes. Perform fuzzy search
     on a search token that doesnt yield an
@@ -329,7 +329,7 @@ def find_genomes(search_tokens: List[str], output_file:pathlib.Path, report_rich
         # here would be there expression eval
     else:
         expression_2_genome_ids = search_token_2_genome_ids
-    if not report_rich:
+    if len(annotations_to_report) == 0:
         logging.info(f'Report mode: "basic". Writing names of genomes to {output_file}')
         with open(output_file, 'w') as handle:
             handle.write('GENOME\tQUERY\n')
@@ -337,18 +337,18 @@ def find_genomes(search_tokens: List[str], output_file:pathlib.Path, report_rich
                 genome_names = sorted(resolver.get_genome_names(genome_ids))
                 for genome_name in genome_names:
                     handle.write(f'{genome_name}\t{expression}\n')
-    elif report_rich:
-        logging.info(f'Report mode: "rich". Collecting annotations and writing to {output_file}')
+    else:
+        logging.info(f'Collecting annotations {annotations_to_report} and writing to {output_file}')
+        annotations_to_report = set(annotations_to_report)
         with open(output_file, 'w') as handle:
-            handle.write('GENOME\tQUERY\tTAXONOMY\tmOTU\tEGGNOG\tKEGG\tPFAM\n') #TODO add missing columns
+            handle.write(f'GENOME\tQUERY\t{'TAXONOMY\tmOTU\t' if 'TAXONOMY' in annotations_to_report else ''}{'EGGNOG\t' if 'EGGNOG' in annotations_to_report else ''}{'KEGG\t' if 'KEGG' in annotations_to_report else ''}\t{'PFAM\t' if 'PFAM' in annotations_to_report else ''}\n') #TODO add missing columns
             for expression, genome_ids in expression_2_genome_ids.items():
                 logging.info(f'Search Token: {expression}:') 
                 genomes = resolver.get_genomes_by_genome_ids(genome_ids)
                 for genome in tqdm.tqdm(resolver.stringify_genomes(genomes), total=len(genomes), unit='genomes', desc='Writing genomes + annotations to file'):
-                    handle.write(f'{genome.get_genome_name()}\t{expression}\t{genome.get_tax_printable()}\t{genome.get_motu_printable()}\t{genome.get_eggnog_printable()}\t{genome.get_kegg_printable()}\t{genome.get_pfam_printable()}\n')
-    else:
-        logging.info(f'Unknown report mode {report_mode}')
-        exit(1)
+                    
+                    handle.write(f'{genome.get_genome_name()}\t{expression}\t{genome.get_tax_printable() + '\t' if 'TAXONOMY' in annotations_to_report else ''}{genome.get_motu_printable() + '\t' if 'TAXONOMY' in annotations_to_report else ''}{genome.get_eggnog_printable() + '\t' if 'EGGNOG' in annotations_to_report else ''}{genome.get_kegg_printable() + '\t' if 'KEGG' in annotations_to_report else ''}{genome.get_pfam_printable() + '\t' if 'PFAM' in annotations_to_report else ''}\n')
+
                 
     resolver.close()
     
