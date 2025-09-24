@@ -651,7 +651,7 @@ The `-o` parameter specifies the output file where genomes with or without annot
 
 | Option               | Description                                                                                                                                                                                                                                                                |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `-i`     | **Search Tokens**: allows you to specify the tokens used to search for genomes. You can provide a single token, multiple tokens, or a file containing tokens, with one name per line. 
+| `-i`     | **Search Queries**: allows you to specify the tokens used to search for genomes. You can provide a single token, multiple tokens, or a file containing tokens, with one name per line. 
 | `-o`     | **Output file**: This parameter specifies the output file where genomes with or without annotations will be stored.
 | `-r`     | **Report**: Decide on which annotations to report. Can be any combination of [KEGG, PFAM, EGGNOG, TAXONOMY], e.g. -r KEGG,PFAM
 
