@@ -105,6 +105,7 @@ $ motus --help
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
     Version: 4.0.2
 
+
     References:
 
     Profiler: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand
@@ -125,13 +126,17 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
               calc_mgc    Calculate marker gene cluster (MGC) abundance
               calc_motu   Summarize MGC abundances into a mOTU profile
 
-        -- Utilities
-              download    Download genomes associated with mOTUs
-              downloadDB  Download the mOTUs marker gene database
-              merge       Merge multiple taxonomic profiling results into one table
-              classify    Classify user genomes into mOTUs
-              prep_long   Prepare long reads to be profiled by mOTUs
 
+        -- Tool utilities
+              downloadMGDB  Download the mOTUs marker gene database
+              merge         Merge multiple taxonomic profiling results into one table
+              classify      Classify user genomes into mOTUs
+              prep_long     Prepare long reads to be profiled by mOTUs
+
+
+       -- Genome accession
+              genomes     Search the mOTUs-db by keyword (taxonomic, functional)
+              download    Download sequence files from mOTUs-db
 
         Type motus <command> to print the help menu for a specific command
 
@@ -152,75 +157,68 @@ Helper functions include `download`, which provides users with programmatic acce
 $ motus profile
 ```
 
-<details>
-<summary>profile cli options</summary>
-
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
     Version: 4.0.2
 
 
     References:
+       Profiler: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand
+       taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022).
+       doi: https://doi.org/10.1186/s40168-022-01410-z
 
-    Profiler: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand
-    taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022).
-    doi: https://doi.org/10.1186/s40168-022-01410-z
-
-    Database: Dmitrijeva, Ruscheweyh et al. The mOTUs online database provides web-accessible
-    genomic context to taxonomic profiling of microbial communities. Nuclic Acids Research (2025).
-    doi: https://doi.org/10.1093/nar/gkae1004
+       Database: Dmitrijeva, Ruscheweyh et al. The mOTUs online database provides web-accessible
+       genomic context to taxonomic profiling of microbial communities. Nuclic Acids Research (2025).
+       doi: https://doi.org/10.1093/nar/gkae1004
 
 
-    motus profile [options]
+    Summary:
+       The profile function in mOTUs is the main function that executes map_tax, calc_mgc, and calc_motu in sequence.
+       It takes short read metagenomic sequencing data as input and generates a taxonomic profile.
+
+
+    Usage:
+       motus profile -f FILE [FILE ...] -r FILE [FILE ...] -s FILE [FILE ...] -o FILE [options]
+       motus profile -f FILE [FILE ...] -r FILE [FILE ...] -o FILE [options]
+       motus profile -s FILE [FILE ...] -o FILE [options]
+
 
     Input options:
-       -f  FILE[ FILE]  input file(s) for reads in forward orientation, fastq(.gz)-formatted
-       -r  FILE[ FILE]  input file(s) for reads in reverse orientation, fastq(.gz)-formatted
-       -s  FILE[ FILE]  input file(s) for unpaired reads, fastq(.gz)-formatted
-       -n  STR          sample name ['unnamed sample']
+       -f, --forward  FILE[ FILE]
+           Input file(s) for reads in forward orientation, fastq(.gz)-formatted
+
+       -r, --reverse  FILE[ FILE]
+           Input file(s) for reads in reverse orientation, fastq(.gz)-formatted
+
+       -s, --single  FILE[ FILE]
+           Input file(s) for unpaired reads, fastq(.gz)-formatted
+
+       -n, --sample-name  STR
+           Sample name (default: 'unnamed sample')
 
     Output options:
-       -o  FILE         output file name [required]
-       -c               Write second output file with relative abundances
+       -o, --output-file  FILE
+           Output file name [required]
+
+       -a, --relative-abundance
+           Write a second output file with relative abundances (default: False)
 
     Algorithm options:
-       -g  INT          number of marker genes cutoff: 1=higher recall, 6=higher precision, 10=maximum [3]
-       -l  INT          min length of the alignment (bp) [75]
-       -t  INT          number of threads [1]
-       -y  STR          type of read counts [INSERT_SCALED]
-                        Values: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
+       -g, --marker-genes  INT
+           Required number of marker genes for a mOTU to be called present: 1=higher recall, 6=higher precision, 10=maximum (default: 3)
+
+       -l, --alignment-length  INT
+           Minimum length of the alignment (bp) (default: 75)
+
+       -t, --threads  INT
+           Number of threads (default: 1)
+
+       -y, --counting-mode  STR
+           Which scale the abundances are reported in (default: INSERT_SCALED)
+           Values: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
 
 motus.py: error: the following arguments are required: -o
 ```
-</details>
-
-#### Required arguments
-
-
-Input: `-f, -r, -s`: One or multiple fastq/fasta files, which can be gzipped. The order of input files matters if using paired-end data (`-f, -r`).
-
-Output: `-o`: Path to the output file. This also serves as a prefix for intermediate files.
-
-
-
-
-
-
-#### 🔧 Options
-
-| Option               | Description                                                                                                                                                                                                                                                                |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `-f,-r`     | **Input path - Paired**: One or more gzipped fasta/q files. The input files must have the same order in both -f and -r.
-| `-s`     | **Input path - Single**: One or more gzipped fasta/q files. The order of the input files doesn’t matter for single-end files.
-| `-o`     | **Output prefix**: Path to the output file. This prefix is also used for intermediate files.
-| `-n`       | **Samplename**: Name of the sample. Required when merging samples. The default value is “unnamed sample”.
-| `-c`       | **Relative Abundance**: Report relative abundance in addition to counts.  
-| `-g`       | **Sensitivity**: The number of marker genes with abundance required to call a mOTU present. The default value is 3, with a minimum of 1 and a maximum of 10. A value of 1 results in high recall but low precision, while a value of 10 results in high precision but low recall.   
-| `-l`       | **Length**: Filter alignments if their length is below this value. **Note**: Choose a value greater than or equal to the length of the reads. Default value is `75`.
-| `-t`       | **Threads**: Number of threads to use for the alignment step. Default is 1.
-| `-y`       | **Counting method**: mOTUs can count in different modes. For more details, see the Wiki. The default mode is INSERT\_SCALED. Other options include INSERT\_RAW, INSERT\_NORM, INSERT\_SCALED, BASE\_RAW, and BASE\_NORM.
-
-
 
 ### Merge
 
@@ -237,25 +235,32 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 
     References:
+        Profiler: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand
+        taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022).
+        doi: https://doi.org/10.1186/s40168-022-01410-z
 
-    Profiler: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand
-    taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022).
-    doi: https://doi.org/10.1186/s40168-022-01410-z
-
-    Database: Dmitrijeva, Ruscheweyh et al. The mOTUs online database provides web-accessible
-    genomic context to taxonomic profiling of microbial communities. Nuclic Acids Research (2025).
-    doi: https://doi.org/10.1093/nar/gkae1004
-
-
-    motus merge [options]
-
-        Input options:
-           -i  FILE[ FILE]  A list of mOTUs profile files or a text file with one line
-                            per mOTUs profile files to be merged
+        Database: Dmitrijeva, Ruscheweyh et al. The mOTUs online database provides web-accessible
+        genomic context to taxonomic profiling of microbial communities. Nuclic Acids Research (2025).
+        doi: https://doi.org/10.1093/nar/gkae1004
 
 
-        Output options:
-           -o  FILE  output file name
+    Summary:
+        The merge function in mOTUs takes multiple profiles produced by the profile function and
+        combines them into a single table.
+
+
+    Usage:
+        motus merge -i FILE [FILE ...] -o FILE
+
+
+    Input options:
+        -i, --input-files  FILE [FILE ...]
+            A list of mOTUs profile files or a text file containing the list of profiles to be merged
+            with one line per mOTUs profile file [required].
+
+    Output options:
+        -o, --output-file  FILE
+            Output file name [required].
 
 
 motus.py: error: the following arguments are required: -i, -o
@@ -270,73 +275,6 @@ motus.py: error: the following arguments are required: -i, -o
 Input: `-i`: Specifies the mOTUs profile files to merge. These files must be generated from the same mOTUs version and with the same parameters. At least two profiles are required. The input can be provided as a text file with one line per profile or as a space-separated list containing multiple mOTUs profiles.
 
 Output: `-o`: Specifies the path to the merged profile file.
-
----
-
-### download
-
-```bash
-$ motus download
-```
-
-<details>
-<summary>download cli options</summary>
-
-```bash
-Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: 4.0.2
-
-
-    References:
-
-    Profiler: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand
-    taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022).
-    doi: https://doi.org/10.1186/s40168-022-01410-z
-
-    Database: Dmitrijeva, Ruscheweyh et al. The mOTUs online database provides web-accessible
-    genomic context to taxonomic profiling of microbial communities. Nuclic Acids Research (2025).
-    doi: https://doi.org/10.1093/nar/gkae1004
-
-
-     motus download [options]
-
-         Output options:
-            -s  FILE  Genome metadata file
-            -o  PATH  Genome output folder. Only required when
-                      -l is not set
-
-         Options:
-            -l        Skip genome download. Only create genome report file
-            -r        Download only representative genomes
-            -w   STR  Keyword: Can be mOTU, genome name or taxonomy.
-                        Fuzzy search enabled for taxonomy
-
-
-motus.py: error: the following arguments are required: -s, -w
-```
-</details>
-
-
-
-#### Required arguments
-
-
-Input: `-w`: This keyword is used to search for GTDB taxonomy, mOTUs, and genome names. If no hits are found, a fuzzy search is performed on taxonomy.
-
-Output:
-
-* `-s`: This option provides a summary of files that are or could be downloaded.
-* `-o`: This option specifies the output folder where downloaded genomes will be stored.  
-  
-#### 🔧 Options
-
-| Option               | Description                                                                                                                                                                                                                                                                |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `-w`     | **Keyword**: This keyword is used to search for GTDB taxonomy, mOTUs, and genome names. If no hits are found, a fuzzy search is performed on taxonomy.
-| `-o`     | **Output folder**: This option specifies the output folder where downloaded genomes will be stored.
-| `-s`     | **Summary file**: This option provides a summary of files that are or could be downloaded.
-| `-l`     | **Skip download**: Skip genome download. Only write links to the summary file.
-| `-r`     | **Representative only**: Instead of downloading all genomes, only download the representative per mOTU
 
 ---
 
@@ -370,7 +308,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
          Options:
 
-            -f        Force download even when database is already present
+            -f, --force        Force download even when database is already present
 
 
 ```
@@ -547,14 +485,14 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
          Input options:
             -i  FILE/STR Can be either a list of genome names (1-n) or 
                             a text file with genomes to download. One line 
-                            per genome name. The input file is c
-                            ompatible with the output of motus find.
+                            per genome name. The input file is
+                            compatible with the output of motus find.
 
          Output options:
             -o  PATH     Output folder.
 
          Options:
-            -r           Download only representative genomes.
+            -r, --representatives           Download only representative genomes.
 
            
 motus.py: error: the following arguments are required: -o, -i
@@ -611,7 +549,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
     doi: https://doi.org/10.1093/nar/gkae1004
     
 
-     motus find [options]
+     motus genomes [options]
 
         Input options:
             -i  FILE/STR Can be either a list of search queries (1-n) or
@@ -624,7 +562,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
             -o  FILE     Genome names with or without annotations that were
                             found to match search queries.
 
-            -r  STR,[STR] Annotation to report. Choose any combination of
+            -d, --details  STR,[STR] Annotation to report. Choose any combination of
                             [KEGG, PFAM, EGGNOG, TAXONOMY], e.g.
                             -r KEGG,PFAM
                             
