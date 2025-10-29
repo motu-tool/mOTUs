@@ -147,7 +147,6 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
     Type motus <command> to print the help menu for a specific command
 
-motus.py: error: the following arguments are required: command
 ```
 
 ### Commands
