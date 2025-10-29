@@ -103,7 +103,7 @@ $ motus --help
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: 4.0.2
+    Version: 4.0.4
 
 
     References:
@@ -154,7 +154,7 @@ motus.py: error: the following arguments are required: command
 
 The `profile` function in mOTUs is the main function that executes `map_tax`, `calc_mgc`, and `calc_motu` in sequence. It takes short read metagenomic sequencing data as input and generates a taxonomic profile.
 
-Helper functions include `download`, which provides users with programmatic access to the ~4 million genomes in the motus-db; `downloadDB`, which downloads the marker gene database of mOTUs; `merge`, which merges multiple taxonomic profiles; and `classify`, which assigns user-submitted genomes to existing mOTUs.
+Helper functions include `download`, which provides users with programmatic access to the ~4 million genomes in the motus-db; `downloadMGDB`, which downloads the marker gene database of mOTUs; `merge`, which merges multiple taxonomic profiles; and `classify`, which assigns user-submitted genomes to existing mOTUs.
 
 ---
 
@@ -166,7 +166,7 @@ $ motus profile
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: 4.0.2
+    Version: 4.0.4
 
 
     References:
@@ -193,13 +193,13 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
     Input options:
         -f, --forward  FILE [FILE ...]
-            Input file(s) for reads in forward orientation, fastq(.gz)-formatted
+            Input file(s) for reads in forward orientation, fastQ/A(.gz)-formatted
 
         -r, --reverse  FILE [FILE ...]
-            Input file(s) for reads in reverse orientation, fastq(.gz)-formatted
+            Input file(s) for reads in reverse orientation, fastQ/A(.gz)-formatted
 
         -s, --single  FILE [FILE ...]
-            Input file(s) for unpaired reads, fastq(.gz)-formatted
+            Input file(s) for unpaired reads, fastQ/A(.gz)-formatted
 
         -n, --sample-name  STR
             Sample name (default: 'unnamed sample')
@@ -208,12 +208,11 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
         -o, --output-file  FILE
             Output file name [required]
 
-        -a, --relative-abundance
-            Write a second output file with relative abundances (default: False)
 
     Algorithm options:
         -g, --marker-genes  INT
-            Required number of marker genes for a mOTU to be called present: 1=higher recall, 6=higher precision, 10=maximum (default: 3)
+            Required number of marker genes for a mOTU to be called present: 
+            1=higher recall, 6=higher precision, 10=maximum (default: 3)
 
         -l, --alignment-length  INT
             Minimum length of the alignment (bp) (default: 75)
@@ -223,10 +222,9 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
         -y, --counting-mode  STR
             Which scale the abundances are reported in (default: INSERT_SCALED)
-            Values: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
+            Choices: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
 
 
-motus.py: error: the following arguments are required: -o
 ```
 
 ### Map Tax
@@ -237,7 +235,7 @@ $ motus map_tax
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: 4.0.2
+    Version: 4.0.4
 
 
     References:
@@ -251,7 +249,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 
     Summary:
-        The map_tax command in mOTUs takes short read metagenomic sequencing data as input and
+        The map_tax command takes short read metagenomic sequencing data as input and
         maps reads to the mOTUs marker gene database.
 
 
@@ -263,13 +261,13 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
     Input options:
         -f, --forward  FILE [FILE ...]
-            Input file(s) for reads in forward orientation, fastq(.gz)-formatted
+            Input file(s) for reads in forward orientation, fastQ/A(.gz)-formatted
 
         -r, --reverse  FILE [FILE ...]
-            Input file(s) for reads in reverse orientation, fastq(.gz)-formatted
+            Input file(s) for reads in reverse orientation, fastQ/A(.gz)-formatted
 
         -s, --single  FILE [FILE ...]
-            Input file(s) for unpaired reads, fastq(.gz)-formatted
+            Input file(s) for unpaired reads, fastQ/A(.gz)-formatted
 
     Output options:
         -o, --output-file  FILE
@@ -292,7 +290,7 @@ $ motus calc_mgc
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: 4.0.2
+    Version: 4.0.4
 
 
     References:
@@ -306,7 +304,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 
     Summary:
-        The calc_mgc command in mOTUs takes a file storing the alignments of sequencing reads
+        The calc_mgc command takes a file storing the alignments of sequencing reads
         to the mOTUs marker gene database and calculates marker gene cluster abundances.
 
 
@@ -336,7 +334,7 @@ $ motus calc_motu
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: 4.0.2
+    Version: 4.0.4
 
 
     References:
@@ -350,7 +348,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 
     Summary:
-        The calc_motu command in mOTUs takes a file containing marker gene cluster
+        The calc_motu command takes a file containing marker gene cluster
         abundances and generates a taxonomic profile.
 
 
@@ -369,19 +367,17 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
         -o, --output-file  FILE
             Output file name [required]
 
-        -a, --relative-abundance
-            Write a second output file with relative abundances (default: False)
-
     Algorithm options:
         -g, --marker-genes  INT
-            Required number of marker genes for a mOTU to be called present: 1=higher recall, 6=higher precision, 10=maximum (default: 3)
+            Required number of marker genes for a mOTU to be called present: 
+            1=higher recall, 6=higher precision, 10=maximum (default: 3)
 
         -y, --counting-mode  STR
             Which scale the abundances are reported in (default: INSERT_SCALED)
-            Values: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
+            Choices: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
 ```
 
-### Merge
+### merge
 
 ```bash
 $ motus merge
@@ -389,7 +385,7 @@ $ motus merge
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: 4.0.2
+    Version: 4.0.4
 
 
     References:
@@ -403,7 +399,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 
     Summary:
-        The merge command in mOTUs takes multiple profiles produced after running the
+        The merge command takes multiple profiles produced after running the
         profile command and combines them into a single table.
 
 
@@ -421,15 +417,8 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
             Output file name [required]
 
 
-motus.py: error: the following arguments are required: -i, -o
 ```
 
-#### Required arguments
-
-
-Input: `-i`: Specifies the mOTUs profile files to merge. These files must be generated from the same mOTUs version and with the same parameters. At least two profiles are required. The input can be provided as a text file with one line per profile or as a space-separated list containing multiple mOTUs profiles.
-
-Output: `-o`: Specifies the path to the merged profile file.
 
 ---
 
@@ -442,7 +431,7 @@ $ motus downloadMGDB
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: 4.0.2
+    Version: 4.0.4
 
 
     References:
@@ -456,7 +445,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 
     Summary:
-        The downloadMGDB command in mOTUs downloads the marker gene reference database used
+        The downloadMGDB command downloads the marker gene reference database used
         by the profile and map_tax commands.
 
 
@@ -472,17 +461,6 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 
 
-
-#### Required arguments
-
-
-#### 🔧 Options
-
-| Option               | Description                                                                                                                                                                                                                                                                |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `-f`     | **Force**: Download the database even if it’s already present.
-
-
 ---
 
 ### classify
@@ -493,7 +471,7 @@ $ motus classify
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: 4.0.2
+    Version: 4.0.4
 
 
     References:
@@ -507,7 +485,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 
     Summary:
-        The classify command in mOTUs takes a list of genome sequence files as input and
+        The classify command takes a list of genome sequence files as input and
         assigns these genomes to existing mOTUs in the database.
 
 
@@ -517,7 +495,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
     Input options:
         -i, --input-file
-            Text file listing genome sequence files in .fasta(.gz) format to classify.
+            Text file listing genome sequence files in .fastA(.gz) format to classify.
             One line per genome file [required]
 
     Output options:
@@ -529,25 +507,8 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
             Number of threads (default: 1)
 
 
-motus.py: error: the following arguments are required: -i, -o
+
 ```
-
-
-#### Required arguments
-
-
-Input: `-i`: A text file containing fasta-formatted (gzip allowed) genome files that will be associated with existing mOTUs.
-
-Output:`-o`: The output file, containing one line per genome with its associated mOTU.
-  
-#### 🔧 Options
-
-| Option               | Description                                                                                                                                                                                                                                                                |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `-i`     | **Genomes**: A text file containing fasta-formatted (gzip allowed) genome files that will be associated with existing mOTUs.
-| `-o`     | **Output file**: The output file, containing one line per genome with its associated mOTU.
-| `-t`     | **Threads**: The number of threads to be used for the alignment step.
-
 
 
 ---
@@ -562,7 +523,7 @@ $ motus prep_long
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: 4.0.2
+    Version: 4.0.4
 
 
     References:
@@ -576,7 +537,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 
     Summary:
-        The prep_long command in mOTUs takes long-read sequencing data and converts it
+        The prep_long command takes long-read sequencing data and converts it
         into the appropriate input format to be used by the profile and map_tax commands.
 
 
@@ -586,7 +547,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
     Input options:
         -i, --input-file  FILE
-            Long-read sequencing file to convert, can be in fasta(.gz) or fastq(.gz) format [required]
+            Long-read sequencing file to convert, can be in fastQ/A(.gz) format [required]
 
     Output options:
         -o, --output-file  FILE
@@ -600,28 +561,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
             Minimum read length after splitting. Shorter reads are discarded (default: 50)
 
            
-      motus.py: error: the following arguments are required: -i, -o
 ```
-
-
-
-
-#### Required arguments
-
-
-Input: `-i`: The input file containing long reads. It can be in fastA(.gz) or fastQ(.gz) format.
-
-Output: `-o`: The output file where the converted reads will be stored in fastA format.  
-
-  
-#### 🔧 Options
-
-| Option               | Description                                                                                                                                                                                                                                                                |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `-i`     | **Input file**: The input file containing long reads. It can be in fastA(.gz) or fastQ(.gz) format.
-| `-o`     | **Output file**: The output file where the converted reads will be stored in fastA format.
-| `-sl`     | **Split length**: The length of short reads. The default value is 300.
-| `-ml`     | **Minimum length**: Reads shorter than this length will not be written to the output. The default value is 75.
 
 
 ---
@@ -635,9 +575,9 @@ $ motus download
 ```
 
 ```bash
-python motus.py download
+
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: 4.0.2
+    Version: 4.0.4
     
     
     References:
@@ -651,7 +591,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
     
 
     Summary:
-        The download command in mOTUs downloads sequences of requested genomes from mOTUs-db.
+        The download command downloads listed genome files from mOTUs-db.
 
 
     Usage:
@@ -661,45 +601,24 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
     Input options:
         -i, --input-genomes  FILE/STR
-            Can be either a list of genome identifiers (1-n) separated by spaces or a text file
+            Can be either a list of genome identifiers separated by spaces or a text file
             listing the identifiers of genomes for download. One line per genome. The output of
-            the motus genomes command can be used as input for this command.
+            the motus genomes command can be used as input for this command [required]
 
     Output options:
         -o, --output-folder  PATH
-            Path to output folder where the downloaded sequences will be saved.
+            Path to output folder where the downloaded sequences will be saved [required]
 
         -r, --representatives
             Download only sequences from representative genomes.
 
-           
-motus.py: error: the following arguments are required: -o, -i
 ```
 
-#### Required arguments
-
-
-The `-i` parameter allows you to specify the names of the genomes to download. You can provide a single genome name, multiple genome names, or a file containing genome names, with one name per line. The output file of `motus find` is compatible with this parameter.
-
-
-The `-o` parameter specifies the output folder where the genomes will be downloaded. If the folder doesn’t exist, it will be created. Files with the same names in this folder will be overwritten without warning.  
- 
-
-  
-#### 🔧 Options
-
-| Option               | Description                                                                                                                                                                                                                                                                |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `-i`     | **Genomes**: This parameter allows you to specify the names of the genomes to download. You can provide a single genome name, multiple genome names, or a file containing genome names, with one name per line.
-| `-o`     | **Output folder**: This parameter specifies the output folder where the genomes will be downloaded to.
-| `-r`     | **representative only**: Download only representative genomes.
-
-
----
 
 
 
-### find
+
+### genomes
 
 ```bash
 $ motus genomes
@@ -707,7 +626,7 @@ $ motus genomes
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: 4.0.3
+    Version: 4.0.4
 
     
     References:
@@ -721,53 +640,34 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 
     Summary:
-        The genomes command in mOTUs queries mOTUs-db based on identifiers, functional,
+        The genomes command queries the mOTUs-db based on identifiers, functional,
         or taxonomic annotations and returns a list of genomes matching indicated query.
 
 
     Usage:    
         motus genomes -i FILE -o FILE [options]
+        motus genomes -i STR [STR ...] -o FILE [options]
 
 
     Input options:
         -i, --input-queries  FILE/STR
-            Can be either a list of search queries (1-n) or a text file listing search queries
-            with one line per query. Queries can be genome identifiers, PFAM, KEGG or EGGNOG ids
+            Can be either a list of search queries or a text file listing search queries
+            with one line per query. Queries can be genome or mOTUs identifiers, PFAM, KEGG or EGGNOG 
             or GTDB taxonomy names. If the query does not exactly match any database entry,
-            alternative queries will be suggested.
+            alternative queries will be suggested [required]
 
     Output options:
         -o, --output-file  FILE
-            Output file containing a list of genome identifiers matching search queries and their
+            Output file containing a list of genome identifiers matching search queries and their 
             annotations as indicated by the -d parameter. This output file can be used as input
-            for the motus download command.
+            for the motus download command [required]
 
-        -d, --details  STR,[STR]
+        -d, --details  STR [STR ...]
             List of annotations to report. Choose any combination of [KEGG, PFAM, EGGNOG, TAXONOMY],
             for example, -d KEGG,PFAM.
                             
-
-motus.py: error: the following arguments are required: -i, -o
 ```
     
-
-#### Required arguments
-
-
-The `-i` parameter allows you to specify the queries used to search for genomes. You can provide a single query, multiple queries, or a file containing queries, with one name per line. Queries can be genome names, GTDB taxonomy or annotation identifiers such as KEGG, PFAM or EGGNOG. Queries that dont match the database exactly will be used to suggest alternatives using fuzzy search.
-
-The `-o` parameter specifies the output file where genomes with or without annotations will be stored.  
- 
-
-  
-#### 🔧 Options
-
-| Option               | Description                                                                                                                                                                                                                                                                |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `-i`     | **Search Queries**: allows you to specify the tokens used to search for genomes. You can provide a single token, multiple tokens, or a file containing tokens, with one name per line. 
-| `-o`     | **Output file**: This parameter specifies the output file where genomes with or without annotations will be stored.
-| `-r`     | **Report**: Decide on which annotations to report. Can be any combination of [KEGG, PFAM, EGGNOG, TAXONOMY], e.g. -r KEGG,PFAM
-
 
 
 ## ❓ Need Help?
