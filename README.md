@@ -207,7 +207,6 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
         -o, --output-file  FILE
             Output file name [required]
 
-
     Algorithm options:
         -g, --marker-genes  INT
             Required number of marker genes for a mOTU to be called present: 
@@ -253,9 +252,9 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 
     Usage:
-       motus map_tax -f FILE [FILE ...] -r FILE [FILE ...] -s FILE [FILE ...] -o FILE [options]
-       motus map_tax -f FILE [FILE ...] -r FILE [FILE ...] -o FILE [options]
-       motus map_tax -s FILE [FILE ...] -o FILE [options]
+        motus map_tax -f FILE [FILE ...] -r FILE [FILE ...] -s FILE [FILE ...] -o FILE [options]
+        motus map_tax -f FILE [FILE ...] -r FILE [FILE ...] -o FILE [options]
+        motus map_tax -s FILE [FILE ...] -o FILE [options]
 
 
     Input options:
@@ -308,7 +307,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 
     Usage:
-       motus calc_mgc -i FILE -o FILE [options]
+        motus calc_mgc -i FILE -o FILE [options]
 
 
     Input options:
@@ -493,16 +492,16 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 
     Input options:
-        -i, --input-file
-            Text file listing genome sequence files in .fastA(.gz) format to classify.
+        -i, --input-file  FILE
+            Text file listing genome sequence files in fastA(.gz) format to classify.
             One line per genome file [required]
 
     Output options:
-        -o, --output-file
+        -o, --output-file  FILE
             Output file name. Each line contains a genome and its associated mOTU [required]
 
     Algorithm options:
-        -t, --threads
+        -t, --threads  INT
             Number of threads (default: 1)
 
 
@@ -651,7 +650,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
     Input options:
         -i, --input-queries  FILE/STR
             Can be either a list of search queries or a text file listing search queries
-            with one line per query. Queries can be genome or mOTUs identifiers, PFAM, KEGG or EGGNOG 
+            with one line per query. Queries can be genome or mOTUs identifiers, PFAM, KEGG, EGGNOG, 
             or GTDB taxonomy names. If the query does not exactly match any database entry,
             alternative queries will be suggested [required]
 
@@ -663,7 +662,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
         -d, --details  STR [STR ...]
             List of annotations to report. Choose any combination of [KEGG, PFAM, EGGNOG, TAXONOMY],
-            for example, -d KEGG,PFAM.
+            for example, -d KEGG PFAM.
                             
 ```
     
