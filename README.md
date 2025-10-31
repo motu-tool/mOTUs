@@ -448,7 +448,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 
     Usage:
-        downloadMGDB [options]
+        motus downloadMGDB [options]
 
 
     Options:
