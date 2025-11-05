@@ -532,12 +532,20 @@ class InsertCounter:
         denominator: float = sum([float(mgh_2_count[1]) / float(MOTUS_DB.get_length_by_mg(mgh_2_count[0])) for mgh_2_count in mg_2_raw_counts.items()])
         scaled_mg_2_counts = {}
         norm_mg_2_counts = {}
-        for mg, count in mg_2_raw_counts.items():
-            numerator = float(count) / float(MOTUS_DB.get_length_by_mg(mg))
-            norm_count = numerator / denominator
-            scaled_count = norm_count * tot_cnt
-            scaled_mg_2_counts[mg] = scaled_count
-            norm_mg_2_counts[mg] = norm_count
+        if False: 
+            for mg, count in mg_2_raw_counts.items():
+                numerator = float(count) / float(MOTUS_DB.get_length_by_mg(mg))
+                norm_count = numerator / denominator
+                scaled_count = norm_count * tot_cnt
+                scaled_mg_2_counts[mg] = scaled_count
+                norm_mg_2_counts[mg] = norm_count
+        else:       # norm is actually normalisation by gene length
+            for mg, count in mg_2_raw_counts.items():
+                numerator = float(count) / float(MOTUS_DB.get_length_by_mg(mg))
+                norm_count = numerator
+                scaled_count = (norm_count/denominator) * tot_cnt
+                scaled_mg_2_counts[mg] = scaled_count
+                norm_mg_2_counts[mg] = norm_count
 
         return norm_mg_2_counts, scaled_mg_2_counts
 
