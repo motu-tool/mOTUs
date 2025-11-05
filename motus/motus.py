@@ -898,35 +898,52 @@ def parse_map_tax():
     
     {mutils.cite_text()}
         
-    motus map_tax [options]
-    
+    Summary:
+        The map_tax command takes short read metagenomic sequencing data as input and
+        maps reads to the mOTUs marker gene database.
+
+
+    Usage:
+        motus map_tax -f FILE [FILE ...] -r FILE [FILE ...] -s FILE [FILE ...] -o FILE [options]
+        motus map_tax -f FILE [FILE ...] -r FILE [FILE ...] -o FILE [options]
+        motus map_tax -s FILE [FILE ...] -o FILE [options]
+
+
     Input options:
-       -f   FILE[ FILE]  input file(s) for reads in forward orientation, fastq(.gz)-formatted
-       -r   FILE[ FILE]  input file(s) for reads in reverse orientation, fastq(.gz)-formatted
-       -s   FILE[ FILE]  input file(s) for unpaired reads, fastq(.gz)-formatted
-    
-    
+        -f, --forward  FILE [FILE ...]
+            Input file(s) for reads in forward orientation, fastQ/A(.gz)-formatted
+
+        -r, --reverse  FILE [FILE ...]
+            Input file(s) for reads in reverse orientation, fastQ/A(.gz)-formatted
+
+        -s, --single  FILE [FILE ...]
+            Input file(s) for unpaired reads, fastQ/A(.gz)-formatted
+
     Output options:
-       -o   FILE         output file name
-    
+        -o, --output-file  FILE
+            Output file name [required]
+
     Algorithm options:
-       -l   INT          min length of the alignment (bp) [75]
-       -t   INT          number of threads [1]
+        -l, --alignment-length  INT
+            Minimum length of the alignment (bp) (default: 75)
+
+        -t, --threads  INT
+            Number of threads (default: 1)
           ''', formatter_class=CapitalisedHelpFormatter,add_help=False)
 
     # Input options
-    parser.add_argument("-f", nargs="+",default=[])  # input files(s) for reads in forward orientation, fastq(.gz)-formatted
-    parser.add_argument("-r", nargs="+",default=[])  # input files(s) for reads in reverse orientation, fastq(.gz)-formatted
-    parser.add_argument("-s", nargs="+", default=[])  # input files(s) for unpaired reads, fastq(.gz)-formatted
+    parser.add_argument("-f", "--forward", nargs="+",default=[], dest='f')  # input files(s) for reads in forward orientation, fastq(.gz)-formatted
+    parser.add_argument("-r", "--reverse", nargs="+",default=[], dest='r')  # input files(s) for reads in reverse orientation, fastq(.gz)-formatted
+    parser.add_argument("-s", "--single", nargs="+", default=[], dest='s')  # input files(s) for unpaired reads, fastq(.gz)-formatted
     #parser.add_argument("-db")  # provide a different database directory
 
     # Output options
-    parser.add_argument("-o", required=True)  # output file name
+    parser.add_argument("-o", "--output-file", required=True, dest='o')  # output file name
     #parser.add_argument("-b", action="store_true")  # save the result in BAM format
 
     # ALgorithm options
-    parser.add_argument("-l", type=int, default=75)  # min length of the alignment (bp) [75]
-    parser.add_argument("-t", type=int, default=1)  # number of threads
+    parser.add_argument("-l", "--alignment-length",  type=int, default=75, dest='l')  # min length of the alignment (bp) [75]
+    parser.add_argument("-t", "--threads", type=int, default=1, dest='t')  # number of threads
 
     args = parser.parse_args(sys.argv[2:])
 
@@ -1052,39 +1069,64 @@ def parse_profile():
     
     {mutils.cite_text()}
         
-    motus profile [options]
-    
+    Summary:
+        The profile command in mOTUs is the main function that executes map_tax, calc_mgc,
+        and calc_motu in sequence. It takes short read metagenomic sequencing data as input
+        and generates a taxonomic profile.
+
+
+    Usage:
+       motus profile -f FILE [FILE ...] -r FILE [FILE ...] -s FILE [FILE ...] -o FILE [options]
+       motus profile -f FILE [FILE ...] -r FILE [FILE ...] -o FILE [options]
+       motus profile -s FILE [FILE ...] -o FILE [options]
+
+
     Input options:
-       -f  FILE[ FILE]  input file(s) for reads in forward orientation, fastq(.gz)-formatted
-       -r  FILE[ FILE]  input file(s) for reads in reverse orientation, fastq(.gz)-formatted
-       -s  FILE[ FILE]  input file(s) for unpaired reads, fastq(.gz)-formatted
-       -n  STR          sample name ['unnamed sample']
-    
+        -f, --forward  FILE [FILE ...]
+            Input file(s) for reads in forward orientation, fastQ/A(.gz)-formatted
+
+        -r, --reverse  FILE [FILE ...]
+            Input file(s) for reads in reverse orientation, fastQ/A(.gz)-formatted
+
+        -s, --single  FILE [FILE ...]
+            Input file(s) for unpaired reads, fastQ/A(.gz)-formatted
+
+        -n, --sample-name  STR
+            Sample name (default: 'unnamed sample')
+
     Output options:
-       -o  FILE         output file name [required]
-       -c               Write second output file with relative abundances
-    
+        -o, --output-file  FILE
+            Output file name [required]
+
     Algorithm options:
-       -g  INT          number of marker genes cutoff: 1=higher recall, 6=higher precision, 10=maximum [3]
-       -l  INT          min length of the alignment (bp) [75]
-       -t  INT          number of threads [1]
-       -y  STR          type of read counts [INSERT_SCALED]
-                        Values: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
+        -g, --marker-genes  INT
+            Required number of marker genes for a mOTU to be called present: 
+            1=higher recall, 6=higher precision, 10=maximum (default: 3)
+
+        -l, --alignment-length  INT
+            Minimum length of the alignment (bp) (default: 75)
+
+        -t, --threads  INT
+            Number of threads (default: 1)
+
+        -y, --counting-mode  STR
+            Which scale the abundances are reported in (default: INSERT_SCALED)
+            Choices: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
     ''', formatter_class=CapitalisedHelpFormatter,add_help=False)
 
     # Input options
-    parser.add_argument("-f", nargs="+", default=[])  # input file(s) for reads in forward direction
-    parser.add_argument("-r", nargs="+", default=[])  # input file(s) for reads in reverse direction
-    parser.add_argument("-s", nargs="+", default=[])  # input file(s) for unpaired reads
-    parser.add_argument("-n", type=str, default='unnamed sample')  # sample name
+    parser.add_argument("-f", "--forward", nargs="+", default=[], dest='f')  # input file(s) for reads in forward direction
+    parser.add_argument("-r", "--reverse", nargs="+", default=[], dest='r')  # input file(s) for reads in reverse direction
+    parser.add_argument("-s", "--single", nargs="+", default=[], dest='s')  # input file(s) for unpaired reads
+    parser.add_argument("-n", "--sample-name", type=str, default='unnamed sample', dest='n')  # sample name
 
     # Output options
-    parser.add_argument("-o", required=True)
-    parser.add_argument("-g", type=int, default=3, choices=[1,2,3,4,5,6,7,8,9,10])  # number of marker genes cutoff
-    parser.add_argument("-l", type=int, default=75)  # min length of the alignment (bp) [75]
-    parser.add_argument("-t", type=int, default=1)  # number of thread [1]
-    parser.add_argument("-y", type=str, default='INSERT_SCALED', choices=['INSERT_RAW', 'INSERT_NORM', 'INSERT_SCALED', 'BASE_RAW', 'BASE_NORM'])
-    parser.add_argument("-c", action="store_true", help="Write second output file with relative abundances")
+    parser.add_argument("-o", "--output-file", required=True, dest='o')
+    parser.add_argument("-g", "--marker-genes", type=int, default=3, choices=[1,2,3,4,5,6,7,8,9,10], dest='g')  # number of marker genes cutoff
+    parser.add_argument("-l", "--alignment-length", type=int, default=75, dest='l')  # min length of the alignment (bp) [75]
+    parser.add_argument("-t", "--threads",  type=int, default=1, dest='t')  # number of thread [1]
+    parser.add_argument("-y", "--counting-mode", type=str, default='INSERT_SCALED', choices=['INSERT_RAW', 'INSERT_NORM', 'INSERT_SCALED', 'BASE_RAW', 'BASE_NORM'], dest='y')
+    #parser.add_argument("-c", action="store_true", help="Write second output file with relative abundances")
 
     args = parser.parse_args(sys.argv[2:])
     if sys.argv[2:] == []:
@@ -1116,12 +1158,9 @@ def parse_profile():
     MOTUS_PARAMETERS.set_sample_name(samplename)
     MOTUS_PARAMETERS.set_minimal_alignment_length(min_alignment_length)
     MOTUS_PARAMETERS.set_threads(threads)
-
     MOTUS_PARAMETERS.set_count_mode(args.y)
     MOTUS_PARAMETERS.set_minimal_number_of_mgcs(args.g)
-
-    if args.c:
-        MOTUS_PARAMETERS.set_write_relabundances()
+    MOTUS_PARAMETERS.set_write_relabundances()
 
     map_tax()
     calc_mgc()
@@ -1135,20 +1174,31 @@ def parse_calc_mgc():
     
     {mutils.cite_text()}
         
-    motus calc_mgc [options]
-    
-    Input options:
-       -i  FILE         provide the SAM or BAM input file (output of motus map_tax)
-    
-    Output options:
-       -o  FILE         output file name
-    
-    Algorithm options:
-       -l  INT          min length of the alignment (bp) [75]''', formatter_class=CapitalisedHelpFormatter,add_help=False)
+    Summary:
+        The calc_mgc command takes a file storing the alignments of sequencing reads
+        to the mOTUs marker gene database and calculates marker gene cluster abundances.
 
-    parser.add_argument("-i", type=str, required=True)  # provide a SAM or BAM input file (or list of files) output of motus map_tax
-    parser.add_argument("-o", required=True)  # output file name [stdout]
-    parser.add_argument("-l", type=int, default=75)  # min length of the alignment (bp) [75]
+
+    Usage:
+        motus calc_mgc -i FILE -o FILE [options]
+
+
+    Input options:
+        -i, --input-file  FILE
+            Path to BAM file generated after running the motus map_tax command [required]
+
+    Output options:
+        -o, --output-file  FILE
+            Output file name [required]
+
+    Algorithm options:
+        -l, --alignment-length  INT
+            Minimum length of the alignment (bp) (default: 75)
+       ''', formatter_class=CapitalisedHelpFormatter,add_help=False)
+
+    parser.add_argument("-i", "--input-file", type=str, required=True, dest='i')  # provide a SAM or BAM input file (or list of files) output of motus map_tax
+    parser.add_argument("-o", "--output-file", required=True, dest='o')  # output file name [stdout]
+    parser.add_argument("-l", "--alignment-length", type=int, default=75, dest='l')  # min length of the alignment (bp) [75]
 
     args = parser.parse_args(sys.argv[2:])
     # print usage and exit if no arguments are passed
@@ -1187,22 +1237,29 @@ def parse_merge():
     
     {mutils.cite_text()}
 
-    motus merge [options]
+    Summary:
+        The merge command takes multiple profiles produced after running the
+        profile command and combines them into a single table.
 
-        Input options:
-           -i  FILE[ FILE]  A list of mOTUs profile files or a text file with one line
-                            per mOTUs profile files to be merged
-                            
 
-        Output options:
-           -o  FILE  output file name       
+    Usage:
+        motus merge -i FILE [FILE ...] -o FILE
 
+
+    Input options:
+        -i, --input-files  FILE [FILE ...]
+            A list of mOTUs profile files or a text file containing the list of profile
+            files to be merged, with one line per file [required]
+
+    Output options:
+        -o, --output-file  FILE
+            Output file name [required]
           ''', formatter_class=CapitalisedHelpFormatter, add_help=False)
 
 
-    parser.add_argument("-i", nargs="+", required=True)
+    parser.add_argument("-i", "--input-files", nargs="+", required=True, dest='i')
 
-    parser.add_argument("-o", required=True)
+    parser.add_argument("-o", "--output-file", required=True, dest='o')
     args = parser.parse_args(sys.argv[2:])
 
     if sys.argv[2:] == []:
@@ -1312,23 +1369,36 @@ def parse_prep_long():
 
     {mutils.cite_text()}
 
-     motus prep_long [options]
+    Summary:
+        The prep_long command takes long-read sequencing data and converts it
+        into the appropriate input format to be used by the profile and map_tax commands.
 
-        Input options:
-           -i  FILE   long read file to convert, can be fasta(.gz) or fastq(.gz)
-        Output options:
-           -o  FILE   converted file, ready to be used by motus profile
-        Algorithm options:
-           -sl INT    splitting length for the long reads. (default = 300)
-           -ml INT    minimum read length, shorter are discarded. (default = 50)
 
+    Usage:
+        motus prep_long -i FILE -o FILE [options]
+
+
+    Input options:
+        -i, --input-file  FILE
+            Long-read sequencing file to convert, can be in fastQ/A(.gz) format [required]
+
+    Output options:
+        -o, --output-file  FILE
+            Output file name. This converted file is ready to be used by motus profile [required]
+
+    Algorithm options:
+        -sl, --splitting-length  INT
+            Target fragment length (in bp) for splitting long reads (default: 300)
+
+        -ml, --minimum-length  INT
+            Minimum read length after splitting. Shorter reads are discarded (default: 50)
            ''', formatter_class=CapitalisedHelpFormatter, add_help=False)
 
 
-    parser.add_argument("-i", required=True)
-    parser.add_argument("-o", required=True)
-    parser.add_argument("-sl", default=300, type=int)
-    parser.add_argument("-ml", default=50, type=int)
+    parser.add_argument("-i", "--input-file",  required=True, dest='i')
+    parser.add_argument("-o", "--output-file", required=True, dest='o')
+    parser.add_argument("-sl", "--splitting-length", default=300, type=int, dest='sl')
+    parser.add_argument("-ml", "--minimum-length", default=50, type=int, dest='ml')
     args = parser.parse_args(sys.argv[2:])
 
     if sys.argv[2:] == []:
@@ -1350,29 +1420,38 @@ def parse_find():
 
     {mutils.cite_text()}
 
-     motus find [options]
+    Summary:
+        The genomes command queries the mOTUs-db based on identifiers, functional,
+        or taxonomic annotations and returns a list of genomes matching indicated query.
 
-        Input options:
-            -i  FILE/STR Can be either a list of search queries (1-n) or 
-                            a text file with queries. One line 
-                            per query name. Queries can be genome names,
-                            PFAM, KEGG or EGGNOG ids or GTDB taxonomy
-                            names. Will offer suggestions if queries dont
-                            match database entries exactly.
-        Output options:
-            -o  FILE     Genome names with or without annotations that were
-                            found to match search queries.
 
-            -r  STR,[STR] Annotation to report. Choose any combination of
-                            [KEGG, PFAM, EGGNOG, TAXONOMY], e.g. 
-                            -r KEGG,PFAM
-                            
+    Usage:    
+        motus genomes -i FILE -o FILE [options]
+        motus genomes -i STR [STR ...] -o FILE [options]
+
+
+    Input options:
+        -i, --input-queries  FILE/STR
+            Can be either a list of search queries or a text file listing search queries
+            with one line per query. Queries can be genome or mOTUs identifiers, PFAM, KEGG, EGGNOG, 
+            or GTDB taxonomy names. If the query does not exactly match any database entry,
+            alternative queries will be suggested [required]
+
+    Output options:
+        -o, --output-file  FILE
+            Output file containing a list of genome identifiers matching search queries and their 
+            annotations as indicated by the -d parameter. This output file can be used as input
+            for the motus download command [required]
+
+        -d, --details  STR [STR ...]
+            List of annotations to report. Choose any combination of [KEGG, PFAM, EGGNOG, TAXONOMY],
+            for example, -d KEGG PFAM.
            ''', formatter_class=CapitalisedHelpFormatter, add_help=False)
 
 
-    parser.add_argument("-i", required=True, nargs="+")
-    parser.add_argument("-o", required=True)
-    parser.add_argument("-r", default='')
+    parser.add_argument("-i", "--input-queries", required=True, nargs="+", dest='i')
+    parser.add_argument("-o", "--output-file", required=True, dest='o')
+    parser.add_argument("-d", "--details", default=[], nargs="+", dest='d')
 
     args = parser.parse_args(sys.argv[2:])
 
@@ -1384,7 +1463,7 @@ def parse_find():
 
     output_file = pathlib.Path(args.o)
     search_queries_tmp = args.i
-    annotations_to_report_tmp = set(args.r.split(','))
+    annotations_to_report_tmp = set(args.d)
     allowed_annotations = ['KEGG', 'EGGNOG', 'PFAM', 'TAXONOMY']
     annotations_to_report = []
     for annotation in annotations_to_report_tmp:
@@ -1417,25 +1496,33 @@ def parse_classify():
 
     {mutils.cite_text()}
 
-     motus classify [options]
-        Input options:
+    Summary:
+        The classify command takes a list of genome sequence files as input and
+        assigns these genomes to existing mOTUs in the database.
 
-            -i        Text file with fasta formatted (gzip allowed) genome
-        
-        Output options:
 
-           -o  FILE  Output file. One line per genome with associated mOTU 
-       
-        Options:
+    Usage:
+        motus classify -i FILE -o FILE [options]
 
-            -t        Number of threads (default = 1)
 
+    Input options:
+        -i, --input-file  FILE
+            Text file listing genome sequence files in fastA(.gz) format to classify.
+            One line per genome file [required]
+
+    Output options:
+        -o, --output-file  FILE
+            Output file name. Each line contains a genome and its associated mOTU [required]
+
+    Algorithm options:
+        -t, --threads  INT
+            Number of threads (default: 1)
            ''', formatter_class=CapitalisedHelpFormatter, add_help=False)
 
 
-    parser.add_argument("-i", required=True)
-    parser.add_argument("-o", required=True)
-    parser.add_argument("-t", default=1, type=int)
+    parser.add_argument("-i", "--input-file", required=True, dest='i')
+    parser.add_argument("-o", "--output-file", required=True, dest='o')
+    parser.add_argument("-t", "--threads", default=1, type=int, dest='t')
     args = parser.parse_args(sys.argv[2:])
 
     if sys.argv[2:] == []:
@@ -1666,15 +1753,21 @@ def parse_downloadDB():
 
     {mutils.cite_text()}
 
-     motus downloadDB [options]
-     
-         Options:
+    Summary:
+        The downloadMGDB command downloads the marker gene reference database used
+        by the profile and map_tax commands.
 
-            -f        Force download even when database is already present
 
+    Usage:
+        motus downloadMGDB [options]
+
+
+    Options:
+        -f, --force
+            Force download even when database is already present
            ''', formatter_class=CapitalisedHelpFormatter, add_help=False)
 
-    parser.add_argument("-f", action="store_true")
+    parser.add_argument("-f", "--force", action="store_true", dest='f')
     args = parser.parse_args(sys.argv[2:])
 
     force_download = False
@@ -1714,26 +1807,33 @@ def parse_download():
     
     {mutils.cite_text()}
 
-     motus download [options]
+    Summary:
+        The download command downloads listed genome files from mOTUs-db.
 
-         Input options:
-            -i  FILE/STR Can be either a list of genome names (1-n) or 
-                            a text file with genomes to download. One line 
-                            per genome name. The input file is c
-                            ompatible with the output of motus find.
 
-         Output options:
-            -o  PATH     Output folder.
+    Usage:
+        motus download -i FILE -o PATH [options]
+        motus download -i STR [STR ...] -o PATH [options]
 
-         Options:
-            -r           Download only representative genomes.
 
+    Input options:
+        -i, --input-genomes  FILE/STR
+            Can be either a list of genome identifiers separated by spaces or a text file
+            listing the identifiers of genomes for download. One line per genome. The output of
+            the motus genomes command can be used as input for this command [required]
+
+    Output options:
+        -o, --output-folder  PATH
+            Path to output folder where the downloaded sequences will be saved [required]
+
+        -r, --representatives
+            Download only sequences from representative genomes.
            ''', formatter_class=CapitalisedHelpFormatter, add_help=False)
 
 
-    parser.add_argument("-o", required=True)
-    parser.add_argument("-i", required=True, nargs="+")
-    parser.add_argument("-r", action="store_true")
+    parser.add_argument("-o", "--output-folder", required=True, dest='o')
+    parser.add_argument("-i", "--input-genomes", required=True, nargs="+", dest='i')
+    parser.add_argument("-r", "--representatives", action="store_true", dest='r')
 
 
     args = parser.parse_args(sys.argv[2:])
@@ -1778,30 +1878,43 @@ def parse_calc_motu():
     
     {mutils.cite_text()}
         
-    motus calc_motu [options]
-    
-        Input options:
-           -n  STR   sample name [unnamed sample]
-           -i  FILE  provide the mgc abundance table (output of motus calc_mgc)
-        
-        Output options:
-           -o  FILE  output file name 
-           -c        Write second output file with relative abundances
-       
-        Algorithm options:
-           -g   INT   number of marker genes cutoff: 1=higher recall, 6=higher precision, 10=maximum [3]
-           -y   STR   type of read counts [INSERT_SCALED]
-                        Values: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
-          
+    Summary:
+        The calc_motu command takes a file containing marker gene cluster
+        abundances and generates a taxonomic profile.
+
+
+    Usage:
+        motus calc_motu -i FILE -o FILE [options]
+
+
+    Input options:
+        -i, --input-file  FILE
+            MGC abundance table generated by the calc_mgc command [required]
+
+        -n, --sample-name  STR
+            Sample name (default: 'unnamed sample')
+
+    Output options:
+        -o, --output-file  FILE
+            Output file name [required]
+
+    Algorithm options:
+        -g, --marker-genes  INT
+            Required number of marker genes for a mOTU to be called present: 
+            1=higher recall, 6=higher precision, 10=maximum (default: 3)
+
+        -y, --counting-mode  STR
+            Which scale the abundances are reported in (default: INSERT_SCALED)
+            Choices: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
           ''', formatter_class=CapitalisedHelpFormatter,add_help=False)
 
 
-    parser.add_argument("-n", type=str, default='unnamed sample')  # sample name
-    parser.add_argument("-i", required=True)  # provide the mgc abundance table(output of motus calc_mgc)
-    parser.add_argument("-o", required=True)  # output fil name [stdout]
-    parser.add_argument("-y", type=str, default='INSERT_SCALED', choices=['INSERT_RAW', 'INSERT_NORM', 'INSERT_SCALED', 'BASE_RAW', 'BASE_NORM'])
-    parser.add_argument("-g", type=int, default=3, choices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10])  # number of marker genes cutoff
-    parser.add_argument("-c", action="store_true",help="Write second output file with relative abundances")
+    parser.add_argument("-n", "--sample-name", type=str, default='unnamed sample', dest='n')  # sample name
+    parser.add_argument("-i", "--input-file",  required=True, dest='i')  # provide the mgc abundance table(output of motus calc_mgc)
+    parser.add_argument("-o", "--output-file", required=True, dest='o')  # output fil name [stdout]
+    parser.add_argument("-y", "--counting-mode", type=str, default='INSERT_SCALED', choices=['INSERT_RAW', 'INSERT_NORM', 'INSERT_SCALED', 'BASE_RAW', 'BASE_NORM'], dest='y')
+    parser.add_argument("-g", "--marker-genes", type=int, default=3, choices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], dest='g')  # number of marker genes cutoff
+    #parser.add_argument("-c", action="store_true",help="Write second output file with relative abundances")
 
     args = parser.parse_args(sys.argv[2:])
     if sys.argv[2:] == []:
@@ -1823,9 +1936,7 @@ def parse_calc_motu():
     MOTUS_PARAMETERS.set_threads(1)
     MOTUS_PARAMETERS.set_count_mode(args.y)
     MOTUS_PARAMETERS.set_minimal_number_of_mgcs(args.g)
-
-    if args.c:
-        MOTUS_PARAMETERS.set_write_relabundances()
+    MOTUS_PARAMETERS.set_write_relabundances()
 
     calc_motu()
     mutils.shutdown(0)
@@ -1837,28 +1948,39 @@ if __name__ == '__main__':
     
     {mutils.cite_text()}
         
-    motus <command> [options]
-        
+    Usage:
+        motus <command> [options]
+
+
+    Commands:
+
         -- Taxonomic profiling
-              profile     Perform taxonomic profiling (map_tax + calc_mgc + calc_motu) in a single step
-    
-              map_tax     Map reads to the marker gene database
-              calc_mgc    Calculate marker gene cluster (MGC) abundance
-              calc_motu   Summarize MGC abundances into a mOTU profile
-        
-        -- Utilities
-              download    Download genomes associated with mOTUs
-              downloadDB  Download the mOTUs marker gene database
-              merge       Merge multiple taxonomic profiling results into one table
-              classify    Classify user genomes into mOTUs
-              prep_long   Prepare long reads to be profiled by mOTUs
-              find        Find genomes by name, functional or taxonomic annotation
+
+            profile       Perform taxonomic profiling (map_tax + calc_mgc + calc_motu) in a single step
+
+            map_tax       Map reads to the marker gene database
+            calc_mgc      Calculate marker gene cluster (MGC) abundance
+            calc_motu     Summarize MGC abundances into a mOTU profile
+
+
+        -- Tool utilities
+
+            downloadMGDB  Download the mOTUs marker gene database
+            merge         Merge multiple taxonomic profiling results into one table
+            classify      Classify user genomes into mOTUs
+            prep_long     Prepare long reads to be profiled by mOTUs
+
+
+        -- Genome accession
+
+            genomes       Search the mOTUs-db by keyword (taxonomic, functional)
+            download      Download sequence files from mOTUs-db
     
     
         Type motus <command> to print the help menu for a specific command
         ''',formatter_class=CapitalisedHelpFormatter,add_help=False)
 
-    parser.add_argument('command', choices=["profile", "map_tax", "calc_mgc", "calc_motu", "download", "merge", "downloadDB", "batch_profile", "classify", 'prep_long', 'find'])
+    parser.add_argument('command', choices=["profile", "map_tax", "calc_mgc", "calc_motu", "download", "merge", "downloadMGDB", "batch_profile", "classify", 'prep_long', 'genomes'])
     args: argparse.Namespace = parser.parse_args(sys.argv[1:2])
     if args.command == 'profile':
         parse_profile()
@@ -1874,13 +1996,13 @@ if __name__ == '__main__':
         parse_calc_motu()
     elif args.command == 'download':
         parse_download()
-    elif args.command == 'downloadDB':
+    elif args.command == 'downloadMGDB':
         parse_downloadDB()
     elif args.command == 'classify':
         parse_classify()
     elif args.command == 'prep_long':
         parse_prep_long()
-    elif args.command == 'find':
+    elif args.command == 'genomes':
         parse_find()
     else:
         parser.print_usage()

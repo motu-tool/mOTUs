@@ -8,7 +8,7 @@ import Bio.SeqIO.QualityIO as QualityIO
 import gzip
 
 SAM_ID_FLAG = 'mOTUs4'
-MOTUS_VERSION = '4.0.3'
+MOTUS_VERSION = '4.0.4'
 DEFAULT_MOTUS_MGDB_PARENT_LOCATION = pathlib.Path(__file__).resolve().parent
 DEFAULT_MOTUS_MGDB_LOCATION = DEFAULT_MOTUS_MGDB_PARENT_LOCATION.joinpath('db_mOTU')
 DEFAULT_MOTUS_MGDB_LOCATION_MARKER = DEFAULT_MOTUS_MGDB_LOCATION.joinpath('db_mOTU.downloaded')
@@ -50,14 +50,13 @@ def cite_text() -> str:
     """    
     tmp = '''
     References:
-    
-    Profiler: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
-    taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
-    doi: https://doi.org/10.1186/s40168-022-01410-z
+        Profiler: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand
+        taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022).
+        doi: https://doi.org/10.1186/s40168-022-01410-z
 
-    Database: Dmitrijeva, Ruscheweyh et al. The mOTUs online database provides web-accessible 
-    genomic context to taxonomic profiling of microbial communities. Nuclic Acids Research (2025). 
-    doi: https://doi.org/10.1093/nar/gkae1004
+        Database: Dmitrijeva, Ruscheweyh et al. The mOTUs online database provides web-accessible
+        genomic context to taxonomic profiling of microbial communities. Nucleic Acids Research (2025).
+        doi: https://doi.org/10.1093/nar/gkae1004
     '''
     return tmp
 
