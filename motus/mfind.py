@@ -283,12 +283,6 @@ def find_genomes(search_tokens: List[str], output_file:pathlib.Path, annotations
 
     if not mutils.DEFAULT_MOTUS_ANNODB_LOCATION_MARKER.exists():
         logging.info('Need to download mOTUs annotation database (~17GB))')
-        password_mgr = urllib.request.HTTPPasswordMgrWithDefaultRealm()
-        password_mgr.add_password(None, mutils.MOTUS_ANNODB_REMOTE_LOCATION, 'motus', 'motus4')
-        auth_handler = urllib.request.HTTPBasicAuthHandler(password_mgr)
-        opener = urllib.request.build_opener(auth_handler)
-        urllib.request.install_opener(opener)
-
         with urllib.request.urlopen(mutils.MOTUS_ANNODB_REMOTE_LOCATION) as response:
             total = int(response.info().get("Content-Length", -1))
             with open(str(mutils.DEFAULT_MOTUS_ANNODB_LOCATION), "wb") as f, tqdm.tqdm(total=total, unit='B', unit_scale=True, desc='Downloading mOTUs annotation database') as pbar:
@@ -298,6 +292,21 @@ def find_genomes(search_tokens: List[str], output_file:pathlib.Path, annotations
                         break
                     f.write(chunk)
                     pbar.update(len(chunk))
+        # password_mgr = urllib.request.HTTPPasswordMgrWithDefaultRealm()
+        # password_mgr.add_password(None, mutils.MOTUS_ANNODB_REMOTE_LOCATION, 'motus', 'motus4')
+        # auth_handler = urllib.request.HTTPBasicAuthHandler(password_mgr)
+        # opener = urllib.request.build_opener(auth_handler)
+        # urllib.request.install_opener(opener)
+
+        # with urllib.request.urlopen(mutils.MOTUS_ANNODB_REMOTE_LOCATION) as response:
+        #     total = int(response.info().get("Content-Length", -1))
+        #     with open(str(mutils.DEFAULT_MOTUS_ANNODB_LOCATION), "wb") as f, tqdm.tqdm(total=total, unit='B', unit_scale=True, desc='Downloading mOTUs annotation database') as pbar:
+        #         while True:
+        #             chunk = response.read(8192)
+        #             if not chunk:
+        #                 break
+        #             f.write(chunk)
+        #             pbar.update(len(chunk))
         DATABASE_PATH = str(mutils.DEFAULT_MOTUS_ANNODB_LOCATION)
         mutils.DEFAULT_MOTUS_ANNODB_LOCATION_MARKER.touch()
         logging.info('Finished downloading mOTUs annotation database.')

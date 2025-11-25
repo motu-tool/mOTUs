@@ -57,6 +57,7 @@ from mentities import MOTUS_PARAMETERS
 from mentities import MOTUS_DB
 import mentities
 import mfind
+import tqdm
 
 
 __author__ = ('Hans-Joachim Ruscheweyh (hansr@ethz.ch), '
@@ -1795,15 +1796,27 @@ def parse_downloadDB():
     dest_tar_gz_file = mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION.joinpath('db_mOTU.tar.gz')
     if dest_tar_gz_file.is_file():
         dest_tar_gz_file.unlink()
-    urllib.request.urlretrieve(mutils.MOTUS_MGDB_REMOTE_LOCATION, str(dest_tar_gz_file))
-    logging.info('Finished downloading mOTUs marker gene database.')
 
+
+    with urllib.request.urlopen(mutils.MOTUS_MGDB_REMOTE_LOCATION) as response:
+        total = int(response.info().get("Content-Length", -1))
+        with open(str(dest_tar_gz_file), "wb") as f, tqdm.tqdm(total=total, unit='B', unit_scale=True, desc='Downloading mOTUs marker gene database') as pbar:
+            while True:
+                chunk = response.read(8192)
+                if not chunk:
+                    break
+                f.write(chunk)
+                pbar.update(len(chunk))
+    
+ 
+    logging.info('Finished downloading mOTUs marker gene database.')
     logging.info('Start un-taring mOTUs marker gene database.')
     if mutils.DEFAULT_MOTUS_MGDB_LOCATION.exists():
         shutil.rmtree(mutils.DEFAULT_MOTUS_MGDB_LOCATION)
 
     with tarfile.open(dest_tar_gz_file, 'r') as t:
         t.extractall(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION)
+
     mutils.DEFAULT_MOTUS_MGDB_LOCATION_MARKER.touch(exist_ok=True)
     logging.info('Finished untaring mOTUs marker gene database.')
     mutils.shutdown(0)

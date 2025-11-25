@@ -14,9 +14,11 @@ DEFAULT_MOTUS_MGDB_LOCATION = DEFAULT_MOTUS_MGDB_PARENT_LOCATION.joinpath('db_mO
 DEFAULT_MOTUS_MGDB_LOCATION_MARKER = DEFAULT_MOTUS_MGDB_LOCATION.joinpath('db_mOTU.downloaded')
 DEFAULT_MOTUS_ANNODB_LOCATION = DEFAULT_MOTUS_MGDB_LOCATION.joinpath('mOTUsv4.0.annotation.db')
 DEFAULT_MOTUS_ANNODB_LOCATION_MARKER = DEFAULT_MOTUS_MGDB_LOCATION.joinpath('mOTUsv4.0.annotation.db.downloaded')
-MOTUS_MGDB_REMOTE_LOCATION = 'https://sunagawalab.ethz.ch/share/MOTUS/database/4.0/data/mOTUS-MGDB/current/db_mOTU.tar.gz'
+MOTUS_MGDB_REMOTE_LOCATION = 'https://zenodo.org/records/17668622/files/db_mOTU.tar.gz'
+# MOTUS_MGDB_REMOTE_LOCATION = 'https://sunagawalab.ethz.ch/share/MOTUS/database/4.0/data/mOTUS-MGDB/current/db_mOTU.tar.gz'
 MOTUS_GENOME_REMOTE_PREFIX = 'https://sunagawalab.ethz.ch/share/MOTUS/database/4.0/data/genomes/'
-MOTUS_ANNODB_REMOTE_LOCATION = 'https://sunagawalab.ethz.ch/share/MOTUS/database/4.0/data/mOTUS-ANNODB/mOTUsv4.0.annotation.db'
+#MOTUS_ANNODB_REMOTE_LOCATION = 'https://sunagawalab.ethz.ch/share/MOTUS/database/4.0/data/mOTUS-ANNODB/mOTUsv4.0.annotation.db'
+MOTUS_ANNODB_REMOTE_LOCATION = 'https://zenodo.org/records/17669279/files/mOTUsv4.0.annotation.db'
 
 
 def shutdown(exitcode: int) -> None:

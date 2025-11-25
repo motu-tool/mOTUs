@@ -429,6 +429,11 @@ class MotusDB:
         :return: None
         """
         logging.info('Loading database ... ')
+
+        if not mutils.DEFAULT_MOTUS_MGDB_LOCATION_MARKER.exists():
+            logging.error('mOTUs marker gene database not downloaded. Download database with "motus downloadMGDB"')
+            mutils.shutdown(1)
+
         versions_file = mOTUsdb_folder.joinpath('mOTUsv4.0.db').resolve()
         index_files = [mOTUsdb_folder.joinpath(f).resolve() for f in ['mOTUsv4.0.db.fna.gz', 'mOTUsv4.0.db.fna.gz.amb', 'mOTUsv4.0.db.fna.gz.ann', 'mOTUsv4.0.db.fna.gz.bwt', 'mOTUsv4.0.db.fna.gz.pac', 'mOTUsv4.0.db.fna.gz.sa']]
         mgs_file = mOTUsdb_folder.joinpath('mOTUsv4.0.map.tsv.gz').resolve()
