@@ -1,8 +1,8 @@
 import logging
 import sys
 import pathlib
-from mentities import MOTUS_PARAMETERS
-from mentities import MOTUS_DB
+from motus.mentities import MOTUS_PARAMETERS
+from motus.mentities import MOTUS_DB
 import Bio.SeqIO.FastaIO as FastaIO
 import Bio.SeqIO.QualityIO as QualityIO
 import gzip

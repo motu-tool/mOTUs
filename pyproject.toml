@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "motus-profiler"
+version = "4.0.4"
+description = "Taxonomic profiling of metagenomes from diverse environments with mOTUs4"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "GPL-3.0-or-later"       # SPDX license expression
+license-files = ["LICENSE"]        # points to your license file
+
+authors = [
+    { name = "Hans-Joachim Ruscheweyh" },
+    { name = "Marija Dmitrijeva" },
+    { name = "Lilith Feer" },
+    { name = "Kang Li" },
+    { name = "Florian Ruscheweyh" },
+    { name = "Georg Zeller" },
+    { name = "Daniel R. Mende" },
+    { name = "Shinichi Sunagawa" }
+]
+
+maintainers = [
+    { name = "Hans-Joachim Ruscheweyh", email = "hansr@ethz.ch" }
+]
+
+keywords = ["bioinformatics", "metagenomics", "taxonomic profiling"]
+
+dependencies = [
+    "biopython>=1.8.5",
+    "tqdm",
+    "fetchmgs>=2.1.2",
+    "pysam>=0.23.3",
+    "polars>=1.32.2",
+    "rapidfuzz>=3.13.0",
+]
+
+# Removed license classifier to avoid deprecation warning
+classifiers = [
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Operating System :: OS Independent"
+]
+
+[project.urls]
+Homepage = "https://github.com/motu-tool/mOTUs"
+Source = "https://github.com/motu-tool/mOTUs"
+Download = "https://github.com/motu-tool/mOTUs/archive/refs/tags/4.0.4.tar.gz"
+
+[project.scripts]
+motus = "motus.motus:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]

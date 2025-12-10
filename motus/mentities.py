@@ -2,7 +2,7 @@ from typing import List, Tuple, Dict, Set, Self
 import pathlib
 import logging
 import os
-import mutils
+from motus import mutils
 import Bio.SeqIO.FastaIO as FastaIO
 import Bio.SeqIO.QualityIO as QualityIO
 import gzip
@@ -916,7 +916,8 @@ class MergedmOTUsFile:
 
         with open(output_file, 'w') as outhandle:
             outhandle.write(f'{random_smf.get_motus_file_header()}\n')
-            outhandle.write(f'mOTU\tTaxonomy\t{"\t".join(sorted_samples)}\n')
+            xx = "\t".join(sorted_samples)
+            outhandle.write(f'mOTU\tTaxonomy\t{xx}\n')
             for motu in sorted_motus:
                 tax = MOTUS_DB.get_mv_tax_for_motu(motu)
                 values = []
@@ -935,4 +936,4 @@ class MergedmOTUsFile:
 
 
 MOTUS_PARAMETERS = MotusParameters()
-MOTUS_DB = MotusDB()
+MOTUS_DB = MotusDB() 

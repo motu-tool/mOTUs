@@ -52,11 +52,9 @@ from typing import List, Dict, Set, Tuple, Generator, TextIO
 import urllib.request
 import tarfile
 import shutil
-import mutils
-from mentities import MOTUS_PARAMETERS
-from mentities import MOTUS_DB
-import mentities
-import mfind
+from motus import mutils, mfind, mentities
+from motus.mentities import MOTUS_PARAMETERS
+from motus.mentities import MOTUS_DB
 import tqdm
 
 
@@ -1963,7 +1961,12 @@ def parse_calc_motu():
     mutils.shutdown(0)
 
 
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
+    main()
+
+def main():
     parser = argparse.ArgumentParser(usage = f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
     Version: {mutils.MOTUS_VERSION}
     
