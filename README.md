@@ -40,7 +40,7 @@ If you use the mOTUs database, please cite:
 
 ## 📦 Installation
 
-The mOTUs profiler, written in Python 3, can be executed on a 64-bit Linux or MacOS system. However, there are external dependencies that need to be pre-installed. These dependencies can be manually installed or, more conveniently, using the conda package manager.
+The mOTUs profiler, written in Python 3 (>=3.12), can be executed on a 64-bit Linux or MacOS system. However, there are external dependencies that need to be pre-installed. These dependencies can be manually installed or, more conveniently, using the conda package manager.
 
 
 ### Installation with Conda
@@ -68,22 +68,11 @@ If working on a MacOS system, the download link has to be replaced by: `https://
 Install using conda:
 
 ```bash
-$ git clone git@github.com:motu-tool/mOTUs4-dev.git
-$ cd mOTUs4-dev
-$ conda env create -f mOTUs4-dev-conda.yaml
+$ conda create -n mOTUs4 python==3.12 bwa=0.7.19 vsearch pip
+$ conda activate mOTUs4
+$ python -m pip install motus-tool
 ```
 
-This will install:
-
-```bash
-- python==3.12.0
-- bwa==0.7.19
-- fetchmgs==2.1.0
-- pysam=0.23.3
-- polars==1.32.2
-- rapidfuzz==3.13.0
-- biopython==1.85
-```
 
 
 ---
@@ -148,6 +137,8 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
     Type motus <command> to print the help menu for a specific command
 
 ```
+
+---
 
 ### Commands
 
@@ -225,6 +216,8 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 ```
 
+---
+
 ### Map Tax
 
 ```bash
@@ -280,6 +273,9 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 ```
 
+
+---
+
 ### Calc MGC
 
 ```bash
@@ -323,6 +319,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
             Minimum length of the alignment (bp) (default: 75)
 
 ```
+---
 
 ### Calc mOTU
 
@@ -374,6 +371,8 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
             Which scale the abundances are reported in (default: INSERT_SCALED)
             Choices: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
 ```
+
+---
 
 ### merge
 
@@ -614,6 +613,9 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 
 
+---
+
+
 
 
 ### genomes
@@ -667,7 +669,10 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 ```
     
 
+---
+
+
 
 ## ❓ Need Help?
 
-Write a issue on GitHub
+Write an issue on GitHub
