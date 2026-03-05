@@ -430,8 +430,8 @@ class MotusDB:
         """
         logging.info('Loading database ... ')
 
-        if not mutils.DEFAULT_MOTUS_MGDB_LOCATION_MARKER.exists():
-            logging.error('mOTUs marker gene database not downloaded. Download database with "motus downloadMGDB"')
+        if not mOTUsdb_folder.joinpath('db_mOTU.downloaded').exists():
+            logging.error(f'mOTUs marker gene database not found at {mOTUsdb_folder}. Download database with "motus downloadMGDB"')
             mutils.shutdown(1)
 
         versions_file = mOTUsdb_folder.joinpath('mOTUsv4.0.db').resolve()
