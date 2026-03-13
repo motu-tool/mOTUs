@@ -65,12 +65,11 @@ If working on a MacOS system, the download link has to be replaced by: `https://
 </details>
 
 
-Install using conda:
+mOTUs is available as a package in [bioconda](https://bioconda.github.io/recipes/motus/README.html) and can be installed in an isolated environment:
 
 ```bash
-$ conda create -n mOTUs4 python==3.12 bwa=0.7.19 vsearch pip
+$ conda create -n mOTUs4 motus
 $ conda activate mOTUs4
-$ python -m pip install motus-tool
 ```
 
 
