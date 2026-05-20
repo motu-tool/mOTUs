@@ -69,7 +69,7 @@ __author__ = ('Hans-Joachim Ruscheweyh (hansr@ethz.ch), '
 __version__ = mutils.MOTUS_VERSION
 
 
-__date__ = '05 September 2025'
+__date__ = '20 May 2026'
 __license__ = "GPL - v3"
 __maintainer__ = "Hans-Joachim Ruscheweyh"
 
@@ -165,12 +165,12 @@ def map_tax() -> None:
         total_mapped_reads += len(total_mapped_reads_this_file)
         total_reads += total_reads_this_file
         in_bam_file_handle.close()
+        process.stdout.close()
+        return_code: int = process.wait()
+        if return_code != 0:
+            logging.error(f'BWA command failed with return code {return_code}')
+            mutils.shutdown(1)
 
-    process.stdout.close()
-    return_code: int = process.wait()
-    if return_code != 0:
-        logging.error(f'BWA command failed with return code {return_code}')
-        mutils.shutdown(1)
     logging.info(f'Finished all alignments. Total reads: {total_reads}, Total aligned reads {total_mapped_reads}, {round(total_mapped_reads * 100.0 / total_reads, 4)}%')
     temp_bam_file_handle.close()
 
@@ -936,6 +936,9 @@ def parse_map_tax():
 
         -t, --threads  INT
             Number of threads (default: 1)
+
+        -db  PATH
+            Alternative path for the mOTUs marker gene database
           ''', formatter_class=CapitalisedHelpFormatter,add_help=False)
 
     # Input options
@@ -951,6 +954,7 @@ def parse_map_tax():
     # ALgorithm options
     parser.add_argument("-l", "--alignment-length",  type=int, default=75, dest='l')  # min length of the alignment (bp) [75]
     parser.add_argument("-t", "--threads", type=int, default=1, dest='t')  # number of threads
+    parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
 
     args = parser.parse_args(sys.argv[2:])
 
@@ -968,7 +972,7 @@ def parse_map_tax():
     threads = args.t
     min_alignment_length = args.l
 
-    MOTUS_DB.load_motus_db(mutils.DEFAULT_MOTUS_MGDB_LOCATION)
+    MOTUS_DB.load_motus_db(pathlib.Path(args.db) / 'db_mOTU')
 
 
 
@@ -1002,6 +1006,7 @@ def parse_batch_profile():
        -l  INT          min length of the alignment (bp) [75]
        -y  STR          type of read counts [INSERT_SCALED]
                         Values: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
+       -db  PATH        Alternative path for the mOTUs marker gene database
     ]''', formatter_class=CapitalisedHelpFormatter, add_help=False)
 
     # Input options
@@ -1013,6 +1018,7 @@ def parse_batch_profile():
     parser.add_argument("-t", type=int, default=1)  # number of thread [1]
     parser.add_argument("-y", type=str, default='INSERT_SCALED',
                         choices=['INSERT_RAW', 'INSERT_NORM', 'INSERT_SCALED', 'BASE_RAW', 'BASE_NORM'])
+    parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
 
     args = parser.parse_args(sys.argv[2:])
     if sys.argv[2:] == []:
@@ -1050,7 +1056,7 @@ def parse_batch_profile():
     min_alignment_length = args.l
 
 
-    MOTUS_DB.load_motus_db(mutils.DEFAULT_MOTUS_MGDB_LOCATION)
+    MOTUS_DB.load_motus_db(pathlib.Path(args.db) / 'db_mOTU')
 
     for samplename, (bamfile, mgc_file, motu_file, inserts_file) in samplename_2_files.items():
 
@@ -1119,6 +1125,9 @@ def parse_profile():
         -y, --counting-mode  STR
             Which scale the abundances are reported in (default: INSERT_SCALED)
             Choices: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
+
+        -db  PATH
+            Alternative path for the mOTUs marker gene database
     ''', formatter_class=CapitalisedHelpFormatter,add_help=False)
 
     # Input options
@@ -1133,6 +1142,7 @@ def parse_profile():
     parser.add_argument("-l", "--alignment-length", type=int, default=75, dest='l')  # min length of the alignment (bp) [75]
     parser.add_argument("-t", "--threads",  type=int, default=1, dest='t')  # number of thread [1]
     parser.add_argument("-y", "--counting-mode", type=str, default='INSERT_SCALED', choices=['INSERT_RAW', 'INSERT_NORM', 'INSERT_SCALED', 'BASE_RAW', 'BASE_NORM'], dest='y')
+    parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
     #parser.add_argument("-c", action="store_true", help="Write second output file with relative abundances")
 
     args = parser.parse_args(sys.argv[2:])
@@ -1154,7 +1164,7 @@ def parse_profile():
     samplename = args.n
 
 
-    MOTUS_DB.load_motus_db(mutils.DEFAULT_MOTUS_MGDB_LOCATION)
+    MOTUS_DB.load_motus_db(pathlib.Path(args.db) / 'db_mOTU')
 
 
     MOTUS_PARAMETERS.set_read_files(forward_files, reverse_files, unpaired_files, check_files=True)
@@ -1201,11 +1211,15 @@ def parse_calc_mgc():
     Algorithm options:
         -l, --alignment-length  INT
             Minimum length of the alignment (bp) (default: 75)
+
+        -db  PATH
+            Alternative path for the mOTUs marker gene database
        ''', formatter_class=CapitalisedHelpFormatter,add_help=False)
 
     parser.add_argument("-i", "--input-file", type=str, required=True, dest='i')  # provide a SAM or BAM input file (or list of files) output of motus map_tax
     parser.add_argument("-o", "--output-file", required=True, dest='o')  # output file name [stdout]
     parser.add_argument("-l", "--alignment-length", type=int, default=75, dest='l')  # min length of the alignment (bp) [75]
+    parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
 
     args = parser.parse_args(sys.argv[2:])
     # print usage and exit if no arguments are passed
@@ -1221,7 +1235,7 @@ def parse_calc_mgc():
     mutils.startup()
     min_alignment_length = args.l
 
-    MOTUS_DB.load_motus_db(mutils.DEFAULT_MOTUS_MGDB_LOCATION)
+    MOTUS_DB.load_motus_db(pathlib.Path(args.db) / 'db_mOTU')
 
     MOTUS_PARAMETERS.set_alignment_file(alignment_file, required_to_exist=True)
     MOTUS_PARAMETERS.set_mgc_file(mgc_file,required_to_exist=False)
@@ -1261,12 +1275,16 @@ def parse_merge():
     Output options:
         -o, --output-file  FILE
             Output file name [required]
+
+    Database options:
+        -db  PATH
+            Alternative path for the mOTUs marker gene database
           ''', formatter_class=CapitalisedHelpFormatter, add_help=False)
 
 
     parser.add_argument("-i", "--input-files", nargs="+", required=True, dest='i')
-
     parser.add_argument("-o", "--output-file", required=True, dest='o')
+    parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
     args = parser.parse_args(sys.argv[2:])
 
     if sys.argv[2:] == []:
@@ -1288,7 +1306,7 @@ def parse_merge():
 
     input_mOTUs_files = sorted(input_mOTUs_files)
 
-    MOTUS_DB.load_motus_db(mutils.DEFAULT_MOTUS_MGDB_LOCATION)
+    MOTUS_DB.load_motus_db(pathlib.Path(args.db) / 'db_mOTU')
 
     merge_profiles(input_mOTUs_files, output_mOTUs_file)
 
@@ -1524,12 +1542,16 @@ def parse_classify():
     Algorithm options:
         -t, --threads  INT
             Number of threads (default: 1)
+
+        -db  PATH
+            Alternative path for the mOTUs marker gene database)
            ''', formatter_class=CapitalisedHelpFormatter, add_help=False)
 
 
     parser.add_argument("-i", "--input-file", required=True, dest='i')
     parser.add_argument("-o", "--output-file", required=True, dest='o')
     parser.add_argument("-t", "--threads", default=1, type=int, dest='t')
+    parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
     args = parser.parse_args(sys.argv[2:])
 
     if sys.argv[2:] == []:
@@ -1547,12 +1569,12 @@ def parse_classify():
             genome_files.append(genome_file)
     output_file = args.o
 
-    classify(genome_files, output_file, args.t)
+    classify(genome_files, output_file, args.t, db_location=pathlib.Path(args.db) / 'db_mOTU')
     mutils.shutdown(0)
 
 
 
-def classify(genome_files: List[pathlib.Path], output_file: pathlib.Path, threads: int = 1):
+def classify(genome_files: List[pathlib.Path], output_file: pathlib.Path, threads: int = 1, db_location: pathlib.Path = None):
     """Takes a list of genome files and associates them with existing mOTUs.
     A genome can either be:
     - classified with a mOTU (=mOTUXXX)
@@ -1563,14 +1585,17 @@ def classify(genome_files: List[pathlib.Path], output_file: pathlib.Path, thread
         genome_files (List[pathlib.Path]): A list with pathlib.Path objects all pointing to an existing genome file
         output_file (pathlib.Path): Main output file of motus classify
         threads (int, optional): Number of threads. Defaults to 1.
-    """    
+        db_location (pathlib.Path, optional): Path to the mOTUs database folder. Defaults to built-in location.
+    """
 
+    if db_location is None:
+        db_location = mutils.DEFAULT_MOTUS_MGDB_LOCATION
     genome_files = sorted(genome_files)
     root_tmp_folder =  pathlib.Path(str(output_file) + '_classify_tmp')
 
 
     logging.info(f'Starting mOTUs classify:')
-    MOTUS_DB.load_motus_db(mutils.DEFAULT_MOTUS_MGDB_LOCATION, True)
+    MOTUS_DB.load_motus_db(db_location, True)
     logging.info(f'\tInput = {len(genome_files)} genomes.')
     logging.info(f'\tOutput will be written to {output_file}')
     logging.info(f'\tTemporary files will be written to {root_tmp_folder}')
@@ -1772,29 +1797,34 @@ def parse_downloadDB():
     Options:
         -f, --force
             Force download even when database is already present
+
+        -db  PATH
+            Alternative path for the mOTUs marker gene database
            ''', formatter_class=CapitalisedHelpFormatter, add_help=False)
 
     parser.add_argument("-f", "--force", action="store_true", dest='f')
+    parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
     args = parser.parse_args(sys.argv[2:])
 
-    force_download = False
-    if args.f:
-        force_download = True
+    force_download = args.f
+    db_parent = pathlib.Path(args.db)
+    db_location = db_parent / 'db_mOTU'
+    db_marker = db_location / 'db_mOTU.downloaded'
 
     mutils.startup()
 
-    if mutils.DEFAULT_MOTUS_MGDB_LOCATION_MARKER.exists() and not force_download:
+    if db_marker.exists() and not force_download:
         logging.info('Database already downloaded and -f not set. All good.')
         mutils.shutdown(0)
-    if mutils.DEFAULT_MOTUS_MGDB_LOCATION_MARKER.exists() and force_download:
+    if db_marker.exists() and force_download:
         logging.info('Database already downloaded and -f set. Will delete current database and download again.')
-        shutil.rmtree(mutils.DEFAULT_MOTUS_MGDB_LOCATION)
+        shutil.rmtree(db_location)
 
+    db_parent.mkdir(parents=True, exist_ok=True)
     logging.info('Start downloading mOTUs marker gene database. ~6GB')
-    dest_tar_gz_file = mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION.joinpath('db_mOTU.tar.gz')
+    dest_tar_gz_file = db_parent / 'db_mOTU.tar.gz'
     if dest_tar_gz_file.is_file():
         dest_tar_gz_file.unlink()
-
 
     with urllib.request.urlopen(mutils.MOTUS_MGDB_REMOTE_LOCATION) as response:
         total = int(response.info().get("Content-Length", -1))
@@ -1805,17 +1835,17 @@ def parse_downloadDB():
                     break
                 f.write(chunk)
                 pbar.update(len(chunk))
-    
- 
+
     logging.info('Finished downloading mOTUs marker gene database.')
     logging.info('Start un-taring mOTUs marker gene database.')
-    if mutils.DEFAULT_MOTUS_MGDB_LOCATION.exists():
-        shutil.rmtree(mutils.DEFAULT_MOTUS_MGDB_LOCATION)
+    if db_location.exists():
+        shutil.rmtree(db_location)
 
     with tarfile.open(dest_tar_gz_file, 'r') as t:
-        t.extractall(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION)
+        t.extractall(db_parent)
+    dest_tar_gz_file.unlink(missing_ok=True)
 
-    mutils.DEFAULT_MOTUS_MGDB_LOCATION_MARKER.touch(exist_ok=True)
+    db_marker.touch(exist_ok=True)
     logging.info('Finished untaring mOTUs marker gene database.')
     mutils.shutdown(0)
 
@@ -1847,12 +1877,17 @@ def parse_download():
 
         -r, --representatives
             Download only sequences from representative genomes.
+
+    Database options:
+        -db  PATH
+            Alternative path for the mOTUs marker gene database
            ''', formatter_class=CapitalisedHelpFormatter, add_help=False)
 
 
     parser.add_argument("-o", "--output-folder", required=True, dest='o')
     parser.add_argument("-i", "--input-genomes", required=True, nargs="+", dest='i')
     parser.add_argument("-r", "--representatives", action="store_true", dest='r')
+    parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
 
 
     args = parser.parse_args(sys.argv[2:])
@@ -1867,7 +1902,7 @@ def parse_download():
     download_representative_genomes_only = False
     if args.r:
         download_representative_genomes_only = True
-    
+
     genomes_to_download = []
     if len(input_items) == 1: # can be a single genome or a file with genomes
         input_item = input_items[0]
@@ -1882,7 +1917,7 @@ def parse_download():
     else: # list of genomes
         genomes_to_download = input_items
 
-    MOTUS_DB.load_motus_db(mutils.DEFAULT_MOTUS_MGDB_LOCATION, load=False)
+    MOTUS_DB.load_motus_db(pathlib.Path(args.db) / 'db_mOTU', load=False)
     motus_search_db = mentities.GenomeLocator(MOTUS_DB.genome_metadata_file)
     download_genomes(genomes_to_download, motus_search_db, output_folder, download_representative_genomes_only)
     mutils.shutdown(0)
@@ -1925,6 +1960,9 @@ def parse_calc_motu():
         -y, --counting-mode  STR
             Which scale the abundances are reported in (default: INSERT_SCALED)
             Choices: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
+
+        -db  PATH
+            Alternative path for the mOTUs marker gene database (default: built-in location)
           ''', formatter_class=CapitalisedHelpFormatter,add_help=False)
 
 
@@ -1933,6 +1971,7 @@ def parse_calc_motu():
     parser.add_argument("-o", "--output-file", required=True, dest='o')  # output fil name [stdout]
     parser.add_argument("-y", "--counting-mode", type=str, default='INSERT_SCALED', choices=['INSERT_RAW', 'INSERT_NORM', 'INSERT_SCALED', 'BASE_RAW', 'BASE_NORM'], dest='y')
     parser.add_argument("-g", "--marker-genes", type=int, default=3, choices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], dest='g')  # number of marker genes cutoff
+    parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
     #parser.add_argument("-c", action="store_true",help="Write second output file with relative abundances")
 
     args = parser.parse_args(sys.argv[2:])
@@ -1947,7 +1986,7 @@ def parse_calc_motu():
     samplename = args.n
 
 
-    MOTUS_DB.load_motus_db(mutils.DEFAULT_MOTUS_MGDB_LOCATION)
+    MOTUS_DB.load_motus_db(pathlib.Path(args.db) / 'db_mOTU')
 
     MOTUS_PARAMETERS.set_mgc_file(mgc_file, required_to_exist=True)
     MOTUS_PARAMETERS.set_motu_file(motu_file, required_to_exist=False)
@@ -1962,9 +2001,6 @@ def parse_calc_motu():
 
 
 
-
-if __name__ == "__main__":
-    main()
 
 def main():
     parser = argparse.ArgumentParser(usage = f'''Program: motus - a tool for marker gene-based OTU (mOTU) profiling
@@ -2008,7 +2044,7 @@ def main():
     args: argparse.Namespace = parser.parse_args(sys.argv[1:2])
     if args.command == 'profile':
         parse_profile()
-    if args.command == 'batch_profile':
+    elif args.command == 'batch_profile':
         parse_batch_profile()
     elif args.command == 'merge':
         parse_merge()
@@ -2033,3 +2069,7 @@ def main():
         print(f'Unrecognized command {args}')
         mutils.shutdown(1)
     mutils.shutdown(0)
+
+
+if __name__ == "__main__":
+    main()

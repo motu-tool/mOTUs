@@ -428,9 +428,10 @@ class MotusDB:
         :param mOTUsdb_folder:
         :return: None
         """
-        logging.info('Loading database ... ')
+        logging.info(f'Loading database from {mOTUsdb_folder} ...')
 
-        if not mutils.DEFAULT_MOTUS_MGDB_LOCATION_MARKER.exists():
+        db_marker = mOTUsdb_folder / 'db_mOTU.downloaded'
+        if not db_marker.exists():
             logging.error('mOTUs marker gene database not downloaded. Download database with "motus downloadMGDB"')
             mutils.shutdown(1)
 
@@ -849,6 +850,8 @@ class SinglemOTUsFile:
         motu_2_count = self._motu_2_values
         motu_2_relab = {}
         total = float(sum(motu_2_count.values()))
+        if total == 0.0:
+            return self
         for motu, count in motu_2_count.items():
             relab = float(count) / total
             motu_2_relab[motu] = relab
