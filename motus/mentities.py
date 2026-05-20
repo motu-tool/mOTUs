@@ -313,7 +313,7 @@ class MotusParameters:
         return reads
 
     def set_read_files(self, forward_files: List[pathlib.Path], reverse_files: List[pathlib.Path],
-                       unpaired_files: List[pathlib.Path], check_files: bool = True) -> None:
+                       unpaired_files: List[pathlib.Path], check_files: bool = True, skip_pair_check: bool = False) -> None:
         """ Define set of read files
         that we should align against the mOTUs
         database. This step can/will also check
@@ -354,15 +354,22 @@ class MotusParameters:
                 logging.error('Unequal number of files submitted with -r and -f. Quitting ...')
                 mutils.shutdown(1)
             for (r1_file, r2_file) in zip(forward_files, reverse_files):  # , strict=True):
+                if skip_pair_check:
+                    continue
                 r1_reads = self.get_first_1000_reads(r1_file)
                 r2_reads = self.get_first_1000_reads(r2_file)
-                r1_header = set([r[0] for r in r1_reads])
-                r2_header = set([r[0] for r in r2_reads])
+                read1 = r1_reads[0][0]
+                read1_norm = mutils.normalize_header(read1)
+                if read1 != read1_norm:
+                    logging.warning('Detected /1 /2 on the end of readheaders. Removing those for downstream analysis')
+                r1_header = set(mutils.normalize_header(r[0]) for r in r1_reads)
+                r2_header = set(mutils.normalize_header(r[0]) for r in r2_reads)
                 if len(r1_header.symmetric_difference(r2_header)) != 0:
-                    logging.error(f'Headers of reads are not identical. Shutting down ...')
+                    logging.error(f'Read headers do not match between paired files. Shutting down ...')
                     logging.error(f'Differing read headers: {r1_header.symmetric_difference(r2_header)}')
-                    logging.error(f'Differing read headers file 1: {r1_file}')
-                    logging.error(f'Differing read headers file 2: {r2_file}')
+                    logging.error(f'Forward file: {r1_file}')
+                    logging.error(f'Reverse file: {r2_file}')
+                    logging.error(f'If your reads are unsorted or contain singletons, use --skip-pair-check to bypass this validation.')
                     mutils.shutdown(1)
 
             for u_file in unpaired_files:

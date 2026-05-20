@@ -19,6 +19,12 @@ MOTUS_GENOME_REMOTE_PREFIX = 'https://sunagawalab.ethz.ch/share/MOTUS/database/4
 MOTUS_ANNODB_REMOTE_LOCATION = 'https://zenodo.org/records/17669279/files/mOTUsv4.0.annotation.db'
 
 
+def normalize_header(header: str) -> str:
+    if header.endswith('/1') or header.endswith('/2'):
+        return header[:-2]
+    return header
+
+
 def shutdown(exitcode: int) -> None:
     """
     Securily shutdown the mOTU tool.

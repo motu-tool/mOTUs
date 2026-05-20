@@ -15,7 +15,7 @@
 #
 # Type "motus" for usage help
 #
-# Copyright (c) ${2025} ${SunagawaLab}.
+# Copyright (c) ${2026} ${SunagawaLab}.
 #
 # This file is part of ${projectname}
 # (see ${https://motus-tool.org/}).
@@ -156,9 +156,9 @@ def map_tax() -> None:
                 record.set_tag('id', percid, 'f')
                 record.set_tag('qc', qcov, 'f')
                 record.set_tag('al', alnlength, 'i')
-
-                total_mapped_reads_this_file.add(record.qname)
-                record.qname = ''.join([record.qname, orientation])
+                qname = mutils.normalize_header(record.qname)
+                total_mapped_reads_this_file.add(qname)
+                record.qname = ''.join([qname, orientation])
                 temp_bam_file_handle.write(record)
 
         logging.info(f'Finished alignment. Total reads: {total_reads_this_file}, Total aligned reads {len(total_mapped_reads_this_file)}, {round(len(total_mapped_reads_this_file) * 100.0 / total_reads_this_file, 4)}% aligned.')
@@ -941,6 +941,10 @@ def parse_map_tax():
         -t, --threads  INT
             Number of threads (default: 1)
 
+        --skip-pair-check
+            Skip validation that forward and reverse read headers match.
+            Use when reads are unsorted or contain singletons.
+
         -db  PATH
             Alternative path for the mOTUs marker gene database
           ''', formatter_class=CapitalisedHelpFormatter,add_help=False)
@@ -958,6 +962,7 @@ def parse_map_tax():
     # ALgorithm options
     parser.add_argument("-l", "--alignment-length",  type=int, default=75, dest='l')  # min length of the alignment (bp) [75]
     parser.add_argument("-t", "--threads", type=int, default=1, dest='t')  # number of threads
+    parser.add_argument("--skip-pair-check", action="store_true", default=False, dest='skip_pair_check')
     parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
 
     args = parser.parse_args(sys.argv[2:])
@@ -980,7 +985,7 @@ def parse_map_tax():
 
 
 
-    MOTUS_PARAMETERS.set_read_files(forward_files, reverse_files, unpaired_files, check_files=True)
+    MOTUS_PARAMETERS.set_read_files(forward_files, reverse_files, unpaired_files, check_files=True, skip_pair_check=args.skip_pair_check)
     MOTUS_PARAMETERS.set_alignment_file(alignment_file, required_to_exist=False)
     MOTUS_PARAMETERS.set_minimal_alignment_length(min_alignment_length)
     MOTUS_PARAMETERS.set_threads(threads)
@@ -1130,6 +1135,10 @@ def parse_profile():
             Which scale the abundances are reported in (default: INSERT_SCALED)
             Choices: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
 
+        --skip-pair-check
+            Skip validation that forward and reverse read headers match.
+            Use when reads are unsorted or contain singletons.
+
         -db  PATH
             Alternative path for the mOTUs marker gene database
     ''', formatter_class=CapitalisedHelpFormatter,add_help=False)
@@ -1146,6 +1155,7 @@ def parse_profile():
     parser.add_argument("-l", "--alignment-length", type=int, default=75, dest='l')  # min length of the alignment (bp) [75]
     parser.add_argument("-t", "--threads",  type=int, default=1, dest='t')  # number of thread [1]
     parser.add_argument("-y", "--counting-mode", type=str, default='INSERT_SCALED', choices=['INSERT_RAW', 'INSERT_NORM', 'INSERT_SCALED', 'BASE_RAW', 'BASE_NORM'], dest='y')
+    parser.add_argument("--skip-pair-check", action="store_true", default=False, dest='skip_pair_check')
     parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
     #parser.add_argument("-c", action="store_true", help="Write second output file with relative abundances")
 
@@ -1171,7 +1181,7 @@ def parse_profile():
     MOTUS_DB.load_motus_db(pathlib.Path(args.db) / 'db_mOTU')
 
 
-    MOTUS_PARAMETERS.set_read_files(forward_files, reverse_files, unpaired_files, check_files=True)
+    MOTUS_PARAMETERS.set_read_files(forward_files, reverse_files, unpaired_files, check_files=True, skip_pair_check=args.skip_pair_check)
     MOTUS_PARAMETERS.set_alignment_file(alignment_file, required_to_exist=False)
     MOTUS_PARAMETERS.set_mgc_file(mgc_file,required_to_exist=False)
     MOTUS_PARAMETERS.set_inserts_file(inserts_file, required_to_exist=False)
