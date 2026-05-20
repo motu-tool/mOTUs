@@ -1464,21 +1464,26 @@ def parse_find():
         or taxonomic annotations and returns a list of genomes matching indicated query.
 
 
-    Usage:    
+    Usage:
         motus genomes -i FILE -o FILE [options]
         motus genomes -i STR [STR ...] -o FILE [options]
+        motus genomes -l GENOME|TAXON|PFAM|KEGG|EGGNOG -o FILE [options]
 
 
     Input options:
         -i, --input-queries  FILE/STR
             Can be either a list of search queries or a text file listing search queries
-            with one line per query. Queries can be genome or mOTUs identifiers, PFAM, KEGG, EGGNOG, 
+            with one line per query. Queries can be genome or mOTUs identifiers, PFAM, KEGG, EGGNOG,
             or GTDB taxonomy names. If the query does not exactly match any database entry,
-            alternative queries will be suggested [required]
+            alternative queries will be suggested [required unless -l is used]
+
+        -l, --list  STR
+            List all searchable entries for a given category and write them to -o.
+            Choose from [GENOME, TAXON, PFAM, KEGG, EGGNOG]. When used, -i is not required.
 
     Output options:
         -o, --output-file  FILE
-            Output file containing a list of genome identifiers matching search queries and their 
+            Output file containing a list of genome identifiers matching search queries and their
             annotations as indicated by the -d parameter. This output file can be used as input
             for the motus download command [required]
 
@@ -1491,7 +1496,8 @@ def parse_find():
            ''', formatter_class=CapitalisedHelpFormatter, add_help=False)
 
 
-    parser.add_argument("-i", "--input-queries", required=True, nargs="+", dest='i')
+    parser.add_argument("-i", "--input-queries", required=False, nargs="+", default=[], dest='i')
+    parser.add_argument("-l", "--list", choices=['GENOME', 'TAXON', 'PFAM', 'KEGG', 'EGGNOG'], default=None, dest='l')
     parser.add_argument("-o", "--output-file", required=True, dest='o')
     parser.add_argument("-d", "--details", default=[], nargs="+", dest='d')
     parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
@@ -1503,6 +1509,13 @@ def parse_find():
         mutils.shutdown(1)
     mutils.startup()
 
+    if args.l is not None:
+        mfind.list_entries(args.l, pathlib.Path(args.o), db_location=pathlib.Path(args.db) / 'db_mOTU')
+        mutils.shutdown(0)
+
+    if not args.i:
+        logging.error('Either -i/--input-queries or -l/--list must be provided.')
+        mutils.shutdown(1)
 
     output_file = pathlib.Path(args.o)
     search_queries_tmp = args.i

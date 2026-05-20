@@ -21,6 +21,14 @@ KEGG_DB_TYPE = 'KEGG'
 TAXONOMY_DB_TYPE = 'TAXONOMY'
 PFAM_DB_TYPE = 'PFAM'
 
+_LIST_TYPE_TO_DB_TYPE = {
+    'GENOME': GENOME_DB_TYPE,
+    'TAXON':  TAXONOMY_DB_TYPE,
+    'PFAM':   PFAM_DB_TYPE,
+    'KEGG':   KEGG_DB_TYPE,
+    'EGGNOG': EGGNOG_DB_TYPE,
+}
+
 
 # TODO there will be 0 annotations which cannot be decoded. Have to find an example and fix. Otherwise this break the de-initing routine
 
@@ -242,6 +250,9 @@ class SearchDB:
         return genome_names
 
 
+    def get_all_names(self, db_type: str) -> List[str]:
+        return sorted(self._type_2_name_2_id[db_type].keys())
+
     def stringify_genomes(self, genomes: List[Genome]) -> Generator[Genome, None, None] :
         '''
         Takes a list of genome objects which still have 
@@ -263,24 +274,10 @@ class SearchDB:
 
 
 
-def find_genomes(search_tokens: List[str], output_file:pathlib.Path, annotations_to_report: List[str], db_location: pathlib.Path = None) -> None:
-    """Get a list of search tokens and find
-    associated genomes. Perform fuzzy search
-    on a search token that doesnt yield an
-    exact match.
-
-    Genomes with or without annotation  are
-    written to the output file.
-
-    Args:
-        search_tokens (List[str]): A list of input search tokens.
-        output_file (pathlib.Path): The output file. Can already exist and will be overwritten
-        report_rich (bool, optional): If true, report also annotation. Only report genome names of false. Defaults to False.
-    """    
-
-    #### PARAMS ####
-    evaluate_expression = False
-
+def _get_annodb_path(db_location: pathlib.Path = None) -> str:
+    """Ensure the annotation DB is present and return its path as a string.
+    Downloads it on first use (requires the marker gene DB to already exist).
+    """
     if db_location is None:
         db_location = mutils.DEFAULT_MOTUS_MGDB_LOCATION
     annodb_location = db_location / 'mOTUsv4.0.annotation.db'
@@ -308,12 +305,29 @@ def find_genomes(search_tokens: List[str], output_file:pathlib.Path, annotations
             logging.error(f'Download incomplete: expected {total} bytes, got {downloaded_size} bytes. Please retry.')
             mutils.shutdown(1)
 
-        DATABASE_PATH = str(annodb_location)
         annodb_marker.touch()
         logging.info('Finished downloading mOTUs annotation database.')
-    else:
-        DATABASE_PATH = str(annodb_location)
-    #### END PARAMS ####
+
+    return str(annodb_location)
+
+
+def find_genomes(search_tokens: List[str], output_file:pathlib.Path, annotations_to_report: List[str], db_location: pathlib.Path = None) -> None:
+    """Get a list of search tokens and find
+    associated genomes. Perform fuzzy search
+    on a search token that doesnt yield an
+    exact match.
+
+    Genomes with or without annotation  are
+    written to the output file.
+
+    Args:
+        search_tokens (List[str]): A list of input search tokens.
+        output_file (pathlib.Path): The output file. Can already exist and will be overwritten
+        report_rich (bool, optional): If true, report also annotation. Only report genome names of false. Defaults to False.
+    """    
+
+    evaluate_expression = False
+    DATABASE_PATH = _get_annodb_path(db_location)
 
     search_tokens = sorted(set(search_tokens))
     search_token_2_genome_ids = {}
@@ -361,6 +375,22 @@ def find_genomes(search_tokens: List[str], output_file:pathlib.Path, annotations
 
                 
     resolver.close()
-    
 
 
+def list_entries(list_type: str, output_file: pathlib.Path, db_location: pathlib.Path = None) -> None:
+    """Write all searchable names of the given type to output_file, one per line.
+
+    Args:
+        list_type (str): One of GENOME, TAXON, PFAM, KEGG, EGGNOG.
+        output_file (pathlib.Path): Destination file.
+        db_location (pathlib.Path, optional): Path to the db_mOTU folder.
+    """
+    DATABASE_PATH = _get_annodb_path(db_location)
+    db_type = _LIST_TYPE_TO_DB_TYPE[list_type]
+    resolver = SearchDB(DATABASE_PATH)
+    names = resolver.get_all_names(db_type)
+    logging.info(f'Writing {len(names):,} {list_type} entries to {output_file}')
+    with open(output_file, 'w') as handle:
+        for name in names:
+            handle.write(f'{name}\n')
+    resolver.close()
