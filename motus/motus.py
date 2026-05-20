@@ -626,7 +626,7 @@ class InsertCounter:
                 if len(mgs) == 1:
                     best_mgs.append(mgs[0], self._get_alignment_blocks(markergeneheader_2_best_alignments2[mgs[0]]))
                 else:
-                    picked_mg = random.choice(mgs)
+                    picked_mg = sorted(mgs)[0]
                     best_mgs.append(picked_mg,
                                     self._get_alignment_blocks(markergeneheader_2_best_alignments2[picked_mg]))
         else:
