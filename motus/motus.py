@@ -1485,12 +1485,16 @@ def parse_find():
         -d, --details  STR [STR ...]
             List of annotations to report. Choose any combination of [KEGG, PFAM, EGGNOG, TAXONOMY],
             for example, -d KEGG PFAM.
+
+        -db  PATH
+            Alternative path for the mOTUs database
            ''', formatter_class=CapitalisedHelpFormatter, add_help=False)
 
 
     parser.add_argument("-i", "--input-queries", required=True, nargs="+", dest='i')
     parser.add_argument("-o", "--output-file", required=True, dest='o')
     parser.add_argument("-d", "--details", default=[], nargs="+", dest='d')
+    parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
 
     args = parser.parse_args(sys.argv[2:])
 
@@ -1525,7 +1529,7 @@ def parse_find():
     else: # list of genomes
         search_queries = search_queries_tmp
 
-    mfind.find_genomes(search_queries, output_file, annotations_to_report)
+    mfind.find_genomes(search_queries, output_file, annotations_to_report, db_location=pathlib.Path(args.db) / 'db_mOTU')
     mutils.shutdown(0)
 
 

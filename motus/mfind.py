@@ -251,10 +251,10 @@ class SearchDB:
         for genome in genomes:
             genome_id, eggnog_ids, kegg_ids, pfam_ids, taxmotu_ids = genome.get_all_ids()
             genome_name = self._type_2_id_2_name[GENOME_DB_TYPE][genome_id]
-            eggnog_names = [self._type_2_id_2_name[EGGNOG_DB_TYPE][x] for x in eggnog_ids]
-            kegg_names = [self._type_2_id_2_name[KEGG_DB_TYPE][x] for x in kegg_ids]
-            pfam_names = [self._type_2_id_2_name[PFAM_DB_TYPE][x] for x in pfam_ids]
-            taxmotu_names = [self._type_2_id_2_name[TAXONOMY_DB_TYPE][x] for x in taxmotu_ids]
+            eggnog_names = [self._type_2_id_2_name[EGGNOG_DB_TYPE][x] for x in eggnog_ids if x != 0]
+            kegg_names = [self._type_2_id_2_name[KEGG_DB_TYPE][x] for x in kegg_ids if x != 0]
+            pfam_names = [self._type_2_id_2_name[PFAM_DB_TYPE][x] for x in pfam_ids if x != 0]
+            taxmotu_names = [self._type_2_id_2_name[TAXONOMY_DB_TYPE][x] for x in taxmotu_ids if x != 0]
             genome.set_all_names(genome_name, eggnog_names, kegg_names, pfam_names, taxmotu_names)
             yield genome
 
@@ -263,7 +263,7 @@ class SearchDB:
 
 
 
-def find_genomes(search_tokens: List[str], output_file:pathlib.Path, annotations_to_report: List[str]) -> None:
+def find_genomes(search_tokens: List[str], output_file:pathlib.Path, annotations_to_report: List[str], db_location: pathlib.Path = None) -> None:
     """Get a list of search tokens and find
     associated genomes. Perform fuzzy search
     on a search token that doesnt yield an
@@ -281,14 +281,20 @@ def find_genomes(search_tokens: List[str], output_file:pathlib.Path, annotations
     #### PARAMS ####
     evaluate_expression = False
 
-    if not mutils.DEFAULT_MOTUS_ANNODB_LOCATION_MARKER.exists():
-        if not mutils.DEFAULT_MOTUS_MGDB_LOCATION_MARKER.exists():
+    if db_location is None:
+        db_location = mutils.DEFAULT_MOTUS_MGDB_LOCATION
+    annodb_location = db_location / 'mOTUsv4.0.annotation.db'
+    annodb_marker   = db_location / 'mOTUsv4.0.annotation.db.downloaded'
+    mgdb_marker     = db_location / 'db_mOTU.downloaded'
+
+    if not annodb_marker.exists():
+        if not mgdb_marker.exists():
             logging.error('mOTUs marker gene database not downloaded. Download database with "motus downloadMGDB"')
             mutils.shutdown(1)
         logging.info('Need to download mOTUs annotation database (~17GB))')
         with urllib.request.urlopen(mutils.MOTUS_ANNODB_REMOTE_LOCATION) as response:
             total = int(response.info().get("Content-Length", -1))
-            with open(str(mutils.DEFAULT_MOTUS_ANNODB_LOCATION), "wb") as f, tqdm.tqdm(total=total, unit='B', unit_scale=True, desc='Downloading mOTUs annotation database') as pbar:
+            with open(str(annodb_location), "wb") as f, tqdm.tqdm(total=total, unit='B', unit_scale=True, desc='Downloading mOTUs annotation database') as pbar:
                 while True:
                     chunk = response.read(8192)
                     if not chunk:
@@ -296,11 +302,11 @@ def find_genomes(search_tokens: List[str], output_file:pathlib.Path, annotations
                     f.write(chunk)
                     pbar.update(len(chunk))
 
-        DATABASE_PATH = str(mutils.DEFAULT_MOTUS_ANNODB_LOCATION)
-        mutils.DEFAULT_MOTUS_ANNODB_LOCATION_MARKER.touch()
+        DATABASE_PATH = str(annodb_location)
+        annodb_marker.touch()
         logging.info('Finished downloading mOTUs annotation database.')
     else:
-        DATABASE_PATH = str(mutils.DEFAULT_MOTUS_ANNODB_LOCATION)
+        DATABASE_PATH = str(annodb_location)
     #### END PARAMS ####
 
     search_tokens = sorted(set(search_tokens))
