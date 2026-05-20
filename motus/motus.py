@@ -1854,6 +1854,12 @@ def parse_downloadDB():
                 f.write(chunk)
                 pbar.update(len(chunk))
 
+    downloaded_size = dest_tar_gz_file.stat().st_size
+    if total > 0 and downloaded_size != total:
+        dest_tar_gz_file.unlink(missing_ok=True)
+        logging.error(f'Download incomplete: expected {total} bytes, got {downloaded_size} bytes. Please retry.')
+        mutils.shutdown(1)
+
     logging.info('Finished downloading mOTUs marker gene database.')
     logging.info('Start un-taring mOTUs marker gene database.')
     if db_location.exists():

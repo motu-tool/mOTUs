@@ -302,6 +302,12 @@ def find_genomes(search_tokens: List[str], output_file:pathlib.Path, annotations
                     f.write(chunk)
                     pbar.update(len(chunk))
 
+        downloaded_size = annodb_location.stat().st_size
+        if total > 0 and downloaded_size != total:
+            annodb_location.unlink(missing_ok=True)
+            logging.error(f'Download incomplete: expected {total} bytes, got {downloaded_size} bytes. Please retry.')
+            mutils.shutdown(1)
+
         DATABASE_PATH = str(annodb_location)
         annodb_marker.touch()
         logging.info('Finished downloading mOTUs annotation database.')
