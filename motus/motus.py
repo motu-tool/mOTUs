@@ -410,6 +410,8 @@ class InsertCounter:
             mg_len = MOTUS_DB.get_length_by_mg(mg)
             last_allowed_base = mg_len - min_alignment_length - 1
             alignments_trunc = []
+            weighted_untrunc_inserts = 0.0
+            weighted_trunc_inserts = 0.0
             for (alignment_blocks, weight) in alignments:
                 aligned_bases_untrunc = 0
                 aligned_bases_trunc = 0
@@ -431,11 +433,13 @@ class InsertCounter:
                     aligned_bases_trunc += aln_end - aln_start
                 if aligned_bases_trunc != 0:
                     alignments_trunc.append(aligned_bases_trunc / aligned_bases_untrunc) # a value of 1 means that the alignment was not truncated. a value <1 means that the alignment was truncated
+                    weighted_trunc_inserts += weight
                 mg_2_untrunc_base_counts[mg] += aligned_bases_untrunc * weight
                 mg_2_trunc_base_counts[mg] += aligned_bases_trunc * weight
+                weighted_untrunc_inserts += weight
 
-            mg_2_untrunc_insert_counts[mg] = len(alignments) * weight
-            mg_2_trunc_insert_counts[mg] = len(alignments_trunc) * weight
+            mg_2_untrunc_insert_counts[mg] = weighted_untrunc_inserts
+            mg_2_trunc_insert_counts[mg] = weighted_trunc_inserts
 
         mg_2_edge_corrected_insert_counts = collections.Counter()
         mg_2_edge_corrected_base_counts = collections.Counter()
