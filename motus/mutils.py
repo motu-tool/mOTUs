@@ -20,7 +20,7 @@ MOTUS_MGDB_REMOTE_LOCATION_41_toy = 'https://zenodo.org/records/20322003/files/d
 MOTUS_MGDB_REMOTE_LOCATION_41_toy_version = '4.1-toy'
 MOTUS_MGDB_REMOTE_LOCATION_40 = 'https://zenodo.org/records/17668622/files/db_mOTU.tar.gz'
 MOTUS_MGDB_REMOTE_LOCATION_40_version = '4.0'
-MOTUS_MGDB_REMOTE_LOCATION_41 = 'https://zenodo.org/records/20322003/files/db_mOTU.tar.gz'
+MOTUS_MGDB_REMOTE_LOCATION_41 = 'https://zenodo.org/records/20322482/files/db_mOTU.tar.gz'
 MOTUS_MGDB_REMOTE_LOCATION_41_version = '4.1'
 
 MOTUS_MGDB_REMOTE_LOCATION = MOTUS_MGDB_REMOTE_LOCATION_41

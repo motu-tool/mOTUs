@@ -968,9 +968,9 @@ def parse_map_tax():
     args = parser.parse_args(sys.argv[2:])
 
     # print usage and exit if no arguments are passed
-    if sys.argv[2:] == []:
+    if not sys.argv[2:] or sys.argv[2] in ('-h', '--help'):
         parser.print_usage()
-        mutils.shutdown(1)
+        mutils.shutdown(0)
 
     # convert string arguments into Pathlib objects
     forward_files = [pathlib.Path(el) for el in args.f]
@@ -1030,9 +1030,9 @@ def parse_batch_profile():
     parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
 
     args = parser.parse_args(sys.argv[2:])
-    if sys.argv[2:] == []:
+    if not sys.argv[2:] or sys.argv[2] in ('-h', '--help'):
         parser.print_usage()
-        mutils.shutdown(1)
+        mutils.shutdown(0)
 
     map_file = args.f
     samplename_2_files = {}
@@ -1160,9 +1160,9 @@ def parse_profile():
     #parser.add_argument("-c", action="store_true", help="Write second output file with relative abundances")
 
     args = parser.parse_args(sys.argv[2:])
-    if sys.argv[2:] == []:
+    if not sys.argv[2:] or sys.argv[2] in ('-h', '--help'):
         parser.print_usage()
-        mutils.shutdown(1)
+        mutils.shutdown(0)
 
     forward_files = [pathlib.Path(el) for el in args.f]
     reverse_files = [pathlib.Path(el) for el in args.r]
@@ -1237,9 +1237,9 @@ def parse_calc_mgc():
 
     args = parser.parse_args(sys.argv[2:])
     # print usage and exit if no arguments are passed
-    if sys.argv[2:] == []:
+    if not sys.argv[2:] or sys.argv[2] in ('-h', '--help'):
         parser.print_usage()
-        mutils.shutdown(1)
+        mutils.shutdown(0)
 
     alignment_file = pathlib.Path(args.i)
     mgc_file = pathlib.Path(args.o)
@@ -1301,9 +1301,9 @@ def parse_merge():
     parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
     args = parser.parse_args(sys.argv[2:])
 
-    if sys.argv[2:] == []:
+    if not sys.argv[2:] or sys.argv[2] in ('-h', '--help'):
         parser.print_usage()
-        mutils.shutdown(1)
+        mutils.shutdown(0)
 
     mutils.startup()
 
@@ -1440,9 +1440,9 @@ def parse_prep_long():
     parser.add_argument("-ml", "--minimum-length", default=50, type=int, dest='ml')
     args = parser.parse_args(sys.argv[2:])
 
-    if sys.argv[2:] == []:
+    if not sys.argv[2:] or sys.argv[2] in ('-h', '--help'):
         parser.print_usage()
-        mutils.shutdown(1)
+        mutils.shutdown(0)
     mutils.startup()
 
     input_sequence_file = pathlib.Path(args.i)
@@ -1504,9 +1504,9 @@ def parse_find():
 
     args = parser.parse_args(sys.argv[2:])
 
-    if sys.argv[2:] == []:
+    if not sys.argv[2:] or sys.argv[2] in ('-h', '--help'):
         parser.print_usage()
-        mutils.shutdown(1)
+        mutils.shutdown(0)
     mutils.startup()
 
     if args.l is not None:
@@ -1585,9 +1585,9 @@ def parse_classify():
     parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
     args = parser.parse_args(sys.argv[2:])
 
-    if sys.argv[2:] == []:
+    if not sys.argv[2:] or sys.argv[2] in ('-h', '--help'):
         parser.print_usage()
-        mutils.shutdown(1)
+        mutils.shutdown(0)
     mutils.startup()
 
     genome_files = []
@@ -1934,9 +1934,9 @@ def parse_download():
 
 
     args = parser.parse_args(sys.argv[2:])
-    if sys.argv[2:] == []:
+    if not sys.argv[2:] or sys.argv[2] in ('-h', '--help'):
         parser.print_usage()
-        mutils.shutdown(1)
+        mutils.shutdown(0)
     mutils.startup()
 
 
@@ -2018,9 +2018,9 @@ def parse_calc_motu():
     #parser.add_argument("-c", action="store_true",help="Write second output file with relative abundances")
 
     args = parser.parse_args(sys.argv[2:])
-    if sys.argv[2:] == []:
+    if not sys.argv[2:] or sys.argv[2] in ('-h', '--help'):
         parser.print_usage()
-        mutils.shutdown(1)
+        mutils.shutdown(0)
 
 
     mgc_file = pathlib.Path(args.i)
@@ -2083,6 +2083,10 @@ def main():
         Type motus <command> to print the help menu for a specific command
         ''',formatter_class=CapitalisedHelpFormatter,add_help=False)
 
+    if len(sys.argv) < 2 or sys.argv[1] in ('-h', '--help'):
+        parser.print_usage()
+        mutils.shutdown(0)
+
     parser.add_argument('command', choices=["profile", "map_tax", "calc_mgc", "calc_motu", "download", "merge", "downloadMGDB", "batch_profile", "classify", 'prep_long', 'genomes'])
     args: argparse.Namespace = parser.parse_args(sys.argv[1:2])
     if args.command == 'profile':
@@ -2110,7 +2114,7 @@ def main():
     else:
         parser.print_usage()
         print(f'Unrecognized command {args}')
-        mutils.shutdown(1)
+        mutils.shutdown(0)
     mutils.shutdown(0)
 
 
