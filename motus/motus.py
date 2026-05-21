@@ -1829,15 +1829,21 @@ def parse_downloadDB():
         -f, --force
             Force download even when database is already present
 
+        --toy
+            Download the lightweight toy database (4.1-toy) instead of the full database.
+            Useful for testing and development.
+
         -db  PATH
             Alternative path for the mOTUs marker gene database
            ''', formatter_class=CapitalisedHelpFormatter, add_help=False)
 
     parser.add_argument("-f", "--force", action="store_true", dest='f')
+    parser.add_argument("--toy", action="store_true", default=False, dest='toy')
     parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
     args = parser.parse_args(sys.argv[2:])
 
     force_download = args.f
+    remote_url = mutils.MOTUS_MGDB_REMOTE_LOCATION_41_toy if args.toy else mutils.MOTUS_MGDB_REMOTE_LOCATION
     db_parent = pathlib.Path(args.db)
     db_location = db_parent / 'db_mOTU'
     db_marker = db_location / 'db_mOTU.downloaded'
@@ -1857,7 +1863,7 @@ def parse_downloadDB():
     if dest_tar_gz_file.is_file():
         dest_tar_gz_file.unlink()
 
-    with urllib.request.urlopen(mutils.MOTUS_MGDB_REMOTE_LOCATION) as response:
+    with urllib.request.urlopen(remote_url) as response:
         total = int(response.info().get("Content-Length", -1))
         with open(str(dest_tar_gz_file), "wb") as f, tqdm.tqdm(total=total, unit='B', unit_scale=True, desc='Downloading mOTUs marker gene database') as pbar:
             while True:

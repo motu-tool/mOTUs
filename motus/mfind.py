@@ -284,10 +284,13 @@ def _get_annodb_path(db_location: pathlib.Path = None) -> str:
     annodb_marker   = db_location / 'mOTUsv4.0.annotation.db.downloaded'
     mgdb_marker     = db_location / 'db_mOTU.downloaded'
 
+    if not mgdb_marker.exists():
+        logging.error('mOTUs marker gene database not downloaded. Download database with "motus downloadMGDB"')
+        mutils.shutdown(1)
+    if any(db_location.glob('mOTUsv*-toy.db')):
+        logging.error('The genomes and download commands are not available with the toy database.')
+        mutils.shutdown(1)
     if not annodb_marker.exists():
-        if not mgdb_marker.exists():
-            logging.error('mOTUs marker gene database not downloaded. Download database with "motus downloadMGDB"')
-            mutils.shutdown(1)
         logging.info('Need to download mOTUs annotation database (~17GB))')
         with urllib.request.urlopen(mutils.MOTUS_ANNODB_REMOTE_LOCATION) as response:
             total = int(response.info().get("Content-Length", -1))
