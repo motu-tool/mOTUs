@@ -1638,6 +1638,7 @@ def classify(genome_files: List[pathlib.Path], output_file: pathlib.Path, thread
     fetchmgs_fna = root_tmp_folder.joinpath('motus_classify.fna')
     fetchmgs_tsv = root_tmp_folder.joinpath('motus_classify.tsv')
     fetchmgs_genomes_done = []
+
     if fetchmgs_marker.exists():
         with open(fetchmgs_marker) as handle:
             for line in handle:
@@ -1689,11 +1690,12 @@ def classify(genome_files: List[pathlib.Path], output_file: pathlib.Path, thread
     if True:  # if the marker file with all genomes exists?
         logging.info(f'\tAligning genome marker genes against the mOTUs marker gene database using vsearch')
         vsearch_command = f'vsearch --threads {threads} --usearch_global {str(fetchmgs_fna)} --db {MOTUS_DB.get_bwa_index()} --strand both --id 0.8 --maxaccepts 2000 --maxrejects 2000 --mincols 20 --userout {str(alignment_m8)} --userfields query+target+id+alnlen+mism+ids+ql+tl --mincols 40'
-        try:
-            subprocess.run(vsearch_command,shell=True, stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,check=True)
-        except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"Command {vsearch_command} failed") from e
-        logging.info(f'\tFinished alignment')
+        if True:
+            try:
+                subprocess.run(vsearch_command,shell=True, stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,check=True)
+            except subprocess.CalledProcessError as e:
+                raise RuntimeError(f"Command {vsearch_command} failed") from e
+            logging.info(f'\tFinished alignment')
 
         logging.info(f'\tCombining individual marker gene distances into genome to genome distances')
         query_genome_2_unfilt_hits = collections.defaultdict(list)
@@ -1710,6 +1712,8 @@ def classify(genome_files: List[pathlib.Path], output_file: pathlib.Path, thread
             for (header, sequence) in FastaIO.SimpleFastaParser(handle):
                 [genome, cog] = header.rsplit('.', 1)
                 query_genome_2_cogs[genome][cog] = len(sequence)
+
+        
         motu_2_cogs = MOTUS_DB.get_motu_2_median_mgc_gene_length()
         genome_2_motus = {}
         for query_genome, query_cog_2_length in query_genome_2_cogs.items():
@@ -1764,10 +1768,11 @@ def classify(genome_files: List[pathlib.Path], output_file: pathlib.Path, thread
                     tot_matches += best_aln[0]
                     tot_length += best_aln[1]
                 combined_distance = tot_matches * 100.0 / tot_length
-                if combined_distance >= 96.5:
-                    motu_2_combined_distance[motu] = combined_distance
-            if len(motu_2_combined_distance) == 0:
-                motu_2_combined_distance['Unknown'] = -1.0
+                #if combined_distance >= 96.5:
+                motu_2_combined_distance[motu] = combined_distance
+            # if len(motu_2_combined_distance) == 0:
+            #     motu_2_combined_distance['Unknown'] = -1.0
+
             genome_2_motus[query_genome] = motu_2_combined_distance
         
         with open(combined_distances_file, 'w') as handle:
@@ -1784,20 +1789,37 @@ def classify(genome_files: List[pathlib.Path], output_file: pathlib.Path, thread
             dist = float(dist)
             genome_2_motus[genome].append((motu, dist))
     
-    genome_2_best_motu = {}
+    genome_2_sorted_hits = {}
     for genome, motus in genome_2_motus.items():
-        best_dist = max([x[1] for x in motus])
-        best_motu = sorted([x for x in motus if x[1] == best_dist])[0]
-        genome_2_best_motu[genome] = best_motu #(motu, dist)
+        genome_2_sorted_hits[genome] = sorted(motus, key=lambda x: x[1], reverse=True)
+
+    def _fmt_hits(hits):
+        return ';'.join(f'{m}:{round(d, 2)}' for m, d in hits) or 'None'
+
     with open(fetchmgs_tsv) as handle, open(output_file, 'w') as outhandle:
-        outhandle.write('GENOME\tMOTU\tSIMILARITY\tNUM_MGS\n')
+        outhandle.write('GENOME\tMOTU\tSIMILARITY\tNUM_MGS\tOTHER_SIGNIFICANT_HITS\tOTHER_HITS\n')
         handle.readline()
         for line in handle:
             [genome, num_mgs, mgs] = line.strip().split('\t')
-            (motu, dist) = genome_2_best_motu.get(genome, ('<6MGs-no_mOTU', '-1'))
-            if motu == 'Unknown':
-                motu = 'Novel-no_mOTU'
-            tmp = '\t'.join([genome, motu, str(dist), num_mgs])
+            sorted_hits = genome_2_sorted_hits.get(genome, [])
+            if not sorted_hits:
+                tmp = '\t'.join([genome, '<6MGs-no_mOTU', '-1', num_mgs, 'None', 'None'])
+            else:
+                best_motu, best_dist = sorted_hits[0]
+                if best_motu == 'Unknown' or best_dist < 96.5:
+                    motu_col = 'Novel-no_mOTU'
+                    sim_col = '-1'
+                    other_significant = []
+                    other_hits = sorted_hits[:5]
+                else:
+                    motu_col = best_motu
+                    sim_col = str(round(best_dist, 2))
+                    other_significant = [(m, d) for m, d in sorted_hits[1:] if d >= 96.5]
+                    non_significant    = [(m, d) for m, d in sorted_hits[1:] if d < 96.5]
+                    allowed = max(0, 5 - len(other_significant))
+                    other_hits = non_significant[:allowed]
+                tmp = '\t'.join([genome, motu_col, sim_col, num_mgs,
+                                 _fmt_hits(other_significant), _fmt_hits(other_hits)])
             outhandle.write(f'{tmp}\n')
             
         
