@@ -421,16 +421,27 @@ class MotusDB:
         """Collect the mOTUs MGDB files, check their existence and,
         if the load parameter is set, load their contents into memory.
 
+        The pattern of the file determines the version
+
+        e.g 
+        mOTUsv4.0.db --> version 4.0 of the database
+        mOTUsv4.1-toy.db --> version 4.1-toy
+        mOTUsv4.1.db --> version 4.0
+
+        version shortened to XXX
+
         Following files are expected:
-        1. mOTUs.version --> holds the version of the database
-        2. mOTUsNR.fasta.gz --> Marker gene sequences in gzipped fasta file
-        3. mOTUsNR.fasta.gz.* --> the BWA index
-        4. mOTUsv4.0.map.tsv.gz --> Link between mOTU, MGC and MG
-        5. mOTUsv4.0.db.blocklist.gz --> contains MGs that should be removed from the alignment file
-        6. mOTUsv4.0.gtdb.taxonomy.rep.tsv.gz --> The GTDB R220 annotation of mOTUs by their rep genome
-        7. mOTUsv4.0.gtdb.taxonomy.80mv.tsv.gz --> The GTDB R220 annotation of mOTUs by their 80% majority vote
-        8. mOTUsv4.0.genomes.tsv.gz --> Genome metadata
-        9.
+        1. mOTUsvXXX.db --> information on database, including version
+        2. mOTUsvXXX.db.fna.gz --> Marker gene sequences in gzipped fasta file
+        3. mOTUsvXXX.db.fna.gz.* --> the BWA index
+        4. mOTUsvXXX.map.tsv.gz --> Link between mOTU, MGC and MG
+        5. mOTUsvXXX.db.blocklist.gz --> contains MGs that should be removed from the alignment file
+        6. mOTUsvXXX.gtdb.taxonomy.rep.tsv.gz --> The GTDB R220 annotation of mOTUs by their rep genome
+        7. mOTUsvXXX.gtdb.taxonomy.80mv.tsv.gz --> The GTDB R220 annotation of mOTUs by their 80% majority vote
+        8. mOTUsvXXX.genomes.tsv.gz --> Genome metadata
+
+        9. mOTUsvXXX.annotation.db --> the mOTUs annotation sql database
+
 
         :param mOTUsdb_folder:
         :return: None
@@ -442,19 +453,41 @@ class MotusDB:
             logging.error('mOTUs marker gene database not downloaded. Download database with "motus downloadMGDB"')
             mutils.shutdown(1)
 
-        versions_file = mOTUsdb_folder.joinpath('mOTUsv4.0.db').resolve()
-        index_files = [mOTUsdb_folder.joinpath(f).resolve() for f in ['mOTUsv4.0.db.fna.gz', 'mOTUsv4.0.db.fna.gz.amb', 'mOTUsv4.0.db.fna.gz.ann', 'mOTUsv4.0.db.fna.gz.bwt', 'mOTUsv4.0.db.fna.gz.pac', 'mOTUsv4.0.db.fna.gz.sa']]
-        mgs_file = mOTUsdb_folder.joinpath('mOTUsv4.0.map.tsv.gz').resolve()
-        blocklist_file = mOTUsdb_folder.joinpath('mOTUsv4.0.db.blocklist.gz').resolve()
-        gtdb_taxonomy_file_reps = mOTUsdb_folder.joinpath('mOTUsv4.0.gtdb.taxonomy.rep.tsv.gz').resolve()
-        gtdb_taxonomy_file_mv = mOTUsdb_folder.joinpath('mOTUsv4.0.gtdb.taxonomy.80mv.tsv.gz').resolve()
-        genome_data_file = mOTUsdb_folder.joinpath('mOTUsv4.0.genomes.tsv.gz').resolve()
+        # Discover the database version from the mOTUsv*.db file on disk,
+        # excluding mOTUsv*.annotation.db which lives in the same folder.
+        db_files = sorted(
+            f for f in mOTUsdb_folder.glob('mOTUsv*.db')
+            if not f.name.endswith('.annotation.db')
+        )
+        if len(db_files) == 0:
+            logging.error(f'No mOTUsv*.db file found in {mOTUsdb_folder}. Is the database complete?')
+            mutils.shutdown(1)
+        if len(db_files) > 1:
+            logging.error(f'Multiple mOTUsv*.db files found in {mOTUsdb_folder}: {[f.name for f in db_files]}. Cannot determine version.')
+            mutils.shutdown(1)
+        versions_file = db_files[0].resolve()
+        db_prefix_from_filename = versions_file.stem[len('mOTUsv'):]  # e.g. '4.0' or '4.1-toy'
 
         self._mOTUsdb_folder = mOTUsdb_folder
 
         with open(versions_file) as handle:
             self.database_version = handle.readline().strip().split()[-1]
             self.database_date = handle.readline().strip().split()[-1]
+
+        if self.database_version != db_prefix_from_filename:
+            logging.error(f'Database version mismatch: filename "{versions_file.name}" implies version "{db_prefix_from_filename}" but the file reports version "{self.database_version}". Quitting ...')
+            mutils.shutdown(1)
+        logging.info(f'mOTUs database version: {self.database_version}')
+        v = f'mOTUsv{self.database_version}'
+        index_files = [mOTUsdb_folder.joinpath(f).resolve() for f in [
+            f'{v}.db.fna.gz', f'{v}.db.fna.gz.amb', f'{v}.db.fna.gz.ann',
+            f'{v}.db.fna.gz.bwt', f'{v}.db.fna.gz.pac', f'{v}.db.fna.gz.sa'
+        ]]
+        mgs_file = mOTUsdb_folder.joinpath(f'{v}.map.tsv.gz').resolve()
+        blocklist_file = mOTUsdb_folder.joinpath(f'{v}.db.blocklist.gz').resolve()
+        gtdb_taxonomy_file_reps = mOTUsdb_folder.joinpath(f'{v}.gtdb.taxonomy.rep.tsv.gz').resolve()
+        gtdb_taxonomy_file_mv = mOTUsdb_folder.joinpath(f'{v}.gtdb.taxonomy.80mv.tsv.gz').resolve()
+        genome_data_file = mOTUsdb_folder.joinpath(f'{v}.genomes.tsv.gz').resolve()
         self.index_location = index_files[0]
         for index_file in index_files + [mgs_file, blocklist_file, gtdb_taxonomy_file_reps, gtdb_taxonomy_file_mv, genome_data_file]:
             if not index_file.exists():
@@ -495,18 +528,21 @@ class MotusDB:
                 for line in handle:
                     self.blocklist_mg.add(line.strip())
             with gzip.open(gtdb_taxonomy_file_reps, 'rt') as handle:
-                #MOTU    GENOME  GTDBR220
-                handle.readline()
+                header = [h.lstrip('#') for h in handle.readline().strip().split('\t')]
+                motu_col   = header.index('MOTU')
+                genome_col = header.index('GENOME')
+                gtdb_col   = next(i for i, h in enumerate(header) if h in ('GTDB', 'GTDBR220'))
                 for line in handle:
-                    [motu, representative, gtdb_taxonomy] = line.strip().split('\t')
-                    self.motu_2_representative_genome_gtdb_tax[motu] = gtdb_taxonomy
-                    self.motu_2_representative[motu] = representative
+                    cols = line.strip().split('\t')
+                    self.motu_2_representative_genome_gtdb_tax[cols[motu_col]] = cols[gtdb_col]
+                    self.motu_2_representative[cols[motu_col]] = cols[genome_col]
             with gzip.open(gtdb_taxonomy_file_mv, 'rt') as handle:
-                #MOTU    GENOME  GTDBR220
-                handle.readline()
+                header = [h.lstrip('#') for h in handle.readline().strip().split('\t')]
+                motu_col = header.index('MOTU')
+                gtdb_col = next(i for i, h in enumerate(header) if h in ('GTDB', 'GTDBR220'))
                 for line in handle:
-                    [motu, gtdb_taxonomy] = line.strip().split('\t')
-                    self.motu_2_mv_gtdb_tax[motu] = gtdb_taxonomy
+                    cols = line.strip().split('\t')
+                    self.motu_2_mv_gtdb_tax[cols[motu_col]] = cols[gtdb_col]
             logging.info(f'Loading database finished. Version {self.database_version} (version date: {self.database_date}) contains {len(self.motus)} mOTUs, {len(self.mgc_2_motu)} markergeneclusters and {len(self.mgh_2_mglength)} markergenes.')
 
 
