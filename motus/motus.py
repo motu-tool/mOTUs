@@ -1690,7 +1690,7 @@ def classify(genome_files: List[pathlib.Path], output_file: pathlib.Path, thread
     if True:  # if the marker file with all genomes exists?
         logging.info(f'\tAligning genome marker genes against the mOTUs marker gene database using vsearch')
         vsearch_command = f'vsearch --threads {threads} --usearch_global {str(fetchmgs_fna)} --db {MOTUS_DB.get_bwa_index()} --strand both --id 0.8 --maxaccepts 2000 --maxrejects 2000 --mincols 20 --userout {str(alignment_m8)} --userfields query+target+id+alnlen+mism+ids+ql+tl --mincols 40'
-        if True:
+        if False:
             try:
                 subprocess.run(vsearch_command,shell=True, stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,check=True)
             except subprocess.CalledProcessError as e:
@@ -1793,33 +1793,20 @@ def classify(genome_files: List[pathlib.Path], output_file: pathlib.Path, thread
     for genome, motus in genome_2_motus.items():
         genome_2_sorted_hits[genome] = sorted(motus, key=lambda x: x[1], reverse=True)
 
-    def _fmt_hits(hits):
-        return ';'.join(f'{m}:{round(d, 2)}' for m, d in hits) or 'None'
-
     with open(fetchmgs_tsv) as handle, open(output_file, 'w') as outhandle:
-        outhandle.write('GENOME\tMOTU\tSIMILARITY\tNUM_MGS\tOTHER_SIGNIFICANT_HITS\tOTHER_HITS\n')
+        outhandle.write('GENOME\tCLOSEST_MOTU\tSIMILARITY\tASSIGNED_TO_MOTU\tTAXONOMY\t#MGs\n')
         handle.readline()
         for line in handle:
             [genome, num_mgs, mgs] = line.strip().split('\t')
             sorted_hits = genome_2_sorted_hits.get(genome, [])
             if not sorted_hits:
-                tmp = '\t'.join([genome, '<6MGs-no_mOTU', '-1', num_mgs, 'None', 'None'])
+                motu_col = 'no_mOTU_<6MGs' if int(num_mgs) < 6 else 'no_mOTU'
+                tmp = '\t'.join([genome, motu_col, '-1.0', 'False', 'd__;p__;c__;o__;f__;g__;s__', num_mgs])
             else:
                 best_motu, best_dist = sorted_hits[0]
-                if best_motu == 'Unknown' or best_dist < 96.5:
-                    motu_col = 'Novel-no_mOTU'
-                    sim_col = '-1'
-                    other_significant = []
-                    other_hits = sorted_hits[:5]
-                else:
-                    motu_col = best_motu
-                    sim_col = str(round(best_dist, 2))
-                    other_significant = [(m, d) for m, d in sorted_hits[1:] if d >= 96.5]
-                    non_significant    = [(m, d) for m, d in sorted_hits[1:] if d < 96.5]
-                    allowed = max(0, 5 - len(other_significant))
-                    other_hits = non_significant[:allowed]
-                tmp = '\t'.join([genome, motu_col, sim_col, num_mgs,
-                                 _fmt_hits(other_significant), _fmt_hits(other_hits)])
+                within_cutoff = best_dist >= 96.5
+                taxonomy = MOTUS_DB.get_mv_tax_for_motu(best_motu)
+                tmp = '\t'.join([genome, best_motu, str(round(best_dist, 2)), str(within_cutoff), taxonomy, num_mgs])
             outhandle.write(f'{tmp}\n')
             
         
