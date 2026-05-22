@@ -1690,7 +1690,7 @@ def classify(genome_files: List[pathlib.Path], output_file: pathlib.Path, thread
     if True:  # if the marker file with all genomes exists?
         logging.info(f'\tAligning genome marker genes against the mOTUs marker gene database using vsearch')
         vsearch_command = f'vsearch --threads {threads} --usearch_global {str(fetchmgs_fna)} --db {MOTUS_DB.get_bwa_index()} --strand both --id 0.8 --maxaccepts 2000 --maxrejects 2000 --mincols 20 --userout {str(alignment_m8)} --userfields query+target+id+alnlen+mism+ids+ql+tl --mincols 40'
-        if False:
+        if True:
             try:
                 subprocess.run(vsearch_command,shell=True, stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,check=True)
             except subprocess.CalledProcessError as e:
