@@ -87,11 +87,9 @@ After installation, you can test whether the tool was installed correctly by exe
 $ motus --help
 ```
 
-**Note** Currently the command to execute mOTUs is `python motus/motus.py` which will be replaced with `motus` once the tool is installed via `pip`.
-
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: 4.0.4
+    Version: 4.1.0
 
 
     References:
@@ -155,7 +153,7 @@ $ motus profile
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: 4.0.4
+    Version: 4.1.0
 
 
     References:
@@ -199,7 +197,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
     Algorithm options:
         -g, --marker-genes  INT
-            Required number of marker genes for a mOTU to be called present: 
+            Required number of marker genes for a mOTU to be called present:
             1=higher recall, 6=higher precision, 10=maximum (default: 3)
 
         -l, --alignment-length  INT
@@ -212,6 +210,12 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
             Which scale the abundances are reported in (default: INSERT_SCALED)
             Choices: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
 
+        --skip-pair-check
+            Skip validation that forward and reverse read headers match.
+            Use when reads are unsorted or contain singletons.
+
+        -db  PATH
+            Alternative path for the mOTUs marker gene database
 
 ```
 
@@ -225,7 +229,7 @@ $ motus map_tax
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: 4.0.4
+    Version: 4.1.0
 
 
     References:
@@ -270,6 +274,13 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
         -t, --threads  INT
             Number of threads (default: 1)
 
+        --skip-pair-check
+            Skip validation that forward and reverse read headers match.
+            Use when reads are unsorted or contain singletons.
+
+        -db  PATH
+            Alternative path for the mOTUs marker gene database
+
 ```
 
 
@@ -283,7 +294,7 @@ $ motus calc_mgc
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: 4.0.4
+    Version: 4.1.0
 
 
     References:
@@ -317,6 +328,9 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
         -l, --alignment-length  INT
             Minimum length of the alignment (bp) (default: 75)
 
+        -db  PATH
+            Alternative path for the mOTUs marker gene database
+
 ```
 ---
 
@@ -328,7 +342,7 @@ $ motus calc_motu
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: 4.0.4
+    Version: 4.1.0
 
 
     References:
@@ -363,12 +377,16 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
     Algorithm options:
         -g, --marker-genes  INT
-            Required number of marker genes for a mOTU to be called present: 
+            Required number of marker genes for a mOTU to be called present:
             1=higher recall, 6=higher precision, 10=maximum (default: 3)
 
         -y, --counting-mode  STR
             Which scale the abundances are reported in (default: INSERT_SCALED)
             Choices: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
+
+        -db  PATH
+            Alternative path for the mOTUs marker gene database (default: built-in location)
+
 ```
 
 ---
@@ -381,7 +399,7 @@ $ motus merge
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: 4.0.4
+    Version: 4.1.0
 
 
     References:
@@ -412,6 +430,9 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
         -o, --output-file  FILE
             Output file name [required]
 
+    Database options:
+        -db  PATH
+            Alternative path for the mOTUs marker gene database
 
 ```
 
@@ -427,7 +448,7 @@ $ motus downloadMGDB
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: 4.0.4
+    Version: 4.1.0
 
 
     References:
@@ -453,6 +474,14 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
         -f, --force
             Force download even when database is already present
 
+        --toy
+            Download the lightweight toy database (v4.1-toy) instead of the full database.
+            Useful for testing and development. Note: the genomes and download commands
+            are not available with the toy database.
+
+        -db  PATH
+            Alternative path for the mOTUs marker gene database
+
 ```
 
 
@@ -467,7 +496,7 @@ $ motus classify
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: 4.0.4
+    Version: 4.1.0
 
 
     References:
@@ -483,6 +512,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
     Summary:
         The classify command takes a list of genome sequence files as input and
         assigns these genomes to existing mOTUs in the database.
+        Requires vsearch to be installed and on PATH.
 
 
     Usage:
@@ -496,15 +526,27 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
     Output options:
         -o, --output-file  FILE
-            Output file name. Each line contains a genome and its associated mOTU [required]
+            Output file name [required]
 
     Algorithm options:
         -t, --threads  INT
             Number of threads (default: 1)
 
-
+        -db  PATH
+            Alternative path for the mOTUs marker gene database
 
 ```
+
+The output file is a tab-separated table with one row per input genome:
+
+| Column | Description |
+|---|---|
+| `GENOME` | Input genome filename |
+| `CLOSEST_MOTU` | Best-matching mOTU by combined marker gene similarity. `no_mOTU` if no hit was found with ≥6 marker genes; `no_mOTU_<6MGs` if fewer than 6 marker genes were extracted. |
+| `SIMILARITY` | Combined percent identity to the closest mOTU (0–100). `-1.0` if no mOTU could be assigned. |
+| `ASSIGNED_TO_MOTU` | `True` if similarity ≥96.5% (genome is within the mOTU boundary), `False` otherwise. |
+| `TAXONOMY` | GTDB taxonomy of the closest mOTU. `d__;p__;c__;o__;f__;g__;s__` if no mOTU was assigned. |
+| `#MGs` | Number of marker genes extracted from the genome by fetchMGs. |
 
 
 ---
@@ -519,7 +561,7 @@ $ motus prep_long
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: 4.0.4
+    Version: 4.1.0
 
 
     References:
@@ -571,20 +613,19 @@ $ motus download
 ```
 
 ```bash
-
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: 4.0.4
-    
-    
+    Version: 4.1.0
+
+
     References:
-        Profiler: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
-        taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
+        Profiler: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand
+        taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022).
         doi: https://doi.org/10.1186/s40168-022-01410-z
 
-        Database: Dmitrijeva, Ruscheweyh et al. The mOTUs online database provides web-accessible 
-        genomic context to taxonomic profiling of microbial communities. Nucleic Acids Research (2025). 
+        Database: Dmitrijeva, Ruscheweyh et al. The mOTUs online database provides web-accessible
+        genomic context to taxonomic profiling of microbial communities. Nucleic Acids Research (2025).
         doi: https://doi.org/10.1093/nar/gkae1004
-    
+
 
     Summary:
         The download command downloads listed genome files from mOTUs-db.
@@ -608,6 +649,10 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
         -r, --representatives
             Download only sequences from representative genomes.
 
+    Database options:
+        -db  PATH
+            Alternative path for the mOTUs marker gene database
+
 ```
 
 
@@ -625,16 +670,16 @@ $ motus genomes
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
-    Version: 4.0.4
+    Version: 4.1.0
 
-    
+
     References:
-        Profiler: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand 
-        taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022). 
+        Profiler: Ruscheweyh, Milanese et al. Cultivation-independent genomes greatly expand
+        taxonomic-profiling capabilities of mOTUs across various environments. Microbiome (2022).
         doi: https://doi.org/10.1186/s40168-022-01410-z
 
-        Database: Dmitrijeva, Ruscheweyh et al. The mOTUs online database provides web-accessible 
-        genomic context to taxonomic profiling of microbial communities. Nucleic Acids Research (2025). 
+        Database: Dmitrijeva, Ruscheweyh et al. The mOTUs online database provides web-accessible
+        genomic context to taxonomic profiling of microbial communities. Nucleic Acids Research (2025).
         doi: https://doi.org/10.1093/nar/gkae1004
 
 
@@ -643,28 +688,36 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
         or taxonomic annotations and returns a list of genomes matching indicated query.
 
 
-    Usage:    
+    Usage:
         motus genomes -i FILE -o FILE [options]
         motus genomes -i STR [STR ...] -o FILE [options]
+        motus genomes -l GENOME|TAXON|PFAM|KEGG|EGGNOG -o FILE [options]
 
 
     Input options:
         -i, --input-queries  FILE/STR
             Can be either a list of search queries or a text file listing search queries
-            with one line per query. Queries can be genome or mOTUs identifiers, PFAM, KEGG, EGGNOG, 
+            with one line per query. Queries can be genome or mOTUs identifiers, PFAM, KEGG, EGGNOG,
             or GTDB taxonomy names. If the query does not exactly match any database entry,
-            alternative queries will be suggested [required]
+            alternative queries will be suggested [required unless -l is used]
+
+        -l, --list  STR
+            List all searchable entries for a given category and write them to -o.
+            Choose from [GENOME, TAXON, PFAM, KEGG, EGGNOG]. When used, -i is not required.
 
     Output options:
         -o, --output-file  FILE
-            Output file containing a list of genome identifiers matching search queries and their 
+            Output file containing a list of genome identifiers matching search queries and their
             annotations as indicated by the -d parameter. This output file can be used as input
             for the motus download command [required]
 
         -d, --details  STR [STR ...]
             List of annotations to report. Choose any combination of [KEGG, PFAM, EGGNOG, TAXONOMY],
             for example, -d KEGG PFAM.
-                            
+
+        -db  PATH
+            Alternative path for the mOTUs database
+
 ```
     
 
@@ -675,3 +728,48 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 ## ❓ Need Help?
 
 Write an issue on GitHub
+
+---
+
+## 📋 Changelog
+
+### v4.1.0
+
+**Database**
+- Default marker gene database updated to v4.1
+- Annotation database (used by `genomes`) is now version-matched to the installed marker gene DB; v4.0 and v4.1 annotation DBs are downloaded and stored separately
+- GTDB taxonomy files parsed by column name rather than position to handle format differences between v4.0 (`GTDBR220`) and v4.1 (`GTDB`)
+- Toy database added (`downloadMGDB --toy`): lightweight database for testing; disables `genomes` and `download` commands
+
+**classify**
+- Output columns changed to `GENOME`, `CLOSEST_MOTU`, `SIMILARITY`, `ASSIGNED_TO_MOTU`, `TAXONOMY`, `#MGs`
+- Reports one best mOTU per genome with GTDB taxonomy; `ASSIGNED_TO_MOTU` is `True` if similarity ≥96.5%
+- Unclassified genomes reported as `no_mOTU` (hits found but all below threshold) or `no_mOTU_<6MGs` (fewer than 6 marker genes extracted)
+
+**CLI**
+- `-db PATH` flag added to all commands to specify a custom database parent folder
+- `--skip-pair-check` added to `profile` and `map_tax` for unsorted inputs or inputs containing singletons
+- `motus genomes -l GENOME|TAXON|PFAM|KEGG|EGGNOG` lists all searchable entries of a given type without requiring `-i`
+- Tool checks at startup whether `bwa` is on PATH (hard error if missing) and whether `vsearch` is on PATH (warning if missing)
+
+**Bug fixes**
+- Database download: incomplete downloads (content-length mismatch) no longer leave a broken DB with a valid completion marker
+- `merge`: blank lines in a profile list file no longer cause a cryptic `FileNotFoundError`
+- `MergedmOTUsFile`: class-level `_singlemotusfiles` dict replaced with an instance variable, preventing state leakage between calls in the same process
+- Multimapper resolution: replaced non-deterministic `random.choice` with `sorted()[0]` for reproducible MG selection within an MGC
+- Edge correction: fixed inaccurate weight distribution in inverse padding
+
+**Algorithm**
+- `INSERT_NORM` and `INSERT_SCALED` calculation corrected: length-normalisation was incorrectly folded into the scaling denominator
+
+---
+
+### v4.0.x
+
+- Initial public release of mOTUs4 with database v4.0 (124,295 mOTUs)
+- Three-stage pipeline: `map_tax` → `calc_mgc` → `calc_motu`; `profile` runs all three in sequence
+- `classify` command: genome-to-mOTU assignment via fetchMGs + vsearch
+- `genomes` and `download` commands for programmatic access to mOTUs-db genome sequences
+- `merge` command for combining multiple single-sample profiles into one table
+- `prep_long` command: splits long reads into ~300 bp fragments for profiling
+- Read name normalisation: `/1`/`/2` suffixes stripped and re-appended as BAM qname tags to track orientation through the pipeline
