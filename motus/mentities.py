@@ -904,10 +904,9 @@ class SinglemOTUsFile:
 
 
 class MergedmOTUsFile:
-    # data
-    _singlemotusfiles = {}
 
     def __init__(self, motus_files: List[pathlib.Path]) -> None:
+        self._singlemotusfiles = {}
         # check that there are >1 motus files
         if not motus_files or len(motus_files) < 2:
             logging.error(f'Provide at least 2 mOTUs files for merging.')

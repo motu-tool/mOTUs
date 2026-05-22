@@ -277,12 +277,11 @@ class SearchDB:
 def _get_annodb_path(db_location: pathlib.Path = None) -> str:
     """Ensure the annotation DB is present and return its path as a string.
     Downloads it on first use (requires the marker gene DB to already exist).
+    The annotation DB version is derived from the marker gene DB on disk.
     """
     if db_location is None:
         db_location = mutils.DEFAULT_MOTUS_MGDB_LOCATION
-    annodb_location = db_location / 'mOTUsv4.0.annotation.db'
-    annodb_marker   = db_location / 'mOTUsv4.0.annotation.db.downloaded'
-    mgdb_marker     = db_location / 'db_mOTU.downloaded'
+    mgdb_marker = db_location / 'db_mOTU.downloaded'
 
     if not mgdb_marker.exists():
         logging.error('mOTUs marker gene database not downloaded. Download database with "motus downloadMGDB"')
@@ -290,9 +289,28 @@ def _get_annodb_path(db_location: pathlib.Path = None) -> str:
     if any(db_location.glob('mOTUsv*-toy.db')):
         logging.error('The genomes and download commands are not available with the toy database.')
         mutils.shutdown(1)
+
+    db_files = sorted(f for f in db_location.glob('mOTUsv*.db') if not f.name.endswith('.annotation.db'))
+    if len(db_files) != 1:
+        logging.error(f'Cannot determine database version in {db_location}.')
+        mutils.shutdown(1)
+    db_version = db_files[0].stem[len('mOTUsv'):]
+
+    if db_version == mutils.MOTUS_ANNODB_REMOTE_LOCATION_40_version:
+        remote_url = mutils.MOTUS_ANNODB_REMOTE_LOCATION_40
+    elif db_version == mutils.MOTUS_ANNODB_REMOTE_LOCATION_41_version:
+        remote_url = mutils.MOTUS_ANNODB_REMOTE_LOCATION_41
+    else:
+        logging.error(f'No annotation database available for marker gene database version {db_version}.')
+        mutils.shutdown(1)
+
+    annodb_filename = f'mOTUsv{db_version}.annotation.db'
+    annodb_location = db_location / annodb_filename
+    annodb_marker   = db_location / f'{annodb_filename}.downloaded'
+
     if not annodb_marker.exists():
-        logging.info('Need to download mOTUs annotation database (~17GB))')
-        with urllib.request.urlopen(mutils.MOTUS_ANNODB_REMOTE_LOCATION) as response:
+        logging.info(f'Need to download mOTUs annotation database v{db_version} (~17GB)')
+        with urllib.request.urlopen(remote_url) as response:
             total = int(response.info().get("Content-Length", -1))
             with open(str(annodb_location), "wb") as f, tqdm.tqdm(total=total, unit='B', unit_scale=True, desc='Downloading mOTUs annotation database') as pbar:
                 while True:
@@ -331,7 +349,7 @@ def find_genomes(search_tokens: List[str], output_file:pathlib.Path, annotations
 
     evaluate_expression = False
     DATABASE_PATH = _get_annodb_path(db_location)
-
+    print(DATABASE_PATH)
     search_tokens = sorted(set(search_tokens))
     search_token_2_genome_ids = {}
     resolver = SearchDB(DATABASE_PATH)

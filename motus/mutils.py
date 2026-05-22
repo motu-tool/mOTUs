@@ -1,6 +1,7 @@
 import logging
 import sys
 import pathlib
+import shutil
 from motus.mentities import MOTUS_PARAMETERS
 from motus.mentities import MOTUS_DB
 import Bio.SeqIO.FastaIO as FastaIO
@@ -12,8 +13,8 @@ MOTUS_VERSION = '4.1.0'
 DEFAULT_MOTUS_MGDB_PARENT_LOCATION = pathlib.Path(__file__).resolve().parent
 DEFAULT_MOTUS_MGDB_LOCATION = DEFAULT_MOTUS_MGDB_PARENT_LOCATION.joinpath('db_mOTU')
 DEFAULT_MOTUS_MGDB_LOCATION_MARKER = DEFAULT_MOTUS_MGDB_LOCATION.joinpath('db_mOTU.downloaded')
-DEFAULT_MOTUS_ANNODB_LOCATION = DEFAULT_MOTUS_MGDB_LOCATION.joinpath('mOTUsv4.0.annotation.db')
-DEFAULT_MOTUS_ANNODB_LOCATION_MARKER = DEFAULT_MOTUS_MGDB_LOCATION.joinpath('mOTUsv4.0.annotation.db.downloaded')
+DEFAULT_MOTUS_ANNODB_LOCATION = DEFAULT_MOTUS_MGDB_LOCATION.joinpath('mOTUsv4.1.annotation.db')
+DEFAULT_MOTUS_ANNODB_LOCATION_MARKER = DEFAULT_MOTUS_MGDB_LOCATION.joinpath('mOTUsv4.1.annotation.db.downloaded')
 
 
 MOTUS_MGDB_REMOTE_LOCATION_41_toy = 'https://zenodo.org/records/20322003/files/db_mOTU.tar.gz'
@@ -25,9 +26,16 @@ MOTUS_MGDB_REMOTE_LOCATION_41_version = '4.1'
 
 MOTUS_MGDB_REMOTE_LOCATION = MOTUS_MGDB_REMOTE_LOCATION_41
 
+MOTUS_GENOME_REMOTE_PREFIX = 'https://sunagawalab.ethz.ch/share/MOTUS/database/4.0/data/genomes/'
 
-MOTUS_GENOME_REMOTE_PREFIX = 'https://sunagawalab.ethz.ch/share/MOTUS/database/4.0/data/genomes/' 
-MOTUS_ANNODB_REMOTE_LOCATION = 'https://zenodo.org/records/17669279/files/mOTUsv4.0.annotation.db' # TODO the annotation database of 4.1 is missing
+
+MOTUS_ANNODB_REMOTE_LOCATION_40 = 'https://zenodo.org/records/17669279/files/mOTUsv4.0.annotation.db' 
+MOTUS_ANNODB_REMOTE_LOCATION_41 = 'https://zenodo.org/records/20343612/files/mOTUsv4.1.annotation.db' 
+MOTUS_ANNODB_REMOTE_LOCATION_40_version = '4.0' 
+MOTUS_ANNODB_REMOTE_LOCATION_41_version = '4.1' 
+MOTUS_ANNODB_REMOTE_LOCATION = MOTUS_ANNODB_REMOTE_LOCATION_41
+
+
 
 
 def normalize_header(header: str) -> str:
@@ -56,8 +64,12 @@ def startup() -> None:
 
     logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=logging.INFO, datefmt='%Y-%m-%d,%H:%M:%S')
 
-    #TODO TEST if bwa is installed and working
     logging.info(f'mOTU tool starting - {SAM_ID_FLAG}:{MOTUS_VERSION}')
+    if shutil.which('bwa') is None:
+        logging.error('bwa is not installed or not on PATH. Please install bwa 0.7.18.')
+        shutdown(1)
+    if shutil.which('vsearch') is None:
+        logging.warning('vsearch is not installed or not on PATH. The classify command will not work.')
 
 def cite_text() -> str:
     """Returns the mOTUs4 citations

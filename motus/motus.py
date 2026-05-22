@@ -1314,7 +1314,9 @@ def parse_merge():
         input_mOTUs_files_tmp = []
         with open(input_mOTUs_files[0]) as handle:
             for line in handle:
-                input_mOTUs_files_tmp.append(pathlib.Path(line.strip()))
+                line = line.strip()
+                if line:
+                    input_mOTUs_files_tmp.append(pathlib.Path(line))
         input_mOTUs_files = input_mOTUs_files_tmp
 
 
