@@ -649,6 +649,11 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
         -r, --representatives
             Download only sequences from representative genomes.
 
+    Algorithm options:
+        -t, --file-type  STR
+            File type to download (default: genome)
+            Choices: [genome, gene_fna, gene_faa, gene_gff, antismash, pfam, eggnog, kegg, trna, rrna]
+
     Database options:
         -db  PATH
             Alternative path for the mOTUs marker gene database

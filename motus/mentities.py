@@ -35,11 +35,11 @@ class GenomeLocator:
             mutils.shutdown(1)
         return genome in self._representative_genomes
 
-    def get_genome_path(self, genome: str) -> str:
+    def get_genome_path(self, genome: str, file_type: str = 'genome') -> str:
         if genome not in self._valid_genomes:
             logging.error(f'Genome "{genome}" does not exist. Quitting')
             mutils.shutdown(1)
-        return f'{mutils.MOTUS_GENOME_API_BASE_URL}/{genome}/download?file_type=genome'
+        return f'{mutils.MOTUS_GENOME_API_BASE_URL}/{genome}/download?file_type={file_type}'
 
 
 

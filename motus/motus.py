@@ -1329,24 +1329,25 @@ def parse_merge():
     mutils.shutdown(0)
 
 
-def download_genomes(genomes_to_download: List[str], genome_locator: mentities.GenomeLocator, output_folder: pathlib.Path, download_representative_genomes_only: bool) -> None:
-    """Takes a list of genomes and downloads them to the 
+def download_genomes(genomes_to_download: List[str], genome_locator: mentities.GenomeLocator, output_folder: pathlib.Path, download_representative_genomes_only: bool, file_type: str = 'genome') -> None:
+    """Takes a list of genomes and downloads them to the
     output folder. Only start downloading if all genome
     names are valid. Otherwise program will terminate
     with an error
 
     Args:
         genomes_to_download (List[str]): A list of genome names (1-n)
-        genome_locator (GenomeLocator): Object which maps genome names to URLs 
+        genome_locator (GenomeLocator): Object which maps genome names to URLs
         output_folder (pathlib.Path): The output folder. Will be created if it doesnt exist
         download_representative_genomes_only (bool): Only download representative genomes if set to True
+        file_type (str): File type to download (e.g. genome, genes_fna)
     Returns:
         None None: None
-    """    
-    
+    """
+
     genomes_to_download = set(genomes_to_download)
     logging.info(f'Checking existence of {len(genomes_to_download)} genome names.')
-    
+
 
     filtered_genomes_to_download = set()
     if download_representative_genomes_only:
@@ -1364,15 +1365,16 @@ def download_genomes(genomes_to_download: List[str], genome_locator: mentities.G
 
     genome_2_url = {}
     for genome in filtered_genomes_to_download:
-        genome_2_url[genome] = genome_locator.get_genome_path(genome)
-    
-    logging.info(f'Downloading {len(genome_2_url)} genomes to {output_folder}')
+        genome_2_url[genome] = genome_locator.get_genome_path(genome, file_type)
+
+    ext = mutils.MOTUS_GENOME_FILE_TYPE_EXTENSIONS.get(file_type, f'.{file_type}')
+    logging.info(f'Downloading {len(genome_2_url)} genomes ({file_type}) to {output_folder}')
 
     output_folder.mkdir(exist_ok=True, parents=True)
 
     with tqdm.tqdm(total=len(genome_2_url), desc='Downloading genomes', unit='genomes') as genome_pbar:
         for genome, genome_path in genome_2_url.items():
-            destpath = output_folder / f'{genome}.fa.gz'
+            destpath = output_folder / f'{genome}{ext}'
             with urllib.request.urlopen(genome_path) as response:
                 total = int(response.info().get("Content-Length", -1))
                 with open(destpath, "wb") as f, tqdm.tqdm(total=total, unit='B', unit_scale=True, desc=genome, leave=False) as byte_pbar:
@@ -1941,6 +1943,11 @@ def parse_download():
         -r, --representatives
             Download only sequences from representative genomes.
 
+    Algorithm options:
+        -t, --file-type  STR
+            File type to download (default: genome)
+            Choices: [genome, gene_fna, gene_faa, gene_gff, antismash, pfam, eggnog, kegg, trna, rrna]
+
     Database options:
         -db  PATH
             Alternative path for the mOTUs marker gene database
@@ -1950,6 +1957,7 @@ def parse_download():
     parser.add_argument("-o", "--output-folder", required=True, dest='o')
     parser.add_argument("-i", "--input-genomes", required=True, nargs="+", dest='i')
     parser.add_argument("-r", "--representatives", action="store_true", dest='r')
+    parser.add_argument("-t", "--file-type", type=str, default='genome', dest='t')
     parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
 
 
@@ -1982,7 +1990,7 @@ def parse_download():
 
     MOTUS_DB.load_motus_db(pathlib.Path(args.db) / 'db_mOTU', load=False)
     motus_search_db = mentities.GenomeLocator(MOTUS_DB.genome_metadata_file)
-    download_genomes(genomes_to_download, motus_search_db, output_folder, download_representative_genomes_only)
+    download_genomes(genomes_to_download, motus_search_db, output_folder, download_representative_genomes_only, args.t)
     mutils.shutdown(0)
 
 

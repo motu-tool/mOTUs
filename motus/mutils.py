@@ -27,6 +27,18 @@ MOTUS_MGDB_REMOTE_LOCATION_41_version = '4.1'
 MOTUS_MGDB_REMOTE_LOCATION = MOTUS_MGDB_REMOTE_LOCATION_41
 
 MOTUS_GENOME_API_BASE_URL = 'https://motus-api.microbiomics.io/v1/genomes'
+MOTUS_GENOME_FILE_TYPE_EXTENSIONS = {
+    'genome':    '.fa.gz',
+    'gene_fna':  '.genes.fna.gz',
+    'gene_faa':  '.genes.faa.gz',
+    'gene_gff':  '.genes.gff.gz',
+    'antismash': '.antismash-6.1.tsv',
+    'pfam':      '.pfam.37.1.tsv.gz',
+    'eggnog':    '.eggnog.2.1.7-5.0.2.tsv.gz',
+    'kegg':      '.kegg.apr22.tsv.gz',
+    'trna':      '.aragorn.1.2.41.tsv.gz',
+    'rrna':      '.barrnap.0.9.fna.gz',
+}
 
 
 MOTUS_ANNODB_REMOTE_LOCATION_40 = 'https://zenodo.org/records/17669279/files/mOTUsv4.0.annotation.db' 
