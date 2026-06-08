@@ -17,60 +17,29 @@ SIDENTIFIER = 'S'
 
 
 class GenomeLocator:
-    _genome_2_path = {}
-    _representative_genomes = set()
 
     def __init__(self, genome_metadata_file: pathlib.Path) -> None:
-        """Set up the GenomeLocator object.
-        Loads the metadata file into memory.
-        Might take a few seconds
+        self._valid_genomes = set()
+        self._representative_genomes = set()
 
-        Args:
-            genome_metadata_file (pathlib.Path): The genome metadata file of mOTUs
-        """
-
-
-        df = pl.scan_csv(genome_metadata_file, separator="\t", has_header=True, infer_schema_length=0).select(["GENOME", "LOCATION",'MOTU4_STATUS']).collect()
+        df = pl.scan_csv(genome_metadata_file, separator="\t", has_header=True, infer_schema_length=0).select(["GENOME", 'MOTU4_STATUS']).collect()
         for row in df.iter_rows():
-            [genome, location,motu4_status] = row
-            self._genome_2_path[genome] = location
+            [genome, motu4_status] = row
+            self._valid_genomes.add(genome)
             if 'representative' in motu4_status:
                 self._representative_genomes.add(genome)
 
-    def is_represenative_genome(self, genome: str):
-        """Checks whether the submitted genome
-        is a representative genome or not
-
-        Args:
-            genome (str): Name of the genome
-
-        Returns:
-            bool: True if genome is representative. False if not 
-        """        
-        if genome not in self._genome_2_path:
+    def is_represenative_genome(self, genome: str) -> bool:
+        if genome not in self._valid_genomes:
             logging.error(f'Genome "{genome}" does not exist. Quitting')
             mutils.shutdown(1)
-        else:
-            if genome in self._representative_genomes:
-                return True
-            else:
-                return False
+        return genome in self._representative_genomes
+
     def get_genome_path(self, genome: str) -> str:
-        """Receives a genome name as input
-        and returns the url of the remote 
-        location of this genomes
-
-        Args:
-            genome (str): genome name
-
-        Returns:
-            str: url to the genome file
-        """
-        if genome not in self._genome_2_path:
+        if genome not in self._valid_genomes:
             logging.error(f'Genome "{genome}" does not exist. Quitting')
-            mutils.shutdown(1)      
-        p = mutils.MOTUS_GENOME_REMOTE_PREFIX + self._genome_2_path[genome]
-        return p
+            mutils.shutdown(1)
+        return f'{mutils.MOTUS_GENOME_API_BASE_URL}/{genome}/download?file_type=genome'
 
 
 

@@ -1370,10 +1370,19 @@ def download_genomes(genomes_to_download: List[str], genome_locator: mentities.G
 
     output_folder.mkdir(exist_ok=True, parents=True)
 
-    for cnt, (genome, genome_path) in enumerate(genome_2_url.items(), 1):
-        destpath = str(output_folder) + '/' + str(genome_path).split('/')[-1]
-        logging.info(f'Downloading genome ({cnt} / {len(genome_2_url)}) {genome} to {destpath}')
-        urllib.request.urlretrieve(genome_path, destpath)
+    with tqdm.tqdm(total=len(genome_2_url), desc='Downloading genomes', unit='genomes') as genome_pbar:
+        for genome, genome_path in genome_2_url.items():
+            destpath = output_folder / f'{genome}.fa.gz'
+            with urllib.request.urlopen(genome_path) as response:
+                total = int(response.info().get("Content-Length", -1))
+                with open(destpath, "wb") as f, tqdm.tqdm(total=total, unit='B', unit_scale=True, desc=genome, leave=False) as byte_pbar:
+                    while True:
+                        chunk = response.read(8192)
+                        if not chunk:
+                            break
+                        f.write(chunk)
+                        byte_pbar.update(len(chunk))
+            genome_pbar.update(1)
     logging.info(f'Finished downloading genomes')
 
 
