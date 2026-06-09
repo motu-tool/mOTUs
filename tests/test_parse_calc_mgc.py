@@ -1,33 +1,28 @@
 import io
+import pathlib
 import unittest
 from unittest.mock import patch, MagicMock
 import sys
 from motus.motus import parse_calc_mgc
 
+TOY_DB = pathlib.Path(__file__).parent / 'data' / 'motus4.1-toy-db'
+
 
 class TestParseCalcMGC(unittest.TestCase):
-    @patch('builtins.open')
     @patch('gzip.open', new_callable=MagicMock)
     @patch('pathlib.Path.exists', new_callable=MagicMock)
-    def test_parse_calc_mgc_minimum_parameters(self, mock_exists, mock_gzip_open, mock_open):
-        # pass required parameters
-        sys.argv = ["motus", "calc_mgc", "-o", "output_file", "-i", "my_file.bam"]
-        mock_open.return_value.__enter__.return_value = MagicMock(readline=MagicMock(side_effect=[
-            "version: 4.0", "date: 2024-01-01"
-        ]))
+    def test_parse_calc_mgc_minimum_parameters(self, mock_exists, mock_gzip_open):
+        sys.argv = ["motus", "calc_mgc", "-o", "output_file", "-i", "my_file.bam", "-db", str(TOY_DB)]
 
         with self.assertRaises(FileNotFoundError):
             parse_calc_mgc()
 
-    @patch('builtins.open')
     @patch('gzip.open', new_callable=MagicMock)
     @patch('pathlib.Path.exists', new_callable=MagicMock)
-    @patch('motus.mentities.MOTUS_DB.load_motus_db')
-    def test_parse_calc_mgc_all_parameters(self, mock_load_db, mock_exists, mock_gzip_open, mock_open):
+    def test_parse_calc_mgc_all_parameters(self, mock_exists, mock_gzip_open):
         # pass all possible parameters; -v (verbosity) was removed from the CLI in v4.1
-        # MOTUS_DB.load_motus_db is mocked because builtins.open mock would otherwise
-        # corrupt the DB version file read that happens inside load_motus_db
-        sys.argv = ["motus", "calc_mgc", "-i", "my_files.bam", "-o", "output_file", "-l", "80"]
+        sys.argv = ["motus", "calc_mgc", "-i", "my_files.bam", "-o", "output_file", "-l", "80",
+                    "-db", str(TOY_DB)]
 
         with self.assertRaises(FileNotFoundError):
             parse_calc_mgc()

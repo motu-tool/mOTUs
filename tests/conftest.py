@@ -7,7 +7,7 @@ TESTS_DIR = pathlib.Path(__file__).parent
 TOY_DB_DIR = TESTS_DIR / 'data' / 'motus4.1-toy-db'
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='session', autouse=True)
 def toy_db():
     """Download the toy database once per test session; reuse on disk if already present.
 
