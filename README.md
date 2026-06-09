@@ -7,7 +7,7 @@
 [![Bioconda](https://img.shields.io/conda/vn/bioconda/motus?logo=anaconda&style=flat-square&maxAge=3600)](https://anaconda.org/bioconda/motus)
 [![Python Versions](https://img.shields.io/pypi/pyversions/motus-tool.svg?logo=python&style=flat-square&maxAge=3600)](https://pypi.org/project/motus-tool/#files)
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg?style=flat-square)](https://choosealicense.com/licenses/gpl-3.0/)
-[![GitHub issues](https://img.shields.io/github/issues/motu-tool/mOTUs.svg?style=flat-square&maxAge=600)](https://github.com/motu-tool/mOTUs/issues)
+[![GitHub issues](https://img.shields.io/badge/issues-GitHub-red?style=flat-square&logo=github)](https://github.com/motu-tool/mOTUs/issues)
 [![Docs](https://img.shields.io/badge/docs-motus--tool.org-informational?style=flat-square)](https://www.motus-tool.org/)
 [![Database](https://img.shields.io/badge/database-motus--db.org-orange?style=flat-square)](https://www.motus-db.org/)
 [![Downloads](https://img.shields.io/conda/dn/bioconda/motus?style=flat-square&label=bioconda%20downloads&color=303f9f)](https://anaconda.org/bioconda/motus)
