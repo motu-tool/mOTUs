@@ -1,6 +1,18 @@
-![alt text](https://raw.githubusercontent.com/motu-tool/mOTUs/master/pics/motu_logo.png)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/motu-tool/mOTUs/master/pics/motu_logo.png" alt="mOTUs logo">
+</p>
 
-[![license](https://anaconda.org/bioconda/motus/badges/license.svg)](https://github.com/motu-tool/mOTUs4-dev/blob/main/LICENSE)
+[![Actions](https://img.shields.io/github/actions/workflow/status/motu-tool/mOTUs/python-app.yml?branch=mOTUs4.1&logo=github&style=flat-square&maxAge=300)](https://github.com/motu-tool/mOTUs/actions)
+[![PyPI](https://img.shields.io/pypi/v/motus-tool.svg?logo=pypi&style=flat-square&maxAge=3600)](https://pypi.org/project/motus-tool)
+[![Bioconda](https://img.shields.io/conda/vn/bioconda/motus?logo=anaconda&style=flat-square&maxAge=3600)](https://anaconda.org/bioconda/motus)
+[![Python Versions](https://img.shields.io/pypi/pyversions/motus-tool.svg?logo=python&style=flat-square&maxAge=3600)](https://pypi.org/project/motus-tool/#files)
+[![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg?style=flat-square)](https://choosealicense.com/licenses/gpl-3.0/)
+[![GitHub issues](https://img.shields.io/github/issues/motu-tool/mOTUs.svg?style=flat-square&maxAge=600)](https://github.com/motu-tool/mOTUs/issues)
+[![Docs](https://img.shields.io/badge/docs-motus--tool.org-informational?style=flat-square)](https://www.motus-tool.org/)
+[![Database](https://img.shields.io/badge/database-motus--db.org-orange?style=flat-square)](https://www.motus-db.org/)
+[![Downloads](https://img.shields.io/conda/dn/bioconda/motus?style=flat-square&label=bioconda%20downloads&color=303f9f)](https://anaconda.org/bioconda/motus)
+[![Paper 2022](https://img.shields.io/badge/paper-Microbiome%202022-teal.svg?style=flat-square)](https://doi.org/10.1186/s40168-022-01410-z)
+[![Paper 2024](https://img.shields.io/badge/paper-NAR%202024-teal.svg?style=flat-square)](https://doi.org/10.1093/nar/gkae1004)
 
 ---
 
@@ -15,26 +27,18 @@ The current version of the mOTUs profiler is built on top of the genomic mOTUs d
 In the current version, 124,295 species-level taxonomic units (mOTUs) were constructed using sequences of 10 single-copy marker genes recovered from these genomes. 30,256 mOTUs are represented by an isolate genome, whereas 94,039 mOTUs are represented by MAGs only.
 
 
-If you use the mOTUs profiler, please cite:
+Please cite the paper(s) corresponding to the version(s) you use:
 
-> **Reference genome-independent taxonomic profiling of microbiomes with mOTUs3**
-> 
-> Hans-Joachim Ruscheweyh* , Alessio Milanese*, Lucas Paoli, Nicolai Karcher, Quentin Clayssen,
-> Marisa Isabell Metzger, Jakob Wirbel, Peer Bork, Daniel R. Mende, Georg Zeller# & Shinichi Sunagawa#
-> 
-> _Microbiome_ (2022)
-> 
-> doi: [10.1186/s40168-022-01410-z](https://microbiomejournal.biomedcentral.com/articles/10.1186/s40168-022-01410-z)
- 
-If you use the mOTUs database, please cite:
+| Version | Journal | Year | DOI | Citations |
+|---------|---------|------|-----|-----------|
+| mOTUs v1 | _Nature Methods_ | 2013 | [10.1038/nmeth.2693](https://doi.org/10.1038/nmeth.2693) | [![](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fbadge.dimensions.ai%2Fdetails%2Fdoi%2F10.1038%2Fnmeth.2693&search=%3Cdiv%20class%3D%22count%22%3E(%5Cd*)%3C%2Fdiv%3E&replace=%241&style=flat-square&label=cited&cacheSeconds=3600)](https://badge.dimensions.ai/details/doi/10.1038/nmeth.2693) |
+| mOTUs v2 | _Nature Communications_ | 2019 | [10.1038/s41467-019-08844-4](https://doi.org/10.1038/s41467-019-08844-4) | [![](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fbadge.dimensions.ai%2Fdetails%2Fdoi%2F10.1038%2Fs41467-019-08844-4&search=%3Cdiv%20class%3D%22count%22%3E(%5Cd*)%3C%2Fdiv%3E&replace=%241&style=flat-square&label=cited&cacheSeconds=3600)](https://badge.dimensions.ai/details/doi/10.1038/s41467-019-08844-4) |
+| mOTUs v3 (profiler) | _Microbiome_ | 2022 | [10.1186/s40168-022-01410-z](https://doi.org/10.1186/s40168-022-01410-z) | [![](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fbadge.dimensions.ai%2Fdetails%2Fdoi%2F10.1186%2Fs40168-022-01410-z&search=%3Cdiv%20class%3D%22count%22%3E(%5Cd*)%3C%2Fdiv%3E&replace=%241&style=flat-square&label=cited&cacheSeconds=3600)](https://badge.dimensions.ai/details/doi/10.1186/s40168-022-01410-z) |
+| mOTUs v3 (protocol) | _Current Protocols_ | 2022 | [10.1002/cpz1.218](https://doi.org/10.1002/cpz1.218) | [![](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fbadge.dimensions.ai%2Fdetails%2Fdoi%2F10.1002%2Fcpz1.218&search=%3Cdiv%20class%3D%22count%22%3E(%5Cd*)%3C%2Fdiv%3E&replace=%241&style=flat-square&label=cited&cacheSeconds=3600)](https://badge.dimensions.ai/details/doi/10.1002/cpz1.218) |
+| mOTUs database (v4) | _Nucleic Acids Research_ | 2025 | [10.1093/nar/gkae1004](https://doi.org/10.1093/nar/gkae1004) | [![](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fbadge.dimensions.ai%2Fdetails%2Fdoi%2F10.1093%2Fnar%2Fgkae1004&search=%3Cdiv%20class%3D%22count%22%3E(%5Cd*)%3C%2Fdiv%3E&replace=%241&style=flat-square&label=cited&cacheSeconds=3600)](https://badge.dimensions.ai/details/doi/10.1093/nar/gkae1004) |
 
->  **The mOTUs online database provides web-accessible genomic context to taxonomic profiling of microbial communities**
-> 
-> Marija Dmitrijeva* , Hans-Joachim Ruscheweyh* , Lilith Feer , Kang Li , Samuel Miravet-Verde , Anna Sintsova , Daniel R Mende , Georg Zeller , Shinichi Sunagawa#
-> 
-> _Nucleic Acids Research_ (2025)
-> 
-> doi: [https://doi.org/10.1093/nar/gkae1004](https://doi.org/10.1093/nar/gkae1004)
+
+
 
 ---
 
