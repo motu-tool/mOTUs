@@ -55,6 +55,9 @@ Download = "https://github.com/motu-tool/mOTUs/archive/refs/tags/4.0.4.tar.gz"
 [project.scripts]
 motus = "motus.motus:main"
 
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
 [tool.setuptools]
 include-package-data = true
 

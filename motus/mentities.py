@@ -6,7 +6,6 @@ from motus import mutils
 import Bio.SeqIO.FastaIO as FastaIO
 import Bio.SeqIO.QualityIO as QualityIO
 import gzip
-import csv
 import polars as pl
 import collections
 import statistics
@@ -467,51 +466,43 @@ class MotusDB:
         self.genome_metadata_file = genome_data_file
 
         if load:
-            if True:
-                df = pl.scan_csv(mgs_file, separator="\t", has_header=True, infer_schema_length=0,
-                                 schema_overrides={'LENGTH': pl.UInt32}).select(
-                    ['#MOTU', 'MGC', 'COG', 'MG', 'LENGTH']).collect()
-                for row in df.iter_rows():
-                    [motu, mgc, cog, mg, length] = row
-                    self.mgh_2_mgc[mg] = mgc
-                    self.mgh_2_mglength[mg] = length
-                    self.mgc_2_motu[mgc] = motu
-                    self.mgh_2_mg[mg] = cog
-                    self.motus.add(motu)
-                    self.mgc_2_mg[mgc] = cog
-                    if 'unassigned' in motu:
-                        self._unassigned_motu_name = motu
-            else: # can be removed once polars mode has been tested
-                with gzip.open(mgs_file, 'rt') as handle:
-                    for entry in  csv.DictReader(handle, delimiter='\t'):
-                        self.mgh_2_mgc[entry['MG']] = entry['MGC']
-                        self.mgh_2_mglength[entry['MG']] = int(entry['LENGTH'])
-                        self.mgc_2_motu[entry['MGC']] = entry['#MOTU']
-                        self.mgh_2_mg[entry['MG']] = entry['COG']
-                        self.motus.add(entry['#MOTU'])
-                        self.mgc_2_mg[entry['MGC']] = entry['COG']
-                        if 'unassigned' in entry['#MOTU']:
-                            self._unassigned_motu_name = entry['#MOTU']
+            df = pl.scan_csv(mgs_file, separator="\t", has_header=True, infer_schema_length=0,
+                             schema_overrides={'LENGTH': pl.UInt32}).select(
+                ['#MOTU', 'MGC', 'COG', 'MG', 'LENGTH']).collect()
+            mg_col    = df['MG'].to_list()
+            mgc_col   = df['MGC'].to_list()
+            cog_col   = df['COG'].to_list()
+            motu_col  = df['#MOTU'].to_list()
+            len_col   = df['LENGTH'].to_list()
+            self.mgh_2_mgc      = dict(zip(mg_col, mgc_col))
+            self.mgh_2_mglength = dict(zip(mg_col, len_col))
+            self.mgc_2_motu     = dict(zip(mgc_col, motu_col))
+            self.mgh_2_mg       = dict(zip(mg_col, cog_col))
+            self.mgc_2_mg       = dict(zip(mgc_col, cog_col))
+            self.motus          = set(motu_col)
+            unassigned = df.filter(pl.col('#MOTU').str.contains('unassigned'))['#MOTU']
+            if len(unassigned) > 0:
+                self._unassigned_motu_name = unassigned[0]
 
             with gzip.open(blocklist_file, 'rt') as handle:
                 for line in handle:
                     self.blocklist_mg.add(line.strip())
-            with gzip.open(gtdb_taxonomy_file_reps, 'rt') as handle:
-                header = [h.lstrip('#') for h in handle.readline().strip().split('\t')]
-                motu_col   = header.index('MOTU')
-                genome_col = header.index('GENOME')
-                gtdb_col   = next(i for i, h in enumerate(header) if h in ('GTDB', 'GTDBR220'))
-                for line in handle:
-                    cols = line.strip().split('\t')
-                    self.motu_2_representative_genome_gtdb_tax[cols[motu_col]] = cols[gtdb_col]
-                    self.motu_2_representative[cols[motu_col]] = cols[genome_col]
-            with gzip.open(gtdb_taxonomy_file_mv, 'rt') as handle:
-                header = [h.lstrip('#') for h in handle.readline().strip().split('\t')]
-                motu_col = header.index('MOTU')
-                gtdb_col = next(i for i, h in enumerate(header) if h in ('GTDB', 'GTDBR220'))
-                for line in handle:
-                    cols = line.strip().split('\t')
-                    self.motu_2_mv_gtdb_tax[cols[motu_col]] = cols[gtdb_col]
+
+            df_reps = pl.scan_csv(gtdb_taxonomy_file_reps, separator="\t", has_header=True,
+                                  infer_schema_length=0).collect()
+            df_reps = df_reps.rename({df_reps.columns[0]: df_reps.columns[0].lstrip('#')})
+            gtdb_col_reps = 'GTDB' if 'GTDB' in df_reps.columns else 'GTDBR220'
+            self.motu_2_representative_genome_gtdb_tax = dict(zip(
+                df_reps['MOTU'].to_list(), df_reps[gtdb_col_reps].to_list()))
+            self.motu_2_representative = dict(zip(
+                df_reps['MOTU'].to_list(), df_reps['GENOME'].to_list()))
+
+            df_mv = pl.scan_csv(gtdb_taxonomy_file_mv, separator="\t", has_header=True,
+                                infer_schema_length=0).collect()
+            df_mv = df_mv.rename({df_mv.columns[0]: df_mv.columns[0].lstrip('#')})
+            gtdb_col_mv = 'GTDB' if 'GTDB' in df_mv.columns else 'GTDBR220'
+            self.motu_2_mv_gtdb_tax = dict(zip(
+                df_mv['MOTU'].to_list(), df_mv[gtdb_col_mv].to_list()))
             logging.info(f'Loading database finished. Version {self.database_version} (version date: {self.database_date}) contains {len(self.motus)} mOTUs, {len(self.mgc_2_motu)} markergeneclusters and {len(self.mgh_2_mglength)} markergenes.')
 
 

@@ -3,6 +3,14 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# mOTUs database files — downloaded at runtime, never committed (can be GB-scale)
+motus/db_mOTU/
+# Toy database downloaded by the test suite conftest.py fixture
+tests/data/motus4.1-toy-db/
+# Development environment and AI assistant config (local only)
+.devcontainer/
+CLAUDE.md
+
 # C extensions
 *.so
 

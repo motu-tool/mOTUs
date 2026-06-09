@@ -47,9 +47,11 @@ class TestParseBatchProfile(unittest.TestCase):
     @patch('builtins.open', new_callable=MagicMock)
     @patch('gzip.open', new_callable=MagicMock)
     @patch('pathlib.Path.exists', new_callable=MagicMock)
-    def test_all_arguments_provided(self, mock_exists, mock_gzip_open, mock_open):
+    @patch('motus.mentities.MOTUS_DB.load_motus_db')
+    def test_all_arguments_provided(self, mock_load_db, mock_exists, mock_gzip_open, mock_open):
         # pass all arguments possible to the function, since the input file is empty, it will not run all steps
-        sys.argv = ["motus", "batch_profile", "-f", "input_file.tsv", "-l", "5", "-t", "80", "-v", "6", "-y",
+        # -v (verbosity) was removed from the CLI in v4.1
+        sys.argv = ["motus", "batch_profile", "-f", "input_file.tsv", "-l", "5", "-t", "80", "-y",
                     "INSERT_NORM"]
 
         mock_open.return_value.__enter__.return_value = MagicMock(readline=MagicMock(side_effect=[
@@ -64,8 +66,10 @@ class TestParseBatchProfile(unittest.TestCase):
     @patch('builtins.open')
     @patch('gzip.open', new_callable=MagicMock)
     @patch('pathlib.Path.exists', new_callable=MagicMock)
-    def test_map_file_parsing(self, mock_exists, mock_gzip_open, mock_open):
-        sys.argv = ["motus", "batch_profile", "-f", "input_file.tsv", "-l", "5", "-t", "80", "-v", "6", "-y",
+    @patch('motus.mentities.MOTUS_DB.load_motus_db')
+    def test_map_file_parsing(self, mock_load_db, mock_exists, mock_gzip_open, mock_open):
+        # -v (verbosity) was removed from the CLI in v4.1
+        sys.argv = ["motus", "batch_profile", "-f", "input_file.tsv", "-l", "5", "-t", "80", "-y",
                     "INSERT_NORM"]
 
         # mock the tsv file and version file content
@@ -85,8 +89,8 @@ class TestParseBatchProfile(unittest.TestCase):
     @patch('gzip.open', new_callable=MagicMock)
     @patch('pathlib.Path.exists', new_callable=MagicMock)
     def test_map_file_parsing_no_bam_ending(self, mock_exists, mock_gzip_open, mock_open):
-        # pass wrong file ending
-        sys.argv = ["motus", "batch_profile", "-f", "input_file.tsv", "-l", "5", "-t", "80", "-v", "6", "-y",
+        # pass wrong file ending; -v (verbosity) was removed from the CLI in v4.1
+        sys.argv = ["motus", "batch_profile", "-f", "input_file.tsv", "-l", "5", "-t", "80", "-y",
                     "INSERT_NORM"]
 
         tsv_file_content = "SAMPLE-1\tmy_file1\nSAMPLE-2\tmy_file2.bam\n"
@@ -105,7 +109,8 @@ class TestParseBatchProfile(unittest.TestCase):
     @patch('builtins.open')
     @patch('gzip.open', new_callable=MagicMock)
     def test_non_existent_bam_file(self, mock_gzip_open, mock_open):
-        sys.argv = ["motus", "batch_profile", "-f", "input_file.tsv", "-l", "5", "-t", "80", "-v", "6", "-y",
+        # -v (verbosity) was removed from the CLI in v4.1
+        sys.argv = ["motus", "batch_profile", "-f", "input_file.tsv", "-l", "5", "-t", "80", "-y",
                     "INSERT_NORM"]
 
         tsv_file_content = "SAMPLE-1\tmy_file1.bam\nSAMPLE-2\tmy_file2.bam\n"
@@ -123,7 +128,8 @@ class TestParseBatchProfile(unittest.TestCase):
     @patch('gzip.open', new_callable=MagicMock)
     @patch('pathlib.Path.exists', new_callable=MagicMock)
     def test_duplicated_sample_names(self, mock_exists, mock_gzip_open, mock_open):
-        sys.argv = ["motus", "batch_profile", "-f", "input_file.tsv", "-l", "5", "-t", "80", "-v", "6", "-y",
+        # -v (verbosity) was removed from the CLI in v4.1
+        sys.argv = ["motus", "batch_profile", "-f", "input_file.tsv", "-l", "5", "-t", "80", "-y",
                     "INSERT_NORM"]
 
         # duplicated sample name
@@ -145,7 +151,7 @@ class TestParseBatchProfile(unittest.TestCase):
     @patch('os.path.samefile', return_value=True)
     def test_duplicated_bam_files(self, mock_samefile, mock_exists, mock_gzip_open, mock_open):
         # Simulate the command-line arguments passed to the function
-        sys.argv = ["motus", "batch_profile", "-f", "input_file.tsv", "-l", "5", "-t", "80", "-v", "6", "-y",
+        sys.argv = ["motus", "batch_profile", "-f", "input_file.tsv", "-l", "5", "-t", "80", "-y",
                     "INSERT_NORM"]
 
         # Mock the tsv file and version file content

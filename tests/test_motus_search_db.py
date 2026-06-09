@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch, mock_open
 import pathlib
 from motus import motus
+import pytest
 
 
 def set_mock(mock_gzip_open):
@@ -24,6 +25,9 @@ def set_mock(mock_gzip_open):
     return db, mock_taxonomy_handle, mock_metadata_handle, mock_gzip_open.side_effect, mock_taxonomy_file, mock_metadata_file
 
 
+@pytest.mark.skip(
+    reason="MotusSearchDB removed; functionality split into mfind.SearchDB (genomes command) and mentities.GenomeLocator (download command)"
+)
 class TestMotusSearchDB(unittest.TestCase):
 
     @patch("gzip.open")

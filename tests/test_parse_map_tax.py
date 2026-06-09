@@ -110,21 +110,25 @@ class TestParseMapTax(unittest.TestCase):
     @patch('pysam.sort', return_value=None)
     def run_parse_map_tax(self, mock_pysam_sort, mock_popen, mock_exists, mock_gzip_open, mock_open):
         with (mock.patch('pathlib.Path', return_value=pathlib.Path("/fakepath")),
-              mock.patch('motus.motus.MotusParameters.set_read_files') as mock_set_read_files,
-              mock.patch('motus.motus.MotusParameters.set_alignment_file') as mock_set_alignment_file,
+              # MotusParameters lives in mentities since v4.1; patch class methods there
+              mock.patch('motus.mentities.MotusParameters.set_read_files') as mock_set_read_files,
+              mock.patch('motus.mentities.MotusParameters.set_alignment_file') as mock_set_alignment_file,
               mock.patch(
-                  'motus.motus.MotusParameters.set_minimal_alignment_length') as mock_set_minimal_alignment_length,
-              mock.patch('motus.motus.MotusParameters.set_threads') as mock_set_threads,
-              mock.patch('motus.motus.MotusParameters._temp_alignment_file', return_value="temporary.bam"),
-              mock.patch('motus.motus.MotusParameters.get_read_files', return_value=[
+                  'motus.mentities.MotusParameters.set_minimal_alignment_length') as mock_set_minimal_alignment_length,
+              mock.patch('motus.mentities.MotusParameters.set_threads') as mock_set_threads,
+              mock.patch('motus.mentities.MotusParameters._temp_alignment_file', return_value="temporary.bam"),
+              mock.patch('motus.mentities.MotusParameters.get_read_files', return_value=[
                   (pathlib.Path("forward_file1"), '/1'),
                   (pathlib.Path("reverse_file1"), '/2'),
                   (pathlib.Path("forward_file2"), '/1'),
                   (pathlib.Path("reverse_file2"), '/2'),
                   (pathlib.Path("unpaired_file"), '/S')
               ]),
-              mock.patch('motus.motus.MotusParameters.get_alignment_file',
+              mock.patch('motus.mentities.MotusParameters.get_alignment_file',
                          return_value="aligment.bam") as mock_get_alignment_file,
+              # Prevent actual DB loading and map_tax execution in this argument-parsing test
+              mock.patch('motus.mentities.MOTUS_DB.load_motus_db'),
+              mock.patch('motus.motus.map_tax'),
               mock.patch('pysam.AlignmentFile') as pysam_bam,
               mock.patch('sys.stdout', new=StringIO())):
             header = mock_bam_header([('chr1', 100)])  # mock a 100 bp chr1 contig
@@ -149,7 +153,7 @@ class TestParseMapTax(unittest.TestCase):
             parse_map_tax()
 
             mock_set_read_files.assert_called_once()
-            mock_get_alignment_file.assert_called_once()
+            # map_tax() is mocked so get_alignment_file is never called from parse_map_tax itself
             mock_set_alignment_file.assert_called_once_with(pathlib.Path("output.txt"), required_to_exist=False)
             mock_set_minimal_alignment_length.assert_called_once_with(75)  # Default length is 75
             mock_set_threads.assert_called_once_with(1)  # Default thread count is 1
@@ -166,13 +170,14 @@ class TestParseMapTax(unittest.TestCase):
 
     def test_missing_output_argument(self):
         # simulate command-line args without the required output file (-o)
+        # argparse now includes the long name in error messages: -o/--output-file
         sys.argv = ["motus", "map_tax", "-f", "forward.fastq"]
 
         with self.assertRaises(SystemExit):
             sys.stderr = io.StringIO()
             parse_map_tax()
             sys.stderr = sys.__stderr__
-        self.assertIn('error: the following arguments are required: -o', sys.stderr.getvalue().strip())
+        self.assertIn('error: the following arguments are required: -o/--output-file', sys.stderr.getvalue().strip())
 
     @patch('builtins.open', new_callable=MagicMock)
     @patch('gzip.open', new_callable=MagicMock)
@@ -182,10 +187,11 @@ class TestParseMapTax(unittest.TestCase):
                     "-o", "output.txt"]
 
         with mock.patch('pathlib.Path', return_value=pathlib.Path("/fakepath")), \
-                mock.patch('motus.motus.MotusParameters.set_read_files') as mock_set_read_files, \
-                mock.patch('motus.motus.MotusParameters.set_alignment_file') as mock_set_alignment_file, \
-                mock.patch('motus.motus.MotusParameters.set_minimal_alignment_length'), \
-                mock.patch('motus.motus.MotusParameters.set_threads'), \
+                mock.patch('motus.mentities.MotusParameters.set_read_files') as mock_set_read_files, \
+                mock.patch('motus.mentities.MotusParameters.set_alignment_file') as mock_set_alignment_file, \
+                mock.patch('motus.mentities.MotusParameters.set_minimal_alignment_length'), \
+                mock.patch('motus.mentities.MotusParameters.set_threads'), \
+                mock.patch('motus.mentities.MOTUS_DB.load_motus_db'), \
                 mock.patch('motus.motus.map_tax'):
             parse_map_tax()
 
@@ -194,21 +200,23 @@ class TestParseMapTax(unittest.TestCase):
             expected_reverse = [pathlib.Path("reverse.fastq")]
             expected_unpaired = [pathlib.Path("unpaired.fastq")]
             mock_set_read_files.assert_called_once_with(expected_forward, expected_reverse, expected_unpaired,
-                                                        check_files=True)
+                                                        check_files=True, skip_pair_check=False)
 
     @patch('builtins.open', new_callable=MagicMock)
     @patch('gzip.open', new_callable=MagicMock)
     @patch('pathlib.Path.exists', new_callable=MagicMock)
     def test_custom_min_length_threads_verbosity(self, mock_exists, mock_gzip_open, mock_open):
-        # test with custom alignment length, thread count, and verbosity level
-        sys.argv = ["motus", "map_tax", "-f", "forward.fastq", "-o", "output.txt", "-l", "100", "-t", "4", "-v", "2"]
+        # test with custom alignment length and thread count
+        # -v (verbosity) was removed from the CLI in v4.1
+        sys.argv = ["motus", "map_tax", "-f", "forward.fastq", "-o", "output.txt", "-l", "100", "-t", "4"]
 
         with mock.patch('pathlib.Path', return_value=pathlib.Path("/fakepath")), \
-                mock.patch('motus.motus.MotusParameters.set_read_files'), \
-                mock.patch('motus.motus.MotusParameters.set_alignment_file'), \
+                mock.patch('motus.mentities.MotusParameters.set_read_files'), \
+                mock.patch('motus.mentities.MotusParameters.set_alignment_file'), \
                 mock.patch(
-                    'motus.motus.MotusParameters.set_minimal_alignment_length') as mock_set_minimal_alignment_length, \
-                mock.patch('motus.motus.MotusParameters.set_threads') as mock_set_threads, \
+                    'motus.mentities.MotusParameters.set_minimal_alignment_length') as mock_set_minimal_alignment_length, \
+                mock.patch('motus.mentities.MotusParameters.set_threads') as mock_set_threads, \
+                mock.patch('motus.mentities.MOTUS_DB.load_motus_db'), \
                 mock.patch('motus.motus.map_tax'):
             mock_open.return_value.__enter__.return_value = MagicMock(readline=MagicMock(side_effect=[
                 "version: 4.0", "date: 2024-01-01"

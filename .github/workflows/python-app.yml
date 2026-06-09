@@ -5,9 +5,9 @@ name: mOTUs4
 
 on:
   push:
-    branches: [ "hans", "main" ]
+    branches: [ "mOTUs4", "mOTUs4.1" ]
   pull_request:
-    branches: [ "hans", "main" ]
+    branches: [ "mOTUs4" ]
 
 permissions:
   contents: read
@@ -16,9 +16,6 @@ jobs:
   build:
     name: ${{matrix.os}}
     runs-on: ${{matrix.os}}
-    defaults:
-      run:
-        shell: bash -l {0}
     strategy:
       fail-fast: false
       matrix:
@@ -27,24 +24,36 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: create conda environment with conda
-        uses: conda-incubator/setup-miniconda@v3
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
         with:
-          conda-version: "*"
-          activate-environment: mOTUs4
-          environment-file: tests/environment.yaml
-          auto-activate-base: false
-      - name: check conda environment & install flake8 and pytest
+          python-version: "3.12"
+
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
         run: |
-          conda info
-          conda list
-          pip install flake8 pytest
+          sudo apt-get update
+          sudo apt-get install -y bwa samtools vsearch sqlite3
+
+      - name: Install system dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install bwa samtools vsearch
+
+      - name: Install Python package and tools
+        run: |
+          pip install --upgrade pip
+          pip install ".[dev]"
+          pip install flake8
+
       - name: Lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
       - name: Test with pytest
         run: |
-          pytest
+          pytest tests/ --ignore=tests/old_test
