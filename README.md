@@ -745,31 +745,35 @@ Write an issue on GitHub
 ### v4.1.0
 
 **Database**
-- Default marker gene database updated to v4.1
+
+- Default marker gene database updated to v4.1. Version v4.0 still supported. Clustering didn't change but ~150k MAGs from underexplored environments were added and associated with existing mOTUs.
 - Annotation database (used by `genomes`) is now version-matched to the installed marker gene DB; v4.0 and v4.1 annotation DBs are downloaded and stored separately
-- GTDB taxonomy files parsed by column name rather than position to handle format differences between v4.0 (`GTDBR220`) and v4.1 (`GTDB`)
+- GTDB taxonomy bumped to R226 from R220
 - Toy database added (`downloadMGDB --toy`): lightweight database for testing; disables `genomes` and `download` commands
 
 **classify**
+
 - Output columns changed to `GENOME`, `CLOSEST_MOTU`, `SIMILARITY`, `ASSIGNED_TO_MOTU`, `TAXONOMY`, `#MGs`
 - Reports one best mOTU per genome with GTDB taxonomy; `ASSIGNED_TO_MOTU` is `True` if similarity ≥96.5%
 - Unclassified genomes reported as `no_mOTU` (hits found but all below threshold) or `no_mOTU_<6MGs` (fewer than 6 marker genes extracted)
 
 **CLI**
+
 - `-db PATH` flag added to all commands to specify a custom database parent folder
-- `--skip-pair-check` added to `profile` and `map_tax` for unsorted inputs or inputs containing singletons
+- `--skip-pair-check` added to `profile` and `map_tax` for unsorted inputs or inputs containing singletons. Use as last resort!
 - `motus genomes -l GENOME|TAXON|PFAM|KEGG|EGGNOG` lists all searchable entries of a given type without requiring `-i`
 - Tool checks at startup whether `bwa` is on PATH (hard error if missing) and whether `vsearch` is on PATH (warning if missing)
 
 **Bug fixes**
+
 - Database download: incomplete downloads (content-length mismatch) no longer leave a broken DB with a valid completion marker
 - `merge`: blank lines in a profile list file no longer cause a cryptic `FileNotFoundError`
-- `MergedmOTUsFile`: class-level `_singlemotusfiles` dict replaced with an instance variable, preventing state leakage between calls in the same process
 - Multimapper resolution: replaced non-deterministic `random.choice` with `sorted()[0]` for reproducible MG selection within an MGC
 - Edge correction: fixed inaccurate weight distribution in inverse padding
 
 **Algorithm**
-- `INSERT_NORM` and `INSERT_SCALED` calculation corrected: length-normalisation was incorrectly folded into the scaling denominator
+
+- `INSERT_NORM` and `INSERT_SCALED` calculation corrected. `INSERT_NORM` now reports length normalised insert counts without any scaling factor. Full scaling was moved to `INSERT_SCALED`.
 
 ---
 
