@@ -965,12 +965,12 @@ def parse_map_tax():
     parser.add_argument("--skip-pair-check", action="store_true", default=False, dest='skip_pair_check')
     parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
 
-    args = parser.parse_args(sys.argv[2:])
-
-    # print usage and exit if no arguments are passed
+    # print usage and exit if no arguments are passed or help is requested
     if not sys.argv[2:] or sys.argv[2] in ('-h', '--help'):
         parser.print_usage()
         mutils.shutdown(0)
+
+    args = parser.parse_args(sys.argv[2:])
 
     # convert string arguments into Pathlib objects
     forward_files = [pathlib.Path(el) for el in args.f]
@@ -1029,10 +1029,13 @@ def parse_batch_profile():
                         choices=['INSERT_RAW', 'INSERT_NORM', 'INSERT_SCALED', 'BASE_RAW', 'BASE_NORM'])
     parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
 
-    args = parser.parse_args(sys.argv[2:])
     if not sys.argv[2:] or sys.argv[2] in ('-h', '--help'):
         parser.print_usage()
         mutils.shutdown(0)
+
+
+
+    args = parser.parse_args(sys.argv[2:])
 
     map_file = args.f
     samplename_2_files = {}
@@ -1141,7 +1144,7 @@ def parse_profile():
 
         -db  PATH
             Alternative path for the mOTUs marker gene database
-    ''', formatter_class=CapitalisedHelpFormatter,add_help=False)
+    ''', formatter_class=CapitalisedHelpFormatter, add_help=False)
 
     # Input options
     parser.add_argument("-f", "--forward", nargs="+", default=[], dest='f')  # input file(s) for reads in forward direction
@@ -1159,10 +1162,12 @@ def parse_profile():
     parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
     #parser.add_argument("-c", action="store_true", help="Write second output file with relative abundances")
 
-    args = parser.parse_args(sys.argv[2:])
+    # Check for help before parsing (so required args don't trigger error)
     if not sys.argv[2:] or sys.argv[2] in ('-h', '--help'):
         parser.print_usage()
         mutils.shutdown(0)
+
+    args = parser.parse_args(sys.argv[2:])
 
     forward_files = [pathlib.Path(el) for el in args.f]
     reverse_files = [pathlib.Path(el) for el in args.r]
@@ -1235,11 +1240,12 @@ def parse_calc_mgc():
     parser.add_argument("-l", "--alignment-length", type=int, default=75, dest='l')  # min length of the alignment (bp) [75]
     parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
 
-    args = parser.parse_args(sys.argv[2:])
-    # print usage and exit if no arguments are passed
+    # print usage and exit if no arguments are passed or help is requested
     if not sys.argv[2:] or sys.argv[2] in ('-h', '--help'):
         parser.print_usage()
         mutils.shutdown(0)
+
+    args = parser.parse_args(sys.argv[2:])
 
     alignment_file = pathlib.Path(args.i)
     mgc_file = pathlib.Path(args.o)
@@ -1299,11 +1305,12 @@ def parse_merge():
     parser.add_argument("-i", "--input-files", nargs="+", required=True, dest='i')
     parser.add_argument("-o", "--output-file", required=True, dest='o')
     parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
-    args = parser.parse_args(sys.argv[2:])
 
     if not sys.argv[2:] or sys.argv[2] in ('-h', '--help'):
         parser.print_usage()
         mutils.shutdown(0)
+
+    args = parser.parse_args(sys.argv[2:])
 
     mutils.startup()
 
@@ -1451,11 +1458,12 @@ def parse_prep_long():
     parser.add_argument("-o", "--output-file", required=True, dest='o')
     parser.add_argument("-sl", "--splitting-length", default=300, type=int, dest='sl')
     parser.add_argument("-ml", "--minimum-length", default=50, type=int, dest='ml')
-    args = parser.parse_args(sys.argv[2:])
-
     if not sys.argv[2:] or sys.argv[2] in ('-h', '--help'):
         parser.print_usage()
         mutils.shutdown(0)
+
+
+    args = parser.parse_args(sys.argv[2:])
     mutils.startup()
 
     input_sequence_file = pathlib.Path(args.i)
@@ -1515,11 +1523,13 @@ def parse_find():
     parser.add_argument("-d", "--details", default=[], nargs="+", dest='d')
     parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
 
-    args = parser.parse_args(sys.argv[2:])
-
     if not sys.argv[2:] or sys.argv[2] in ('-h', '--help'):
         parser.print_usage()
         mutils.shutdown(0)
+
+
+
+    args = parser.parse_args(sys.argv[2:])
     mutils.startup()
 
     if args.l is not None:
@@ -1596,11 +1606,12 @@ def parse_classify():
     parser.add_argument("-o", "--output-file", required=True, dest='o')
     parser.add_argument("-t", "--threads", default=1, type=int, dest='t')
     parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
-    args = parser.parse_args(sys.argv[2:])
-
     if not sys.argv[2:] or sys.argv[2] in ('-h', '--help'):
         parser.print_usage()
         mutils.shutdown(0)
+
+
+    args = parser.parse_args(sys.argv[2:])
     mutils.startup()
 
     genome_files = []
@@ -1961,10 +1972,14 @@ def parse_download():
     parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
 
 
-    args = parser.parse_args(sys.argv[2:])
     if not sys.argv[2:] or sys.argv[2] in ('-h', '--help'):
         parser.print_usage()
         mutils.shutdown(0)
+
+
+
+
+    args = parser.parse_args(sys.argv[2:])
     mutils.startup()
 
 
@@ -2045,10 +2060,11 @@ def parse_calc_motu():
     parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
     #parser.add_argument("-c", action="store_true",help="Write second output file with relative abundances")
 
-    args = parser.parse_args(sys.argv[2:])
     if not sys.argv[2:] or sys.argv[2] in ('-h', '--help'):
         parser.print_usage()
         mutils.shutdown(0)
+
+    args = parser.parse_args(sys.argv[2:])
 
 
     mgc_file = pathlib.Path(args.i)
