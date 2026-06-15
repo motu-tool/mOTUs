@@ -1873,6 +1873,11 @@ def parse_downloadDB():
     parser.add_argument("-f", "--force", action="store_true", dest='f')
     parser.add_argument("--toy", action="store_true", default=False, dest='toy')
     parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')
+
+    if not sys.argv[2:] or sys.argv[2] in ('-h', '--help'):
+        parser.print_usage()
+        mutils.shutdown(0)
+
     args = parser.parse_args(sys.argv[2:])
 
     force_download = args.f

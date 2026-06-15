@@ -44,37 +44,62 @@ Please cite the paper(s) corresponding to the version(s) you use:
 
 ## 📦 Installation
 
-The mOTUs profiler, written in Python 3 (>=3.12), can be executed on a 64-bit Linux or MacOS system. However, there are external dependencies that need to be pre-installed. These dependencies can be manually installed or, more conveniently, using the conda package manager.
+The mOTUs profiler, written in Python 3 (>=3.12), can be executed on a 64-bit Linux or macOS system. It requires external dependencies (bwa, samtools, vsearch) which must be available on PATH. 
 
+Package managers automate this: they resolve dependency graphs, manage binary versions, and provide isolated environments so mOTUs and its dependencies don't conflict with system packages. Below are the recommended approaches.
+
+### Installation with Pixi (Recommended)
+
+[Pixi](https://prefix.dev/) is a fast, dependency-free package manager. Install mOTUs globally:
+
+```bash
+pixi global install motus
+motus profile -h
+```
+
+Or add to an existing workspace:
+
+```bash
+pixi workspace channel add conda-forge
+pixi workspace channel add bioconda
+pixi add motus
+pixi run motus profile -h
+```
 
 ### Installation with Conda
 
+mOTUs is available in [bioconda](https://bioconda.github.io/recipes/motus/README.html):
+
+```bash
+# First time: add channels
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+
+# Create and activate environment
+conda create -n mOTUs4 motus
+conda activate mOTUs4
+
+# Verify installation
+motus profile -h
+```
 
 <details>
-<summary>Miniconda</summary>
+<summary>Installing conda/mamba</summary>
 
-The installation using the conda package manager is generally preferable, as it encapsulates the entire installation process into a single command once conda is installed. Execute the following command to install conda:
+If you don't have conda installed, use [Miniconda](https://docs.conda.io/projects/miniconda/en/latest/) (lightweight) or [Miniforge](https://github.com/conda-forge/miniforge) (includes mamba, faster):
 
 ```bash
-$ curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-$ sh Miniconda3-latest-Linux-x86_64.sh
-$ conda config --add channels defaults
-$ conda config --add channels bioconda
-$ conda config --add channels conda-forge
+# Linux
+curl -L https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -o miniforge.sh
+bash miniforge.sh
+
+# macOS (choose matching architecture)
+curl -L https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-x86_64.sh -o miniforge.sh
+bash miniforge.sh
 ```
-
-
-If working on a MacOS system, the download link has to be replaced by: `https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh`.
 
 </details>
-
-
-mOTUs is available as a package in [bioconda](https://bioconda.github.io/recipes/motus/README.html) and can be installed in an isolated environment:
-
-```bash
-$ conda create -n mOTUs4 motus
-$ conda activate mOTUs4
-```
 
 
 
@@ -83,12 +108,13 @@ $ conda activate mOTUs4
 ## 🚀 Usage
 
 
+📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html)
 
 After installation, you can test whether the tool was installed correctly by executing:
 
 
 ```bash
-$ motus --help
+motus --help
 ```
 
 ```bash
@@ -151,8 +177,10 @@ Helper functions include `download`, which provides users with programmatic acce
 
 ### Profile
 
+📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-profile)
+
 ```bash
-$ motus profile
+motus profile
 ```
 
 ```bash
@@ -227,8 +255,10 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 ### Map Tax
 
+📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-map-tax)
+
 ```bash
-$ motus map_tax
+motus map_tax
 ```
 
 ```bash
@@ -292,8 +322,10 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 ### Calc MGC
 
+📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-calc-mgc)
+
 ```bash
-$ motus calc_mgc
+motus calc_mgc
 ```
 
 ```bash
@@ -340,8 +372,10 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 ### Calc mOTU
 
+📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-calc-motu)
+
 ```bash
-$ motus calc_motu
+motus calc_motu
 ```
 
 ```bash
@@ -397,8 +431,10 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 ### merge
 
+📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-merge)
+
 ```bash
-$ motus merge
+motus merge
 ```
 
 ```bash
@@ -446,8 +482,10 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 ### downloadMGDB
 
+📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-downloadmgdb)
+
 ```bash
-$ motus downloadMGDB
+motus downloadMGDB
 ```
 
 ```bash
@@ -494,8 +532,10 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 ### classify
 
+📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-classify)
+
 ```bash
-$ motus classify
+motus classify
 ```
 
 ```bash
@@ -559,8 +599,10 @@ The output file is a tab-separated table with one row per input genome:
 
 ### prep_long
 
+📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-prep-long)
+
 ```bash
-$ motus prep_long
+motus prep_long
 ```
 
 ```bash
@@ -612,8 +654,10 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 ### download
 
+📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-download)
+
 ```bash
-$ motus download
+motus download
 ```
 
 ```bash
@@ -673,8 +717,10 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 ### genomes
 
+📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-genomes)
+
 ```bash
-$ motus genomes
+motus genomes
 ```
 
 ```bash
