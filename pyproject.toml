@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "motus-tool"
-version = "4.0.4"
+version = "4.1.0"
 description = "Taxonomic profiling of metagenomes from diverse environments with mOTUs4"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -52,7 +52,7 @@ classifiers = [
 [project.urls]
 Homepage = "https://github.com/motu-tool/mOTUs"
 Source = "https://github.com/motu-tool/mOTUs"
-Download = "https://github.com/motu-tool/mOTUs/archive/refs/tags/4.0.4.tar.gz"
+Download = "https://github.com/motu-tool/mOTUs/archive/refs/tags/4.1.0.tar.gz"
 
 [project.scripts]
 motus = "motus.motus:main"
