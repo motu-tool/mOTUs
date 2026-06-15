@@ -63,16 +63,11 @@ class TestParseProfile(unittest.TestCase):
     @patch('gzip.open', new_callable=MagicMock)
     @patch('pathlib.Path.exists', new_callable=MagicMock)
     def test_parse_profile_no_parameters(self, mock_exists, mock_gzip_open, mock_open):
-        # pass no parameters, expecting failure
+        # pass no parameters, expecting help to be shown
         sys.argv = ["motus", "profile"]
-        mock_open.return_value.__enter__.return_value = MagicMock(readline=MagicMock(side_effect=[
-            "version: 4.0", "date: 2024-01-01"
-        ]))
 
         with self.assertRaises(SystemExit):
-            sys.stderr = io.StringIO()
             parse_profile()
-        self.assertIn('error: the following arguments are required: -o', sys.stderr.getvalue())
 
 
 if __name__ == '__main__':

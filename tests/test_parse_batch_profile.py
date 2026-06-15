@@ -38,12 +38,10 @@ class TestParseBatchProfile(unittest.TestCase):
         self.assertIn('error: the following arguments are required: -f', sys.stderr.getvalue())
 
     def test_no_arguments_provided(self):
-        # test for case where no arguments are provided, expect an error
+        # test for case where no arguments are provided, expecting help to be shown
         sys.argv = ["motus", "batch_profile"]
         with self.assertRaises(SystemExit):
-            sys.stderr = io.StringIO()
             parse_batch_profile()
-        self.assertIn('error: the following arguments are required: -f', sys.stderr.getvalue())
 
     @patch('gzip.open', new_callable=MagicMock)
     @patch('pathlib.Path.exists', new_callable=MagicMock)

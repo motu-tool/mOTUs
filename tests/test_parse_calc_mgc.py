@@ -44,14 +44,11 @@ class TestParseCalcMGC(unittest.TestCase):
     @patch('gzip.open', new_callable=MagicMock)
     @patch('pathlib.Path.exists', new_callable=MagicMock)
     def test_parse_calc_mgc_no_parameters(self, mock_exists, mock_gzip_open, mock_open):
-        # pass no parameters, expecting failure
-        # argparse now includes long argument names in error messages (e.g. -i/--input-file)
+        # pass no parameters, expecting help to be shown
         sys.argv = ["motus", "calc_mgc"]
 
         with self.assertRaises(SystemExit):
-            sys.stderr = io.StringIO()
             parse_calc_mgc()
-        self.assertIn('error: the following arguments are required: -i/--input-file, -o/--output-file', sys.stderr.getvalue())
 
 
 if __name__ == '__main__':

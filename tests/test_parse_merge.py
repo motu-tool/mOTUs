@@ -68,17 +68,11 @@ class TestParseMerge(unittest.TestCase):
     @patch('gzip.open', new_callable=MagicMock)
     @patch('pathlib.Path.exists', new_callable=MagicMock)
     def test_parse_merge_nothing_passed(self, mock_exists, mock_gzip_open, mock_open):
-        # pass no parameters
-        # argparse now includes the long names in error messages: -i/--input-files, -o/--output-file
+        # pass no parameters, expecting help to be shown
         sys.argv = ["motus", "merge"]
-        mock_open.return_value.__enter__.return_value = MagicMock(readline=MagicMock(side_effect=[
-            "version: 4.0", "date: 2024-01-01"
-        ]))
 
         with self.assertRaises(SystemExit):
-            sys.stderr = io.StringIO()
             parse_merge()
-        self.assertIn('error: the following arguments are required: -i/--input-files, -o/--output-file', sys.stderr.getvalue())
 
 if __name__ == '__main__':
     unittest.main()

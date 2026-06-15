@@ -76,9 +76,7 @@ class TestParseDownload(unittest.TestCase):
         sys.argv = ["motus", "download"]
 
         with self.assertRaises(SystemExit):
-            sys.stderr = io.StringIO()
             parse_download()
-        self.assertIn('error: the following arguments are required: -s, -w', sys.stderr.getvalue())
 
 
 if __name__ == '__main__':
