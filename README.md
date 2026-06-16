@@ -169,8 +169,7 @@ Additionally, the tool includes four primary helper functions:
 
 📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-profile)
 
-
-
+Produces a taxonomic profile from short read metagenomic sequencing data by executing map_tax, calc_mgc, and calc_motu in succession.
 
 ```bash
 motus profile
@@ -254,7 +253,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-map-tax)
 
-
+Maps short reads against the mOTUs marker gene database.
 
 ```bash
 motus map_tax
@@ -330,7 +329,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-calc-mgc)
 
-
+Calculates the number of inserts mapping to each marker gene cluster within the mOTUs marker gene database.
 
 ```bash
 motus calc_mgc
@@ -390,7 +389,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-calc-motu)
 
-
+Calculates the taxonomic profile based on the number of inserts mapped to the corresponding marker gene clusters.
 
 ```bash
 motus calc_motu
@@ -460,7 +459,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-merge)
 
-
+Merges taxonomic profiles from multiple samples into one (tab-separated) table.
 
 ```bash
 motus merge
@@ -519,7 +518,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-downloadmgdb)
 
-
+Downloads the marker gene reference database required for profiling.
 
 ```bash
 motus downloadMGDB
@@ -578,7 +577,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-classify)
 
-
+Assigns provided genomes to a mOTU if the corresponding taxon is present within the database.
 
 ```bash
 motus classify
@@ -635,7 +634,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 </details>
 
-The output file is a tab-separated table with one row per input genome:
+<!--The output file is a tab-separated table with one row per input genome:
 
 | Column | Description |
 |---|---|
@@ -646,7 +645,7 @@ The output file is a tab-separated table with one row per input genome:
 | `TAXONOMY` | GTDB taxonomy of the closest mOTU. `d__;p__;c__;o__;f__;g__;s__` if no mOTU was assigned. |
 | `#MGs` | Number of marker genes extracted from the genome by fetchMGs. |
 
-
+-->
 ---
 
 
@@ -655,7 +654,7 @@ The output file is a tab-separated table with one row per input genome:
 
 📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-prep-long)
 
-
+Prepares long reads for profiling by splitting them into ~300 bp fragments.
 
 ```bash
 motus prep_long
@@ -719,7 +718,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-download)
 
-
+Downloads sequences for indicated genomes from the mOTUs genome database.
 
 ```bash
 motus download
@@ -789,7 +788,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-genomes)
 
-
+Queries the mOTUs genome database to find genomes matching indicated mOTU identifiers, taxonomic clades, or functional annotations.
 
 ```bash
 motus genomes
