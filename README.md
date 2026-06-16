@@ -155,13 +155,15 @@ The `profile` function in mOTUs is the main function that executes `map_tax`, `c
 
 
 
-Additionally, the tool includes four primary helper functions:
+Additionally, the tool includes six helper functions:
 
-* `download`: Provides programmatic access to the ~4 million genomes in the `motus-db`.
-* `downloadMGDB`: Downloads the mOTUs marker gene database.
 * `merge`: Combines multiple taxonomic profiles into a single file.
 * `classify`: Assigns user-submitted genomes to existing mOTUs.
 * `genomes`: Finds genomes by functional or taxonomic annotation.
+* `prep_long`: Finds genomes by functional or taxonomic annotation.
+* `download`: Provides programmatic access to the ~4 million genomes in the `motus-db`.
+* `downloadMGDB`: Downloads the mOTUs marker gene database.
+
 
 ---
 
@@ -247,6 +249,8 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 ```
 </details>
+
+
 ---
 
 ### Map Tax
