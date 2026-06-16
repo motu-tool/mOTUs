@@ -900,7 +900,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 ---
 
-### v4.0.x
+### v4.0.4
 
 - Initial public release of mOTUs4 with database v4.0 (124,295 mOTUs)
 - Three-stage pipeline: `map_tax` → `calc_mgc` → `calc_motu`; `profile` runs all three in sequence
