@@ -219,6 +219,9 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
         -n, --sample-name  STR
             Sample name (default: 'unnamed sample')
 
+        -db  PATH
+            Alternative path for the mOTUs marker gene database
+
     Output options:
         -o, --output-file  FILE
             Output file name [required]
@@ -241,9 +244,6 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
         --skip-pair-check
             Skip validation that forward and reverse read headers match.
             Use when reads are unsorted or contain singletons.
-
-        -db  PATH
-            Alternative path for the mOTUs marker gene database
 
 ```
 </details>
@@ -300,6 +300,9 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
         -s, --single  FILE [FILE ...]
             Input file(s) for unpaired reads, fastQ/A(.gz)-formatted
 
+        -db  PATH
+            Alternative path for the mOTUs marker gene database
+
     Output options:
         -o, --output-file  FILE
             Output file name [required]
@@ -314,9 +317,6 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
         --skip-pair-check
             Skip validation that forward and reverse read headers match.
             Use when reads are unsorted or contain singletons.
-
-        -db  PATH
-            Alternative path for the mOTUs marker gene database
 
 ```
 
@@ -368,6 +368,9 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
         -i, --input-file  FILE
             Path to BAM file generated after running the motus map_tax command [required]
 
+        -db  PATH
+            Alternative path for the mOTUs marker gene database
+
     Output options:
         -o, --output-file  FILE
             Output file name [required]
@@ -375,9 +378,6 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
     Algorithm options:
         -l, --alignment-length  INT
             Minimum length of the alignment (bp) (default: 75)
-
-        -db  PATH
-            Alternative path for the mOTUs marker gene database
 
 ```
 
@@ -431,6 +431,9 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
         -n, --sample-name  STR
             Sample name (default: 'unnamed sample')
 
+        -db  PATH
+            Alternative path for the mOTUs marker gene database
+
     Output options:
         -o, --output-file  FILE
             Output file name [required]
@@ -443,9 +446,6 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
         -y, --counting-mode  STR
             Which scale the abundances are reported in (default: INSERT_SCALED)
             Choices: [INSERT_RAW, INSERT_NORM, INSERT_SCALED, BASE_RAW, BASE_NORM]
-
-        -db  PATH
-            Alternative path for the mOTUs marker gene database (default: built-in location)
 
 ```
 
@@ -499,13 +499,12 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
             A list of mOTUs profile files or a text file containing the list of profile
             files to be merged, with one line per file [required]
 
+        -db  PATH
+            Alternative path for the mOTUs marker gene database
+
     Output options:
         -o, --output-file  FILE
             Output file name [required]
-
-    Database options:
-        -db  PATH
-            Alternative path for the mOTUs marker gene database
 
 ```
 
@@ -619,6 +618,9 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
             Text file listing genome sequence files in fastA(.gz) format to classify.
             One line per genome file [required]
 
+        -db  PATH
+            Alternative path for the mOTUs marker gene database
+
     Output options:
         -o, --output-file  FILE
             Output file name [required]
@@ -626,9 +628,6 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
     Algorithm options:
         -t, --threads  INT
             Number of threads (default: 1)
-
-        -db  PATH
-            Alternative path for the mOTUs marker gene database
 
 ```
 
@@ -759,6 +758,9 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
             listing the identifiers of genomes for download. One line per genome. The output of
             the motus genomes command can be used as input for this command [required]
 
+        -db  PATH
+            Alternative path for the mOTUs marker gene database
+
     Output options:
         -o, --output-folder  PATH
             Path to output folder where the downloaded sequences will be saved [required]
@@ -766,14 +768,9 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
         -r, --representatives
             Download only sequences from representative genomes.
 
-    Algorithm options:
         -t, --file-type  STR
             File type to download (default: genome)
             Choices: [genome, gene_fna, gene_faa, gene_gff, antismash, pfam, eggnog, kegg, trna, rrna]
-
-    Database options:
-        -db  PATH
-            Alternative path for the mOTUs marker gene database
 
 ```
 
@@ -836,7 +833,10 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
         -l, --list  STR
             List all searchable entries for a given category and write them to -o.
-            Choose from [GENOME, TAXON, PFAM, KEGG, EGGNOG]. When used, -i is not required.
+            Choose from [GENOME, TAXONONOMY, PFAM, KEGG, EGGNOG]. When used, -i is not required.
+
+        -db  PATH
+            Alternative path for the mOTUs database
 
     Output options:
         -o, --output-file  FILE
@@ -847,9 +847,6 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
         -d, --details  STR [STR ...]
             List of annotations to report. Choose any combination of [KEGG, PFAM, EGGNOG, TAXONOMY],
             for example, -d KEGG PFAM.
-
-        -db  PATH
-            Alternative path for the mOTUs database
 
 ```
     
