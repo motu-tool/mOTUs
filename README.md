@@ -5,7 +5,6 @@
 [![Actions](https://img.shields.io/github/actions/workflow/status/motu-tool/mOTUs/python-app.yml?branch=mOTUs4.1&logo=github&style=flat-square&maxAge=300)](https://github.com/motu-tool/mOTUs/actions)
 [![PyPI](https://img.shields.io/pypi/v/motus-tool.svg?logo=pypi&style=flat-square&maxAge=3600)](https://pypi.org/project/motus-tool)
 [![Bioconda](https://img.shields.io/conda/vn/bioconda/motus?logo=anaconda&style=flat-square&maxAge=3600)](https://anaconda.org/bioconda/motus)
-[![Python Versions](https://img.shields.io/pypi/pyversions/motus-tool.svg?logo=python&style=flat-square&maxAge=3600)](https://pypi.org/project/motus-tool/#files)
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg?style=flat-square)](https://choosealicense.com/licenses/gpl-3.0/)
 [![GitHub issues](https://img.shields.io/badge/issues-GitHub-red?style=flat-square&logo=github)](https://github.com/motu-tool/mOTUs/issues)
 [![Docs](https://img.shields.io/badge/docs-motus--tool.org-informational?style=flat-square)](https://www.motus-tool.org/)
@@ -19,10 +18,11 @@
 # mOTUs profiler
 
 
-The mOTU profiler is a computational tool that estimates taxonomic abundance of known and currently unknown microbial community members using metagenomic shotgun sequencing data.
+
+The mOTUs profiler is a computational tool that estimates taxonomic abundance of microbial community members from known and currently unknown (uncultured) species using metagenomic shotgun sequencing data.
 
 
-The current version of the mOTUs profiler is built on top of the genomic mOTUs database ([motus-db](https://motus-db.org/)) which is constructed from 919K isolate and single cell-amplified (SAGs) genomes and 2.83M metagenome-assembled genomes (MAGs) generated from over 117K metagenomic samples spanning diverse microbiomes, which include (in addition to the human and ocean microbiome) soil, freshwater and gastrointestinal tract microbiomes of ruminants and other animals, environments we found to be greatly underrepresented by reference genomes.  
+The current version of the mOTUs profiler is built on top of the mOTUs database ([motus-db](https://motus-db.org/)) which is constructed from 919K isolate and single cell-amplified (SAGs) genomes and 2.98M metagenome-assembled genomes (MAGs) generated from ~120k metagenomic samples spanning diverse microbiomes, which include (in addition to the human and ocean microbiome) soil, freshwater and gastrointestinal tract microbiomes of ruminants and other animals, environments we found to be greatly underrepresented by reference genomes.  
 
 In the current version, 124,295 species-level taxonomic units (mOTUs) were constructed using sequences of 10 single-copy marker genes recovered from these genomes. 30,256 mOTUs are represented by an isolate genome, whereas 94,039 mOTUs are represented by MAGs only.
 
@@ -44,7 +44,7 @@ Please cite the paper(s) corresponding to the version(s) you use:
 
 ## 📦 Installation
 
-The mOTUs profiler, written in Python 3 (>=3.12), can be executed on a 64-bit Linux or macOS system. It requires external dependencies (bwa, samtools, vsearch) which must be available on PATH. 
+The mOTUs profiler, written in Python 3 (>=3.12), can be executed on a 64-bit Linux or macOS system. It requires external dependencies (bwa>=0.7.19, vsearch>=2.30.4) which must be available on PATH. 
 
 Package managers automate this: they resolve dependency graphs, manage binary versions, and provide isolated environments so mOTUs and its dependencies don't conflict with system packages. Below are the recommended approaches.
 
@@ -83,24 +83,6 @@ conda activate mOTUs4
 # Verify installation
 motus profile -h
 ```
-
-<details>
-<summary>Installing conda/mamba</summary>
-
-If you don't have conda installed, use [Miniconda](https://docs.conda.io/projects/miniconda/en/latest/) (lightweight) or [Miniforge](https://github.com/conda-forge/miniforge) (includes mamba, faster):
-
-```bash
-# Linux
-curl -L https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -o miniforge.sh
-bash miniforge.sh
-
-# macOS (choose matching architecture)
-curl -L https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-x86_64.sh -o miniforge.sh
-bash miniforge.sh
-```
-
-</details>
-
 
 
 ---
@@ -171,7 +153,15 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 The `profile` function in mOTUs is the main function that executes `map_tax`, `calc_mgc`, and `calc_motu` in sequence. It takes short read metagenomic sequencing data as input and generates a taxonomic profile.
 
-Helper functions include `download`, which provides users with programmatic access to the ~4 million genomes in the motus-db; `downloadMGDB`, which downloads the marker gene database of mOTUs; `merge`, which merges multiple taxonomic profiles; and `classify`, which assigns user-submitted genomes to existing mOTUs.
+
+
+Additionally, the tool includes four primary helper functions:
+
+* `download`: Provides programmatic access to the ~4 million genomes in the `motus-db`.
+* `downloadMGDB`: Downloads the mOTUs marker gene database.
+* `merge`: Combines multiple taxonomic profiles into a single file.
+* `classify`: Assigns user-submitted genomes to existing mOTUs.
+* `genomes`: Finds genomes by functional or taxonomic annotation.
 
 ---
 
@@ -179,9 +169,16 @@ Helper functions include `download`, which provides users with programmatic acce
 
 📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-profile)
 
+
+
+
 ```bash
 motus profile
 ```
+
+
+<details>
+<summary>Show options</summary>
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
@@ -250,16 +247,23 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
             Alternative path for the mOTUs marker gene database
 
 ```
-
+</details>
 ---
 
 ### Map Tax
 
 📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-map-tax)
 
+
+
 ```bash
 motus map_tax
 ```
+
+
+
+<details>
+<summary>Show options</summary>
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
@@ -317,6 +321,8 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 ```
 
+</details>
+
 
 ---
 
@@ -324,9 +330,16 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-calc-mgc)
 
+
+
 ```bash
 motus calc_mgc
 ```
+
+
+
+<details>
+<summary>Show options</summary>
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
@@ -368,15 +381,25 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
             Alternative path for the mOTUs marker gene database
 
 ```
+
+</details>
+
 ---
 
 ### Calc mOTU
 
 📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-calc-motu)
 
+
+
 ```bash
 motus calc_motu
 ```
+
+
+
+<details>
+<summary>Show options</summary>
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
@@ -427,15 +450,26 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 ```
 
+
+</details>
+
+
 ---
 
 ### merge
 
 📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-merge)
 
+
+
 ```bash
 motus merge
 ```
+
+<details>
+<summary>Show options</summary>
+
+
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
@@ -476,6 +510,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 ```
 
+</details>
 
 ---
 
@@ -484,9 +519,18 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-downloadmgdb)
 
+
+
 ```bash
 motus downloadMGDB
 ```
+
+
+
+<details>
+<summary>Show options</summary>
+
+
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
@@ -526,7 +570,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 ```
 
-
+</details>
 
 ---
 
@@ -534,9 +578,17 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-classify)
 
+
+
 ```bash
 motus classify
 ```
+
+
+
+<details>
+<summary>Show options</summary>
+
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
@@ -581,6 +633,8 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 ```
 
+</details>
+
 The output file is a tab-separated table with one row per input genome:
 
 | Column | Description |
@@ -601,9 +655,17 @@ The output file is a tab-separated table with one row per input genome:
 
 📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-prep-long)
 
+
+
 ```bash
 motus prep_long
 ```
+
+
+<details>
+<summary>Show options</summary>
+
+
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
@@ -647,6 +709,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
            
 ```
 
+</details>
 
 ---
 
@@ -656,9 +719,16 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-download)
 
+
+
 ```bash
 motus download
 ```
+
+<details>
+<summary>Show options</summary>
+
+
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
@@ -708,7 +778,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 ```
 
-
+</details>
 
 ---
 
@@ -719,9 +789,18 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 📖 [Full documentation](https://www.motus-tool.org/profiler/option_manual.html#motus-genomes)
 
+
+
 ```bash
 motus genomes
 ```
+
+
+<details>
+<summary>Show options</summary>
+
+
+
 
 ```bash
 Program: motus - a tool for marker gene-based OTU (mOTU) profiling
@@ -775,6 +854,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 ```
     
+</details>
 
 ---
 

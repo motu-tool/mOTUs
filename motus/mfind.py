@@ -309,7 +309,7 @@ def _get_annodb_path(db_location: pathlib.Path = None) -> str:
     annodb_marker   = db_location / f'{annodb_filename}.downloaded'
 
     if not annodb_marker.exists():
-        logging.info(f'Need to download mOTUs annotation database v{db_version} (~17GB)')
+        logging.info(f'Need to download mOTUs annotation database v{db_version} (~19GB)')
         with urllib.request.urlopen(remote_url) as response:
             total = int(response.info().get("Content-Length", -1))
             with open(str(annodb_location), "wb") as f, tqdm.tqdm(total=total, unit='B', unit_scale=True, desc='Downloading mOTUs annotation database') as pbar:
