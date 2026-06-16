@@ -861,7 +861,8 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 ## ❓ Need Help?
 
-Write an issue on GitHub
+- **Report an issue**: [GitHub Issues](https://github.com/motu-tool/mOTUs/issues) — for bugs, feature requests, or technical questions
+- **Join the community**: [Discord](https://discord.gg/sVhY42aD3e) — chat with other mOTUs users and developers
 
 ---
 
