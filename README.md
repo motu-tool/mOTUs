@@ -825,7 +825,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
     Usage:
         motus genomes -i FILE -o FILE [options]
         motus genomes -i STR [STR ...] -o FILE [options]
-        motus genomes -l GENOME|TAXON|PFAM|KEGG|EGGNOG -o FILE [options]
+        motus genomes -l GENOME|TAXONOMY|PFAM|KEGG|EGGNOG -o FILE [options]
 
 
     Input options:
@@ -837,7 +837,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
         -l, --list  STR
             List all searchable entries for a given category and write them to -o.
-            Choose from [GENOME, TAXONONOMY, PFAM, KEGG, EGGNOG]. When used, -i is not required.
+            Choose from [GENOME, TAXONOMY, PFAM, KEGG, EGGNOG]. When used, -i is not required.
 
         -db  PATH
             Alternative path for the mOTUs database
@@ -888,7 +888,7 @@ Program: motus - a tool for marker gene-based OTU (mOTU) profiling
 
 - `-db PATH` flag added to all commands to specify a custom database parent folder
 - `--skip-pair-check` added to `profile` and `map_tax` for unsorted inputs or inputs containing singletons. Use as last resort!
-- `motus genomes -l GENOME|TAXON|PFAM|KEGG|EGGNOG` lists all searchable entries of a given type without requiring `-i`
+- `motus genomes -l GENOME|TAXONOMY|PFAM|KEGG|EGGNOG` lists all searchable entries of a given type without requiring `-i`
 - Tool checks at startup whether `bwa` is on PATH (hard error if missing) and whether `vsearch` is on PATH (warning if missing)
 
 **Bug fixes**

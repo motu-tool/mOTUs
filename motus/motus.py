@@ -1487,7 +1487,7 @@ def parse_find():
     Usage:
         motus genomes -i FILE -o FILE [options]
         motus genomes -i STR [STR ...] -o FILE [options]
-        motus genomes -l GENOME|TAXON|PFAM|KEGG|EGGNOG -o FILE [options]
+        motus genomes -l GENOME|TAXONOMY|PFAM|KEGG|EGGNOG -o FILE [options]
 
 
     Input options:
@@ -1517,7 +1517,7 @@ def parse_find():
 
 
     parser.add_argument("-i", "--input-queries", required=False, nargs="+", default=[], dest='i')
-    parser.add_argument("-l", "--list", choices=['GENOME', 'TAXON', 'PFAM', 'KEGG', 'EGGNOG'], default=None, dest='l')
+    parser.add_argument("-l", "--list", choices=['GENOME', 'TAXONOMY', 'PFAM', 'KEGG', 'EGGNOG'], default=None, dest='l')
     parser.add_argument("-o", "--output-file", required=True, dest='o')
     parser.add_argument("-d", "--details", default=[], nargs="+", dest='d')
     parser.add_argument("-db", type=str, default=str(mutils.DEFAULT_MOTUS_MGDB_PARENT_LOCATION), dest='db')

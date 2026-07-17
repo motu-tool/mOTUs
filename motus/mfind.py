@@ -23,7 +23,7 @@ PFAM_DB_TYPE = 'PFAM'
 
 _LIST_TYPE_TO_DB_TYPE = {
     'GENOME': GENOME_DB_TYPE,
-    'TAXON':  TAXONOMY_DB_TYPE,
+    'TAXONOMY':  TAXONOMY_DB_TYPE,
     'PFAM':   PFAM_DB_TYPE,
     'KEGG':   KEGG_DB_TYPE,
     'EGGNOG': EGGNOG_DB_TYPE,
@@ -402,7 +402,7 @@ def list_entries(list_type: str, output_file: pathlib.Path, db_location: pathlib
     """Write all searchable names of the given type to output_file, one per line.
 
     Args:
-        list_type (str): One of GENOME, TAXON, PFAM, KEGG, EGGNOG.
+        list_type (str): One of GENOME, TAXONOMY, PFAM, KEGG, EGGNOG.
         output_file (pathlib.Path): Destination file.
         db_location (pathlib.Path, optional): Path to the db_mOTU folder.
     """

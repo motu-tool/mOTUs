@@ -374,6 +374,7 @@ class MotusDB:
     index_location: pathlib.Path = None
     _motus_core_mgs = ['COG0012','COG0016','COG0018','COG0172','COG0215','COG0495','COG0525','COG0533','COG0541','COG0552']
     _unassigned_motu_name = None
+    _has_unassigned_motu = False
     _mOTUsdb_folder: pathlib.Path = None
 
     motus_mv_taxonomy_file = None
@@ -483,6 +484,7 @@ class MotusDB:
             unassigned = df.filter(pl.col('#MOTU').str.contains('unassigned'))['#MOTU']
             if len(unassigned) > 0:
                 self._unassigned_motu_name = unassigned[0]
+                self._has_unassigned_motu = True
 
             with gzip.open(blocklist_file, 'rt') as handle:
                 for line in handle:
@@ -611,13 +613,9 @@ class MotusDB:
             Whether the motu variable is the unassigned mOTU
         """
 
-        if not self._unassigned_motu_name:
-            logging.error('The unassigned mOTU was not set. This indicates a corrupted database. Please re-download database. Quitting...')
-            mutils.shutdown(1)
-        if motu == self._unassigned_motu_name:
-            return True
-        else:
+        if not self._has_unassigned_motu:
             return False
+        return motu == self._unassigned_motu_name
 
     def get_unassigned_motu(self) -> str:
         """
